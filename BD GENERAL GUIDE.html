@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Billing Dispute General Guide</title>
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#64748b;
+  --accent:#4d148c;
+  --accent-2:#ff6600;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:#0f172a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
+header, footer{background:var(--accent);color:white;padding:16px 28px;}
+header h1, footer p{margin:0;font-weight:600;}
+.container{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 420px;gap:20px;align-items:start;padding:28px 0;flex:1}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 28px rgba(2,6,23,0.06);overflow:hidden}
+h1{margin:0;font-size:22px;color:var(--accent)}
+p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
+.progress-container{display:flex;align-items:center;gap:10px;margin:14px 0}
+.progress-bar{flex:1;height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:var(--accent);transition:width .3s}
+.progress-text{font-size:13px;color:var(--muted)}
+.node{padding:12px;border-radius:10px;border:1px solid rgba(3,7,18,0.05);background:linear-gradient(180deg,#ffffff,#fbfeff);margin:10px 0;min-height:64px}
+.choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.choice{padding:8px 12px;border-radius:999px;background:#eef8f7;border:1px solid rgba(4,20,20,0.03);cursor:pointer;font-weight:600}
+.choice:hover{background:#e0f2fe}
+.choice.active{background:var(--accent);color:white}
+.path{margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed rgba(3,7,18,0.04);font-size:13px}
+.path strong{color:var(--accent)}
+.result{margin-top:12px;padding:12px;border-radius:10px;background:#e6fbfb;border-left:4px solid var(--accent-2);animation:fadeIn 0.4s ease-in;min-height:56px;position:relative}
+.note{margin-top:6px;font-size:13px;color:var(--muted);font-style:italic}
+.controls{display:flex;gap:8px;margin-top:12px}
+button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
+.output-card{margin-top:16px;padding:14px;border-radius:10px;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.05);animation:fadeIn 0.45s ease-in;position:relative}
+.output-header{font-weight:700;color:var(--accent);margin-bottom:8px ;color:#000 !important;display:flex;justify-content:space-between;align-items:center;}
+.output-box{
+  padding:10px;
+  border-left:4px solid var(--accent-2);
+  background:#f8fafc;
+  border-radius:8px;
+  white-space:pre-wrap;
+   font-size:11px; 
+}
+.copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
+.copy-btn:hover{opacity:.85}
+.extra-note{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic}
+.edit-icon{cursor:pointer;font-size:14px;color:var(--accent);margin-left:8px}
+.edit-icon:hover{text-decoration:underline}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:white;padding:20px;border-radius:10px;min-width:300px;text-align:center}
+textarea{resize:none}
+@keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:1200px){.container{grid-template-columns:1fr}}
+
+
+/* ---------- MODAL STYLES ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  min-width: 500px;      /* lapad */
+  max-width: 600px;       /* optional max width */
+  box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+  text-align: center;
+  position: relative;
+  font-family: Inter, sans-serif;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.modal-content input[type="password"], 
+.modal-content textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  margin-top: 10px;
+  font-family: Inter, sans-serif;
+}
+
+.modal-content textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.modal-content button {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-left: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-content button:hover {
+  opacity: 0.9;
+}
+
+.modal-content .save-btn {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.modal-content .cancel-btn {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+@media(max-width:500px){
+  .modal-content { width: 90%; min-width: unset; padding:20px; }
+}
+</style>
+</head>
+<body>
+
+<header style="display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
+    <h1>BD Tools — Billing Dispute Guide</h1>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.location.href='index.html'">Main Page</button>
+    <button onclick="window.location.href='BD-PRICING GENERAL GUIDE.html'">Go to Pricing General Guide</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Left: Flow -->
+  <div class="card">
+      <h1>Billing Dispute General Guide</h1>
+      <p class="lead">Follow the flow below to determine the recommended billing action.</p>
+      <div class="progress-container">
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+        <div id="progressText" class="progress-text">Step 1 of ?</div>
+      </div>
+      <div id="flowArea" class="node"></div>
+      <div class="controls">
+        <button id="goBackBtn" class="secondary" style="display:none;">← Go Back</button>
+        <button id="startOverBtn" class="secondary" style="display:none;">Start Over</button>
+      </div>
+    </div>
+
+    <!-- Middle: Path & Recommendation -->
+    <div class="card">
+      <div class="node">
+        <strong>Selected Path</strong>
+        <div id="selectedPath" class="path">No steps selected yet.</div>
+      </div>
+      <div class="node">
+        <strong>Recommended Action</strong>
+        <div id="recommendation" class="result">No recommendation yet.</div>
+      </div>
+    </div>
+
+    <!-- Right: Suggested Comment & Email -->
+    <div class="card" id="suggestedPanel" style="display:none;">
+      <div class="output-card" id="commentCard">
+        <div class="output-header">
+          Suggested Comment
+          <span class="edit-icon" onclick="attemptEdit('comment')" title="Do you want to update the Comment?">✏️</span>
+        </div>
+        <div id="suggestedComment" class="output-box"></div>
+      </div>
+      <div class="output-card" id="emailCard">
+        <div class="output-header">
+          Suggested Email
+          <span class="edit-icon" onclick="attemptEdit('email')" title="Do you want to update the Email?">✏️</span>
+        </div>
+        <div id="suggestedEmail" class="output-box"></div>
+        <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
+      </div>
+      <div id="generalNote" class="note">Note: These are suggested templates. Personalized emails or comments are always more appreciated.</div>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div id="passwordModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Password to Edit</h3>
+    <input type="password" id="adminPassword" placeholder="Password">
+    <div style="margin-top:18px;">
+      <button class="save-btn" onclick="checkPassword()">Submit</button>
+      <button class="cancel-btn" onclick="closePasswordModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Edit</h3>
+    <textarea id="editTextarea"></textarea>
+    <div style="margin-top:18px;text-align:right;">
+      <button class="save-btn" onclick="saveEdit()">Save</button>
+      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<footer style="display:flex;align-items:center;justify-content:space-between;">
+  <p>© 2025 EBS Operations</p>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:white;">
+      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
+    </span>
+  </div>
+</footer>
+
+<script>
+/* ---------- Decision Tree Data (full) ---------- */
+const NODES = {
+ /* ---------------- Prepaid ---------------- */
+prepaid: {
+  text: "Is there an Account No. noted on BOL?",
+  choices: [
+    { label: "Yes", next: "prepaid_account_yes" },
+    { label: "No", action: "Bill the pro to the Shipper per Terms noted on BOL." }
+  ]
+},
+prepaid_account_yes: {
+  text: "Is the account no. related to the shipper?",
+  choices: [
+    { label: "Yes", action: "Bill the pro to the Shipper per Terms and Account no. noted on BOL." },
+    { label: "No - Account related to the Consignee", next: "prepaid_account_not_shipper" }
+  ]
+},
+prepaid_account_not_shipper: {
+  text: "Who was initially billed on the pro?",
+  choices: [
+    { label: "Shipper – per Terms on BOL", next: "prepaid_shipper_initial_billed" },
+    { label: "Account no. per BOL", next: "prepaid_account_owner_initial_billed" }
+  ]
+},
+prepaid_shipper_initial_billed: {
+  text: "Who is the Disputing Party?",
+  choices: [
+    { label: "Shipper and request is to bill it to account no.", next: "prepaid_shipper_rebill_check" },
+    { label: "Account no. owner and request is to bill it to their account", next: "prepaid_account_owner_rebill_check" }
+  ]
+},
+prepaid_shipper_rebill_check: {
+  text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+  choices: [
+    { label: "Yes", next: "prepaid_shipper_rebill_yes" },
+    { label: "No", action: "If an account number is listed on BOL in the center or random part of the BOL and has no relation to the shipper or consignee - Terms will trump and LOA will be needed in order to update to the random account no. listed on the BOL" }
+  ]
+},
+prepaid_shipper_rebill_yes: {
+  text: "Is the account no. billable (active and a BT account)?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Proceed with rebilling the account no. per BOL (Update the terms if necessary. Example: Update to Collect if Account is related to the Consignee. Check if account is ABT of the Consignee.)",
+      note: "NOTE: If account no. has the same name and address of the Consignee (shipping account), use the account and update the Consignee Section then change the Terms to Collect."
+    },
+    {
+      label: "No",
+      action: "Search for a valid BT account that can be billed.",
+      note: "NOTE: If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account)."
+    }
+  ]
+},
+prepaid_account_owner_rebill_check: {
+  text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+  choices: [
+    { label: "Yes", next: "prepaid_account_owner_rebill_yes" },
+    { label: "No", action: "If an account number is listed on BOL in the center or random part of the BOL and has no relation to the shipper or consignee - Terms will trump the Account no. noted on the BOL. This will be considered rebill per BOL with Correction Fee." }
+  ]
+},
+prepaid_account_owner_rebill_yes: {
+  text: "Is the account no. billable (active and a BT account)?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Proceed with rebilling the account no. per BOL.",
+      note: "NOTE: If account no. has the same name and address of the Consignee (shipping account), use the account and update the Consignee Section then change the Terms to Collect."
+    },
+    {
+      label: "No",
+      action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",
+      note: "NOTE:  If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
+    }
+  ]
+},
+prepaid_account_owner_initial_billed: {
+  text: "Who is the Disputing Party?",
+  choices: [
+    {
+      label: "Account no. owner and request is to bill it to the Shipper",
+      action: "Proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL. If Account is related to Consignee, check Section 7 if it can be performed."
+    },
+    {
+      label: "Shipper and request is to bill it to their account",
+      action: "Proceed with the correction without Correction Fee."
+    }
+  ]
+},
+
+ /* ---------------- Collect ---------------- */
+  collect: {
+    text: "Is there an Account No. noted on BOL?",
+    choices: [
+      { label: "Yes", next: "collect_account_yes" },
+      { label: "No", action: "Bill the pro to the Consignee per Terms noted on BOL." }
+    ]
+  },
+  collect_account_yes: {
+    text: "Is the account no. related to the Consignee?",
+    choices: [
+      { label: "Yes", action: "Bill the pro to the Consignee per Terms and Account no. noted on BOL." },
+      { label: "No - related to the Shipper", next: "collect_account_not_consignee" }
+    ]
+  },
+  collect_account_not_consignee: {
+    text: "Who was initially billed on the pro?",
+    choices: [
+      { label: "Consignee – per Terms on BOL", next: "collect_consignee_initial_billed" },
+      { label: "Account no. per BOL - not related to Shipper or Consignee", next: "collect_account_owner_initial_billed" }
+    ]
+  },
+  collect_consignee_initial_billed: {
+    text: "Who is the Disputing Party?",
+    choices: [
+      { label: "Consignee and request is to bill it to account no.", next: "collect_consignee_rebill_check" },
+      { label: "Account no. owner and request is to bill it to their account", next: "collect_account_owner_rebill_check" }
+    ]
+  },
+  collect_consignee_rebill_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      {
+        label: "Yes",
+        next: "collect_consignee_rebill_yes"
+      },
+      {
+        label: "No",
+        action: "LOA is needed to update or check if debtor update per RVSL can be followed."
+      }
+    ]
+  },
+  collect_consignee_rebill_yes: {
+    text: "Is the account no. billable (active and a BT account)?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Proceed with rebilling the account no. per BOL (Update the terms if necessary. Example: Update to Prepaid if Account is related to the Shipper. Check if account is ABT of the Shipper.)",
+        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), use the account and update the Shipper Section then change the Terms to Prepaid."
+      },
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",
+        note: "NOTE:  If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
+      }
+    ]
+  },
+  collect_account_owner_rebill_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      {
+        label: "Yes",
+        next: "collect_account_owner_rebill_yes"
+      },
+      {
+        label: "No",
+        action: "If an account number is listed on BOL in the center or random part of the BOL and has no relation to the shipper or consignee - Terms will trump the Account no. noted on the BOL. This will be considered rebill per BOL with Correction Fee."
+      }
+    ]
+  },
+  collect_account_owner_rebill_yes: {
+    text: "Is the account no. billable (active and a BT account)?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Proceed with rebilling the account no. per BOL.",
+        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), use the account and update the Shipper Section then change the Terms to Collect."
+      },
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT). ",
+        note: "NOTE: If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
+      }
+    ]
+  },
+  
+  collect_account_owner_initial_billed: {
+  text: "Who is the Disputing Party?",
+  choices: [
+    {
+      label: "Account no. owner and request is to bill it to the Consignee",
+      action: "Proceed and rebill it to the Shipper due to conflicting information on the BOL. Consider this as Debtor update per RVSL.  "
+    },
+    {
+      label: "Consignee and request is to bill it to their account",
+      action: "Proceed with the correction without Correction Fee."
+    }
+  ]
+},
+  /* ---------------- Third Party ---------------- */
+  thirdparty: {
+    text: "Is there an Account No. noted on the BOL?",
+    choices: [
+      { label: "Yes", next: "thirdparty_account_yes" },
+      { label: "No", action: "Proceed and bill it to the BT information. LOA is needed to update or check if debtor update per RVSL can be followed." }
+    ]
+  },
+  thirdparty_account_yes: {
+    text: "Is the account no. information (Name and Address) the same as the BT information noted on the BOL?",
+    choices: [
+      { label: "Yes", next: "thirdparty_account_same_info" },
+      { label: "No", next: "thirdparty_account_diff_info" }
+    ]
+  },
+  thirdparty_account_same_info: {
+    text: "Is the account no. billable (active and a BT account)?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Proceed with rebilling the account no. per BOL (Update the terms if necessary. Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee.)",
+        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), use the account and update the Shipper Section then change the Terms to Prepaid. Follow the same rule for the Consignee."
+      },
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",
+        note: "NOTE:  If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
+      }
+    ]
+  },
+  thirdparty_account_diff_info: {
+    text: "Who was initially billed on the Pro?",
+    choices: [
+      { label: "Account no.", next: "thirdparty_account_owner_options" },
+      { label: "BT information", next: "thirdparty_bt_info_options" }
+    ]
+  },
+  thirdparty_account_owner_options: {
+    text: "If the disputing party is the account no. owner and request is to bill it to the different BT information, is there a valid account no. available and billable that matches the BT information?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Proceed and bill it to the BT information noted on the BOL. Update the terms if necessary. Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee."
+      },
+      {
+        label: "No",
+        action: "Deny the request and advise that BT information cannot be billed. Ask for LOA and a valid account no. that can be billed."
+      },
+      {
+        label: "Disputing party is owner of BT information and request is to bill to their account",
+        action: "Proceed with rebilling it to their account per BOL if it is a good account. If not, search for a valid BT account or request one from the customer."
+      }
+    ]
+  },
+  thirdparty_bt_info_options: {
+    text: "If the disputing party is the BT information (name and address) and request is to bill it to the account no., is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Rebill the pro to the Shipper per RVSL due to conflicting information on the BOL. Do not update without an LOA from the accepting party."
+      },
+      {
+        label: "No",
+        action: "Deny the request and advise the customer that the account no. noted cannot be billed since there is no clear instruction on the BOL that it should be billed. LOA is needed in order to rebill the pro."
+      },
+      {
+        label: "Disputing party is the Account no. and request is to bill to their account",
+        next: "thirdparty_bt_to_account_check"
+      }
+    ]
+  },
+  thirdparty_bt_to_account_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the Account no. per BOL." },
+      { label: "No", action: "Proceed with rebilling the Account no. per LOA with Correction Fee." }
+    ]
+  },
+
+  /* ---------------- No Terms ---------------- */
+  noterms: {
+    text: "Is there an Account No. noted on BOL?",
+    choices: [
+      { label: "Yes", next: "noterms_account_yes" },
+      { label: "No", next: "noterms_no_account" }
+    ]
+  },
+  noterms_account_yes: {
+    text: "If account no. related to the Shipper, Consignee, or True 3rd party, select below:",
+    choices: [
+      { label: "Related to Shipper", action: "Bill the pro to the Shipper." },
+      { label: "Related to Consignee", action: "Bill the pro to the Consignee." },
+      { label: "Related to True 3rd party", action: "Bill it to the account no. with Prepaid as Terms." }
+    ]
+  },
+  noterms_no_account: {
+    text: "Is the shipment originating in the US or Canada?",
+    choices: [
+      { label: "US", action: "Bill it Prepaid per default billing." },
+      { label: "Canada", action: "Bill it Collect per default billing." }
+    ]
+  }
+};
+
+/* ---------- Decision Tree Root ---------- */
+const TREE = {
+  id: "root",
+  text: "Is there a Term Noted on BOL?",
+  choices: [
+    { label: "Yes - Prepaid", next: "prepaid" },
+    { label: "Yes - Collect", next: "collect" },
+    { label: "Yes - Third Party", next: "thirdparty" },
+    { label: "No", next: "noterms" }
+  ]
+};
+
+
+/* ---------- UI Logic ---------- */
+let path=[]; let historyStack=[];
+const TOTAL_DECISION_NODES=15;
+let currentFinalRecommendation = "";
+let currentEditType = "";
+
+function renderNode(nodeObj,nodeKey="root"){
+  const flowArea=document.getElementById("flowArea");
+  const goBackBtn=document.getElementById("goBackBtn");
+  const startOverBtn=document.getElementById("startOverBtn");
+  const progressFill=document.getElementById("progressFill");
+  const progressText=document.getElementById("progressText");
+  const suggestedPanel=document.getElementById("suggestedPanel");
+
+  flowArea.innerHTML="";
+  document.getElementById("recommendation").innerHTML="No recommendation yet.";
+  document.getElementById("suggestedComment").innerHTML="";
+  document.getElementById("suggestedEmail").textContent="";
+  suggestedPanel.style.display="none";
+
+  if(nodeObj.choices){
+    const q=document.createElement("div");
+    q.innerHTML=`<strong>${nodeObj.text}</strong>`;
+    flowArea.appendChild(q);
+    const list=document.createElement("div"); list.className="choice-list";
+    nodeObj.choices.forEach(choice=>{
+      const btn=document.createElement("div");
+      btn.className="choice"; btn.textContent=choice.label;
+      btn.onclick=()=>{
+        historyStack.push({nodeKey,path:JSON.parse(JSON.stringify(path))});
+        path.push({question:nodeObj.text,answer:choice.label});
+        const nextNode=NODES[choice.next]||(choice.action?{action:choice.action,note:choice.note}:{});
+        if(nextNode.action) currentFinalRecommendation=nextNode.action;
+        renderNode(nextNode,choice.next);
+        updateSelectedPath();
+        if(nextNode.action) generateSuggestedCommentEmail(nextNode.action);
+      };
+      list.appendChild(btn);
+    });
+    flowArea.appendChild(list);
+  } else if(nodeObj.action){
+    document.getElementById("recommendation").innerHTML=`<strong>${nodeObj.action.replace(/\n/g,'<br>')}</strong>${nodeObj.note?`<div class="note">${nodeObj.note}</div>`:''}`;
+    currentFinalRecommendation = nodeObj.action;
+    suggestedPanel.style.display="block";
+    generateSuggestedCommentEmail(nodeObj.action);
+  }
+
+  goBackBtn.style.display=historyStack.length?"inline-block":"none";
+  startOverBtn.style.display=path.length?"inline-block":"none";
+  
+const stepNum = path.length + 1;
+  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; // arbitrary max 5 steps for smooth fill
+  progressText.textContent = `Step ${stepNum}`;
+}
+
+function updateSelectedPath(){
+  const el=document.getElementById("selectedPath");
+  el.innerHTML=path.map((p,idx)=>`<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`).join("<br>");
+}
+
+function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
+document.getElementById("goBackBtn").onclick=()=>{if(historyStack.length){const last=historyStack.pop();path=last.path;renderNode(NODES[last.nodeKey],last.nodeKey);updateSelectedPath();}};
+document.getElementById("startOverBtn").onclick=()=>{path=[];historyStack=[];renderNode(TREE,"root");updateSelectedPath();};
+window.onload=()=>{renderNode(TREE,"root");};
+
+function countTotalSteps(nodeObj) {
+  if(!nodeObj.choices) return 1;
+  // For total steps, take the max of all branches
+  return 1 + Math.max(...nodeObj.choices.map(c => {
+    const nextNode = NODES[c.next] || (c.action ? {action:c.action} : {});
+    return countTotalSteps(nextNode);
+  }));
+}
+
+/* ---------- Suggested Comment & Email ---------- */
+function generateSuggestedCommentEmail(recommendation){
+  const commentEl = document.getElementById("suggestedComment");
+  const emailEl = document.getElementById("suggestedEmail");
+  let commentText="", emailText="";
+
+  // Example mapping based on recommendation text
+  if(recommendation.includes("Collect")){
+    commentText = "VS-BLER-CASE#-CHANGED TERMS TO COLLECT PER BOL";
+  } else if(recommendation.includes("Prepaid")){
+    commentText = "VS-BLER-CASE#-CHANGED TERMS TO PREPAID PER BOL";
+  } else if(recommendation.includes("rebilling the account no.") || recommendation.includes("per BOL")){
+    commentText = "VS-BLER-CASE#-CHANGED BT CODE TO ######### PER BOL";
+  }
+
+  // load custom edits from localStorage if exist
+  const customComment = localStorage.getItem(`comment_${recommendation}`);
+  const customEmail = localStorage.getItem(`email_${recommendation}`);
+
+  commentEl.textContent = customComment || commentText;
+  emailEl.textContent = customEmail || 
+    `Hi,\n\nPro ######### has been reviewed and updated to bill the correct debtor per BOL. Revised Invoice will be sent accordingly.\n\nThank you,\nEBS Operations - Invoicing Solutions`;
+}
+
+/* ---------- Admin Edit Logic ---------- */
+function attemptEdit(type){
+  currentEditType = type;
+  document.getElementById("adminPassword").value="";
+  document.getElementById("passwordModal").style.display="flex";
+}
+
+function closePasswordModal(){document.getElementById("passwordModal").style.display="none";}
+function checkPassword(){
+  if(document.getElementById("adminPassword").value==="admin"){
+    closePasswordModal();
+    openEditModal();
+  } else { alert("Incorrect password!"); }
+}
+
+function openEditModal(){
+  document.getElementById("editTextarea").value = currentEditType==="comment" 
+    ? document.getElementById("suggestedComment").textContent
+    : document.getElementById("suggestedEmail").textContent;
+  document.getElementById("modalTitle").textContent = `Edit ${currentEditType==="comment"?"Comment":"Email"}`;
+  document.getElementById("editModal").style.display="flex";
+}
+
+function closeEditModal(){document.getElementById("editModal").style.display="none";}
+
+function saveEdit(){
+  const val = document.getElementById("editTextarea").value;
+  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
+  generateSuggestedCommentEmail(currentFinalRecommendation);
+  closeEditModal();
+}
+
+/* ---------- Copy Email ---------- */
+document.getElementById("copyEmailBtn").onclick = ()=>{
+  navigator.clipboard.writeText(document.getElementById("suggestedEmail").textContent);
+  alert("Email copied to clipboard!");
+}
+</script>
+</body>
+</html>

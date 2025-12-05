@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BD Pricing Decision Guide</title>
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#64748b;
+  --accent:#4d148c;
+  --accent-2:#ff6600;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:#0f172a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
+header, footer{background:var(--accent);color:white;padding:16px 28px;}
+header h1, footer p{margin:0;font-weight:600;}
+.container{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 420px;gap:20px;align-items:start;padding:28px 0;flex:1}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 28px rgba(2,6,23,0.06);overflow:hidden}
+h1{margin:0;font-size:22px;color:var(--accent)}
+p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
+.progress-container{display:flex;align-items:center;gap:10px;margin:14px 0}
+.progress-bar{flex:1;height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:var(--accent);transition:width .3s}
+.progress-text{font-size:13px;color:var(--muted)}
+.node{padding:12px;border-radius:10px;border:1px solid rgba(3,7,18,0.05);background:linear-gradient(180deg,#ffffff,#fbfeff);margin:10px 0;min-height:64px}
+.choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.choice{padding:8px 12px;border-radius:999px;background:#eef8f7;border:1px solid rgba(4,20,20,0.03);cursor:pointer;font-weight:600}
+.choice:hover{background:#e0f2fe}
+.choice.active{background:var(--accent);color:white}
+.path{margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed rgba(3,7,18,0.04);font-size:13px}
+.path strong{color:var(--accent)}
+.result{margin-top:12px;padding:12px;border-radius:10px;background:#e6fbfb;border-left:4px solid var(--accent-2);animation:fadeIn 0.4s ease-in;min-height:56px}
+.note{margin-top:6px;font-size:13px;color:var(--muted);font-style:italic}
+.controls{display:flex;gap:8px;margin-top:12px}
+button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
+.output-card{margin-top:16px;padding:14px;border-radius:10px;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.05);animation:fadeIn 0.45s ease-in;position:relative}
+.output-header{font-weight:700;color:var(--accent);margin-bottom:8px ;color:#000 !important;display:flex;justify-content:space-between;align-items:center;}
+.output-box{
+  padding:10px;
+  border-left:4px solid var(--accent-2);
+  background:#f8fafc;
+  border-radius:8px;
+  white-space:pre-wrap;
+   font-size:11px; 
+}
+.copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
+.copy-btn:hover{opacity:.85}
+.extra-note{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic}
+.edit-icon{cursor:pointer;font-size:16px;color:var(--accent);margin-left:8px}
+.edit-icon:hover{text-decoration:underline}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:white;padding:20px;border-radius:10px;min-width:300px;text-align:center}
+textarea{resize:none}
+@keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:1200px){.container{grid-template-columns:1fr}}
+
+/* ---------- MODAL STYLES ---------- */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.45);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  min-width: 500px;      
+  max-width: 600px;       
+  box-shadow: 0 12px 28px rgba(0,0,0,0.2);
+  text-align: center;
+  font-family: Inter, sans-serif;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.modal-content input[type="password"], 
+.modal-content textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  margin-top: 10px;
+  font-family: Inter, sans-serif;
+}
+
+.modal-content textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.modal-content button {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  margin-left: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modal-content button:hover {
+  opacity: 0.9;
+}
+
+.modal-content .save-btn {
+  background-color: var(--accent);
+  color: #fff;
+}
+
+.modal-content .cancel-btn {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+@media(max-width:500px){
+  .modal-content { width: 90%; min-width: unset; padding:20px; }
+}
+</style>
+</head>
+<body>
+
+<header style="display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:12px;">
+     <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
+    <h1>BD Tools — Pricing Decision Guide</h1>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.location.href='index.html'">Main Page</button>
+    <button onclick="window.location.href='OVC GENERAL GUIDE.html'">Go to OVC General Guide</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h1>Pricing Decision Guide</h1>
+    <p class="lead">Follow the flow below to determine the recommended pricing action.</p>
+    <div class="progress-container">
+      <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      <div id="progressText" class="progress-text">Step 1 of ?</div>
+    </div>
+    <div id="flowArea" class="node"></div>
+    <div class="controls">
+      <button id="goBackBtn" class="secondary" style="display:none;">← Go Back</button>
+      <button id="startOverBtn" class="secondary" style="display:none;">Start Over</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="node">
+      <strong>Selected Path</strong>
+      <div id="selectedPath" class="path">No steps selected yet.</div>
+    </div>
+    <div class="node">
+      <strong>Recommended Action</strong>
+      <div id="recommendation" class="result">No recommendation yet.</div>
+    </div>
+  </div>
+
+  <div class="card" id="suggestedPanel" style="display:none;">
+    <div class="output-card" id="commentCard">
+      <div class="output-header">
+        Suggested Comment
+        <span class="edit-icon" onclick="attemptEdit('comment')" title="Do you want to update the Comment?">✏️</span>
+      </div>
+      <div id="suggestedComment" class="output-box"></div>
+    </div>
+    <div class="output-card" id="emailCard">
+      <div class="output-header">
+        Suggested Email
+        <span class="edit-icon" onclick="attemptEdit('email')" title="Do you want to update the Email?">✏️</span>
+      </div>
+      <div id="suggestedEmail" class="output-box"></div>
+      <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
+    </div>
+    <div id="generalNote" class="note">Note: These are suggested templates. Personalized emails or comments are always more appreciated.</div>
+  </div>
+</div>
+
+<footer style="display:flex;align-items:center;justify-content:space-between;">
+  <p>© 2025 EBS Operations</p>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:white;">
+      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
+    </span>
+  </div>
+</footer>
+
+<!-- Password Modal -->
+<div id="passwordModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Password to Edit</h3>
+    <input type="password" id="adminPassword" placeholder="Password">
+    <div style="margin-top:18px;">
+      <button class="save-btn" onclick="checkPassword()">Submit</button>
+      <button class="cancel-btn" onclick="closePasswordModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Edit</h3>
+    <div id="modalHint" class="note" style="margin-bottom:6px;"></div>
+    <textarea id="editTextarea"></textarea>
+    <div style="margin-top:18px;text-align:right;">
+      <button class="save-btn" onclick="saveEdit()">Save</button>
+      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- DECISION TREE ---------- */
+/* ---------- Updated Decision Tree ---------- */
+const TREE = {
+id: "root",
+text: "Does the customer have a surcharge exception?",
+choices: [
+{ label: "Yes", next: "yes_exception" },
+{ label: "No", next: "no_exception" }
+]
+};
+
+const NODES = {
+/* YES branch */
+yes_exception: {
+text: "Yes — which case?",
+choices: [
+{ label: "Yes, but does not apply on PRO after autorating", next: "no_apply_after_auto" },
+{ label: "Yes, has surcharge exception effective at the time of shipment", next: "yes_apply_effective" }
+]
+},
+no_apply_after_auto: {
+text: "Run a quote to verify whether their pricing is already fixed.",
+choices: [
+{ label: "Rate quote does NOT pull correct pricing", next: "quote_not_correct" },
+{ label: "Rate quote pulls correct pricing", next: "quote_correct" }
+]
+},
+quote_not_correct: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
+quote_correct: { text: "Email Training Team for approval to manually rate the invoice.", choices: [] },
+
+yes_apply_effective: {
+text: "Read carefully and understand the exception. Can it be applied on PRO?",
+choices: [
+{ label: "Surcharge is manually rated accessorial (Storage/Detention)", next: "manually_rated" },
+{ label: "Surcharge is NOT manually rated", next: "not_manually_rated" }
+]
+},
+manually_rated: { text: "Manually apply the customer's accessorial exception on PRO.", choices: [] },
+not_manually_rated: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
+
+/* NO branch */
+no_exception: {
+text: "Which situation?",
+choices: [
+{ label: "No previous exception, but customer published agreement later", next: "published_agreement" },
+{ label: "Does the customer have exception BEFORE and AFTER shipment?", next: "before_after_question" }
+]
+},
+published_agreement: {
+text: "Effective date of the agreement?",
+choices: [
+{ label: "More than 180 days from ship date", next: "published_more" },
+{ label: "Within 180 days from ship date", next: "published_within" }
+]
+},
+published_more: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] },
+published_within: { text: "Apply the pricing exception.", choices: [] },
+
+before_after_question: {
+text: "Does the customer have a surcharge exception before and after the shipment?",
+choices: [
+{ label: "Yes", next: "yes_before_after" },
+{ label: "No", next: "no_before_after" }
+]
+},
+yes_before_after: {
+text: "Verify if the customer has a pricing gap.",
+choices: [
+{ label: "Gap less than 2 weeks (≤14 days)", next: "gap_less" },
+{ label: "Gap more than 2 weeks (≥15 days)", next: "gap_more" }
+]
+},
+gap_less: { text: "If we aren’t overriding a previous agreement or anything like that and all we are doing is applying the customer’s pricing, simply due to nothing more than a gap which was 2 weeks or less, go ahead and rerate without asking for approval.", choices: [] },
+
+gap_more: {
+text: "Who are you talking to?",
+choices: [
+{ label: "Customer", next: "gap_customer" },
+{ label: "Sales Rep", next: "gap_salesrep" }
+]
+},
+gap_customer: { text: "Send an email to the Training Team, who will forward the case to Dustin Carlton. Dustin will then reach out to the Sales Rep who will be sending a Rerate Request.", choices: [] },
+
+
+gap_salesrep: { text: "Advise the Sales Rep to fill out a Back Date Form and send a Rerate request.", choices: [] },
+
+no_before_after: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] }
+};
+
+/* ---------- STATE ---------- */
+let path = [];
+let historyStack = [];
+let currentFinalRecommendation = ""; 
+let currentEditType = "";
+
+/* ---------- HELPERS ---------- */
+function escapeHtml(unsafe) { return unsafe.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+/* ---------- RENDER ---------- */
+function renderNode(nodeObj,nodeKey="root") {
+  const flowArea=document.getElementById("flowArea");
+  const goBackBtn=document.getElementById("goBackBtn");
+  const startOverBtn=document.getElementById("startOverBtn");
+  const progressFill=document.getElementById("progressFill");
+  const progressText=document.getElementById("progressText");
+  const suggestedPanel=document.getElementById("suggestedPanel");
+
+  flowArea.innerHTML=""; document.getElementById("recommendation").innerHTML="No recommendation yet."; suggestedPanel.style.display="none";
+
+  if(nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length){
+    const q=document.createElement("div"); q.innerHTML=`<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`; flowArea.appendChild(q);
+    const list=document.createElement("div"); list.className="choice-list";
+    nodeObj.choices.forEach(choice=>{
+      const btn=document.createElement("div"); btn.className="choice"; btn.textContent=choice.label;
+      btn.onclick=()=>{
+        historyStack.push({nodeKey,path:JSON.parse(JSON.stringify(path))});
+        path.push({question:nodeObj.text,answer:choice.label});
+        const nextNode=NODES[choice.next]||{};
+        if(nextNode && nextNode.text && (!nextNode.choices||nextNode.choices.length===0)) currentFinalRecommendation=nextNode.text; else currentFinalRecommendation="";
+        renderNode(nextNode,choice.next);
+        updateSelectedPath();
+      }; list.appendChild(btn);
+    }); flowArea.appendChild(list);
+  } else if(nodeObj && nodeObj.text){ currentFinalRecommendation=nodeObj.text; document.getElementById("recommendation").innerHTML=`<strong>${escapeHtml(currentFinalRecommendation)}</strong>`;
+  
+  updateSelectedPath(); generateSuggestedCommentEmail(currentFinalRecommendation); }
+  
+  goBackBtn.style.display=historyStack.length?"inline-block":"none"; startOverBtn.style.display=path.length?"inline-block":"none";
+  
+ const stepNum = path.length + 1;
+  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; // arbitrary max 5 steps for smooth fill
+  progressText.textContent = `Step ${stepNum}`;
+}
+
+function updateSelectedPath(){
+  const el=document.getElementById("selectedPath");
+  el.innerHTML=path.map((p,idx)=>`<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`).join("<br>");
+}
+
+function generateSuggestedCommentEmail(finalText) {
+  if (!finalText) return;
+
+  const commentBox = document.getElementById("suggestedComment");
+  const emailBox = document.getElementById("suggestedEmail");
+
+  // Load saved edits from localStorage (use innerHTML to preserve formatting)
+  const storedComment = localStorage.getItem(`comment_${finalText}`);
+  const storedEmail = localStorage.getItem(`email_${finalText}`);
+
+  // Only fallback to default if nothing is stored
+  commentBox.innerHTML = storedComment !== null ? storedComment : `VS-BLER-CASE#-${finalText}`;
+  emailBox.innerHTML = storedEmail !== null ? storedEmail : `Hi,<br><br>${finalText}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+
+  // Make sure the suggested panel is visible
+  document.getElementById("suggestedPanel").style.display = "block";
+}
+
+/* ---------- ADMIN EDIT ---------- */
+function attemptEdit(type){
+  currentEditType = type;
+  document.getElementById("adminPassword").value = "";
+  document.getElementById("passwordModal").style.display = "flex";
+}
+
+function closePasswordModal() {
+  document.getElementById("passwordModal").style.display = "none";
+}
+
+function checkPassword() {
+  if (document.getElementById("adminPassword").value === "admin") {
+    closePasswordModal();
+    openEditModal();
+  } else {
+    alert("Incorrect password!");
+  }
+}
+
+function openEditModal() {
+  const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
+  document.getElementById("editTextarea").value = document.getElementById(currentBox).innerHTML;
+  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
+}
+
+function saveEdit() {
+  const val = document.getElementById("editTextarea").value;
+  if (!currentFinalRecommendation) {
+    alert("No recommendation selected to save edits for!");
+    return;
+  }
+  // Save to localStorage
+  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
+  // Update the displayed box immediately
+  const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
+  document.getElementById(currentBox).innerHTML = val;
+  // Ensure panel is visible
+  document.getElementById("suggestedPanel").style.display = "block";
+  closeEditModal();
+}
+
+/* ---------- EVENTS ---------- */
+document.getElementById("goBackBtn").onclick=()=>{ if(historyStack.length){ const last=historyStack.pop(); path=last.path; renderNode(NODES[last.nodeKey]||TREE,last.nodeKey); }};
+document.getElementById("startOverBtn").onclick = () => {
+path = [];
+historyStack = [];
+currentFinalRecommendation = "";
+document.getElementById("selectedPath").textContent = "No steps selected yet.";
+renderNode(TREE, "root");
+};
+document.getElementById("copyEmailBtn").onclick=()=>{ navigator.clipboard.writeText(document.getElementById("suggestedEmail").textContent); alert("Email copied!"); };
+
+/* ---------- INIT ---------- */
+renderNode(TREE,"root");
+</script>
+
+</body>
+</html>
