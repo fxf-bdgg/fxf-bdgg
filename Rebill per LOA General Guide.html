@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rebill per LOA Guide — Fixed</title>
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#64748b;
+  --accent:#4d148c;
+  --accent-2:#ff6600;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:#0f172a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
+header, footer{background:var(--accent);color:white;padding:16px 28px;}
+.container{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 420px;gap:20px;align-items:start;padding:28px 0;flex:1}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 28px rgba(2,6,23,0.06);overflow:hidden}
+h1{margin:0;font-size:22px;color:var(--accent)}
+p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
+.progress-container{display:flex;align-items:center;gap:10px;margin:14px 0}
+.progress-bar{flex:1;height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:var(--accent);transition:width .3s}
+.progress-text{font-size:13px;color:var(--muted)}
+.node{padding:12px;border-radius:10px;border:1px solid rgba(3,7,18,0.05);background:linear-gradient(180deg,#ffffff,#fbfeff);margin:10px 0;min-height:64px}
+.choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.choice{padding:8px 12px;border-radius:999px;background:#eef8f7;border:1px solid rgba(4,20,20,0.03);cursor:pointer;font-weight:600}
+.choice:hover{background:#e0f2fe}
+.choice.active{background:var(--accent);color:white}
+.path{margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed rgba(3,7,18,0.04);font-size:13px}
+.path strong{color:var(--accent)}
+.result{margin-top:12px;padding:12px;border-radius:10px;background:#e6fbfb;border-left:4px solid var(--accent-2);animation:fadeIn 0.4s ease-in;min-height:56px}
+.note{margin-top:6px;font-size:13px;color:var(--muted);font-style:italic}
+.controls{display:flex;gap:8px;margin-top:12px}
+button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
+.output-card{margin-top:16px;padding:14px;border-radius:10px;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.05);animation:fadeIn 0.45s ease-in;position:relative}
+.output-header{font-weight:700;color:var(--accent);margin-bottom:8px ;color:#000 !important;display:flex;justify-content:space-between;align-items:center;}
+.output-box{
+  padding:10px;
+  border-left:4px solid var(--accent-2);
+  background:#f8fafc;
+  border-radius:8px;
+  white-space:pre-wrap;
+   font-size:11px; 
+}
+.copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
+.copy-btn:hover{opacity:.85}
+.extra-note{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic}
+.edit-icon{cursor:pointer;font-size:16px;color:var(--accent);margin-left:8px}
+.edit-icon:hover{text-decoration:underline}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:white;padding:20px;border-radius:10px;min-width:300px;text-align:center}
+textarea{resize:none}
+@keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:1200px){.container{grid-template-columns:1fr}}
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease;}
+.modal-content { background: #fff; padding: 25px 30px; border-radius: 12px; min-width: 500px; max-width: 600px; box-shadow: 0 12px 28px rgba(0,0,0,0.2); text-align: center; font-family: Inter, sans-serif; }
+.modal-content h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; font-weight: 600; color: var(--accent); }
+.modal-content input[type="password"], .modal-content textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 10px; font-family: Inter, sans-serif; }
+.modal-content textarea { min-height: 120px; resize: vertical; }
+.modal-content button { border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-left: 6px; cursor: pointer; transition: all 0.2s ease; }
+.modal-content button:hover { opacity: 0.9; }
+.modal-content .save-btn { background-color: var(--accent); color: #fff; }
+.modal-content .cancel-btn { background-color: #e5e7eb; color: #111827; }
+@media(max-width:500px){ .modal-content { width: 90%; min-width: unset; padding:20px; } }
+</style>
+</head>
+<body>
+
+<header style="display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:12px;">
+     <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
+    <h1>Rebill per LOA Guide</h1>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.location.href='index.html'">Main Page</button>
+    <button onclick="window.location.href='BD GENERAL GUIDE.html'">Go to BD General Guide</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h1>Rebill per LOA Guide</h1>
+    <p class="lead">Follow the flow below to determine the recommended rebill action according to LOA guidelines.</p>
+    <div class="progress-container">
+      <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      <div id="progressText" class="progress-text"></div>
+    </div>
+    <div id="flowArea" class="node"></div>
+    <div class="controls">
+      <button id="goBackBtn" class="secondary" style="display:none;">← Go Back</button>
+      <button id="startOverBtn" class="secondary" style="display:none;">Start Over</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="node">
+      <strong>Selected Path</strong>
+      <div id="selectedPath" class="path">No steps selected yet.</div>
+    </div>
+    <div class="node">
+      <strong>Recommended Action</strong>
+      <div id="recommendation" class="result">No recommendation yet.</div>
+    </div>
+  </div>
+
+  <div class="card" id="suggestedPanel" style="display:none;">
+    <div class="output-card" id="commentCard">
+      <div class="output-header">
+        Suggested Comment
+        <span class="edit-icon" onclick="attemptEdit('comment')" title="Do you want to update the Comment?">✏️</span>
+      </div>
+      <div id="suggestedComment" class="output-box"></div>
+    </div>
+    <div class="output-card" id="emailCard">
+      <div class="output-header">
+        Suggested Email
+        <span class="edit-icon" onclick="attemptEdit('email')" title="Do you want to update the Email?">✏️</span>
+      </div>
+      <div id="suggestedEmail" class="output-box"></div>
+      <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
+    </div>
+    <div id="generalNote" class="note">Note: These are suggested templates. Personalized emails or comments are always more appreciated.</div>
+  </div>
+</div>
+
+<footer style="display:flex;align-items:center;justify-content:space-between;">
+  <p>© 2025 EBS Operations</p>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:white;">
+      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
+    </span>
+  </div>
+</footer>
+
+<!-- Password Modal -->
+<div id="passwordModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Password to Edit</h3>
+    <input type="password" id="adminPassword" placeholder="Password">
+    <div style="margin-top:18px;">
+      <button class="save-btn" onclick="checkPassword()">Submit</button>
+      <button class="cancel-btn" onclick="closePasswordModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Edit</h3>
+    <div id="modalHint" class="note" style="margin-bottom:6px;"></div>
+    <textarea id="editTextarea"></textarea>
+    <div style="margin-top:18px;text-align:right;">
+      <button class="save-btn" onclick="saveEdit()">Save</button>
+      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- DECISION TREE DATA (NODES) ---------- */
+/* This NODES object includes BOL, NEW DEBTOR, 3PL and FPAY.
+   Multi-line note-containing text uses template literals (`...`) so JS stays valid. */
+
+ /* ---------- DECISION TREE DATA (NODES) ---------- */
+/* This NODES object includes BOL, NEW DEBTOR, 3PL, FPAY, and COLLECTOR. */
+
+const NODES = {
+
+  /* ---------- ROOT ---------- */
+  root:{ 
+    id:"root",
+    text:"WHO IS THE DISPUTING / REQUESTING PARTY?",
+    choices:[
+      {label:"BOL DEBTOR", next:"bol_prestart"},
+      {label:"NEW DEBTOR", next:"new_start"},
+      {label:"3PL", next:"tpl_start"},
+      {label:"FPAY", next:"fpay_request"},
+      {label:"COLLECTOR", next:"collector_start"}
+    ]
+  },
+
+ /* ---------- BOL DEBTOR FLOW ---------- */
+ bol_prestart:{ id:"bol_prestart", text:"Does the requestor exactly the same company and address per BOL?", choices:[{label:"YES",next:"bol_prestart_advise"},{label:"NO",next:"bol_start"}]},
+ 
+  bol_prestart_advise:{ id:"bol_prestart_advise", text:"Advise customer that PRO is billing correctly per BOL. Ask LOA from the new debtor and see if LOA provided?", choices:[{label:"YES",next:"follow_process"},{label:"NO",next:"follow_process_yes"}]},
+  
+  follow_process:{ id:"follow_process", text:"Follow process for NEW DEBTOR update.", choices:[]},
+ 
+   follow_process_yes:{ id:"follow_process_yes", text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.", choices:[]},
+  
+ 
+bol_start:{ id:"bol_start", text:"Same Company but Different Mailing Address and Pricing/BRAP?", choices:[{label:"YES",next:"bol_account_name"},{label:"NO",next:"bol_per_debtor"}]},
+
+
+bol_per_debtor:{ id:"bol_per_debtor", text:"If one of the criteria is not met, use per debtor for better billing.", choices:[]},
+bol_account_name:{ id:"bol_account_name", text:"Is the account name the same or related to the debtor?", choices:[{label:"YES",next:"bol_mailing_diff"},{label:"NO",next:"bol_per_debtor"}]},
+bol_mailing_diff:{ id:"bol_mailing_diff", text:"Is the mailing address different from the current debtor?", choices:[{label:"YES",next:"bol_prau"},{label:"NO",next:"bol_per_debtor"}]},
+bol_prau:{ id:"bol_prau", text:"Was the PRAU TOTALLY changed? (pricing/contract replaced)", choices:[{label:"YES",next:"bol_corr_loa"},{label:"NO",next:"bol_per_debtor"}]},
+bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:[]},
+
+  /* ---------- NEW DEBTOR FLOW ---------- */
+  new_start:{ id:"new_start", text:"Is the PRO paid & closed?", choices:[
+    {label:"YES", next:"new_over_year"},
+    {label:"NO", next:"new_credit_hold"}
+  ]},
+  new_over_year:{ id:"new_over_year", text:"Is it over a year?", choices:[
+    {label:"YES", next:"new_deny_paid_bol"},
+    {label:"NO", next:"new_advise_paid"}
+  ]},
+  new_deny_paid_bol:{ id:"new_deny_paid_bol", text:"DENY. Advise that PRO was already paid by the debtor per BOL.", choices:[]},
+  new_advise_paid:{ id:"new_advise_paid", text:"Advise customer that PRO was already paid and closed by the debtor per BOL.", choices:[
+    {label:"Next", next:"new_customer_insist"}
+  ]},
+  new_customer_insist:{ id:"new_customer_insist", text:"Did the customer reply and insist on rebilling per LOA?", choices:[
+    {label:"YES", next:"new_rebill_or_keep"},
+    {label:"NO", next:"new_leave_as_is"}
+  ]},
+  new_rebill_or_keep:{ id:"new_rebill_or_keep", text:"Proceed to rebill. Payment from debtor per BOL = REMOVE payment. Payment from accepting party per LOA = KEEP payment.", choices:[]},
+  new_leave_as_is:{ id:"new_leave_as_is", text:"Leave the PRO as is since it is already paid and closed by the debtor per BOL.", choices:[]},
+  new_credit_hold:{ id:"new_credit_hold", text:"Is the new debtor account on Credit Hold?", choices:[
+    {label:"YES", next:"new_deny_credit_hold"},
+    {label:"NO", next:"new_loa_details"}
+  ]},
+  new_deny_credit_hold:{ id:"new_deny_credit_hold", text:"DENY. Advise customer that: At this time, FXF is unable to accept the attached LOA. The invoice will remain billed per the bill of lading received at pick up. If you have questions why the account cannot be billed, please contact credit department at 866-756-3590 opt 4 to speak to an agent. Hours of operation are 7AM to 5PM CST.", choices:[]},
+  
+  new_loa_details:{ id:"new_loa_details", text:"Are the LOA details and information complete and accurate?", choices:[
+    {label:"YES", next:"new_proceed"},
+    {label:"NO", next:"new_deny_incomplete"}
+  ]},
+  new_proceed:{ id:"new_proceed", text:"Proceed with the Rebill per LOA.", choices:[]},
+  new_deny_incomplete:{ id:"new_deny_incomplete", text:"DENY. Advise to provide complete and accurate LOA details.", choices:[]},
+
+  /* ---------- 3PL FLOW ---------- */
+  tpl_start:{ id:"tpl_start", text:"What is the request?", choices:[
+    {label:"Rebill to Shipper/Consignee c/o 3PL", next:"tpl_shipper_check"},
+    {label:"Rebill to Company C (not shipper/consignee) c/o 3PL", next:"tpl_companyc_check"},
+    {label:"Rebill to Company B c/o 3PL", next:"tpl_companyb_check"},
+    {label:"Rebill to Company A c/o 3PL2", next:"tpl_companya_check"},
+    {label:"Bill directly to 3PL", next:"tpl_direct_check"}
+  ]},
+
+  tpl_shipper_check:{ id:"tpl_shipper_check", text:"Is the BOL debtor a 3PL only with no company?", choices:[
+    {label:"YES", next:"tpl_corr_accr"},
+    {label:"NO", next:"tpl_who_debtor_shipper"}
+  ]},
+  tpl_corr_accr:{ id:"tpl_corr_accr", text:"CORR ACCR for proper billing.", choices:[]},
+  tpl_who_debtor_shipper:{ id:"tpl_who_debtor_shipper", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Shipper/Consignee", next:"tpl_shipper_rebill"}
+  ]},
+  tpl_shipper_rebill:{ id:"tpl_shipper_rebill", text:"Rebill Shipper/Consignee c/o 3PL. CORR LOA without correction fee.", choices:[]},
+
+  tpl_companyc_check:{ id:"tpl_companyc_check", text:"Is the BOL debtor a 3PL only with no company?", choices:[
+    {label:"YES", next:"tpl_auth_corr_fee"},
+    {label:"NO", next:"tpl_who_debtor_c"}
+  ]},
+  tpl_auth_corr_fee:{ id:"tpl_auth_corr_fee", text:"Auth: Per LOA CORR ACCR with correction fee.", choices:[]},
+  tpl_who_debtor_c:{ id:"tpl_who_debtor_c", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company C(not Shipper/Consignee)", next:"tpl_companyc_rebill"}
+  ]},
+  tpl_companyc_rebill:{ id:"tpl_companyc_rebill", text:"Rebill Company C c/o 3PL. CORR LOA without correction fee.", choices:[]},
+
+  tpl_companyb_check:{ id:"tpl_companyb_check", text:"Is the debtor per BOL Company A c/o 3PL?", choices:[
+    {label:"YES", next:"tpl_companyb_corr"},
+    {label:"NO", next:"tpl_who_debtor_b"}
+  ]},
+  tpl_companyb_corr:{ id:"tpl_companyb_corr", text:"CORR LOA with correction fee.", choices:[]},
+  tpl_who_debtor_b:{ id:"tpl_who_debtor_b", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company B", next:"tpl_companyb_rebill"}
+  ]},
+  tpl_companyb_rebill:{ id:"tpl_companyb_rebill", text:"Rebill Company B c/o 3PL. CORR ACCR for proper billing.", choices:[]},
+
+  tpl_companya_check:{ id:"tpl_companya_check", text:"Is the debtor per BOL Company A c/o 3PL1?", choices:[
+    {label:"YES", next:"tpl_companya_corr"},
+    {label:"NO", next:"tpl_who_debtor_a"}
+  ]},
+  tpl_companya_corr:{
+    id:"tpl_companya_corr",
+    text: `CORR LOA with correction fee (request should come from new 3PL).
+
+NOTES:
+`,
+    choices:[]
+  },
+  tpl_who_debtor_a:{ id:"tpl_who_debtor_a", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"3PL2", next:"tpl_companya_rebill"}
+  ]},
+  tpl_companya_rebill:{ id:"tpl_companya_rebill", text:"Rebill Company A c/o 3PL2. CORR ACCR for proper billing.", choices:[]},
+
+  tpl_direct_check:{ id:"tpl_direct_check", text:"Is the debtor per BOL Company A c/o 3PL?", choices:[
+    {label:"YES", next:"tpl_direct_corr"},
+    {label:"NO", next:"tpl_who_debtor_direct"}
+  ]},
+  tpl_direct_corr:{ id:"tpl_direct_corr", text:"CORR LOA without correction fee.", choices:[]},
+  tpl_who_debtor_direct:{ id:"tpl_who_debtor_direct", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company A", next:"tpl_direct_rebill"}
+  ]},
+  tpl_direct_rebill:{ id:"tpl_direct_rebill", text:"Rebill directly to 3PL. CORR LOA with correction fee.", choices:[]},
+
+  /* -------------------- FPAY FLOW -------------------- */
+  fpay_request:{
+    id:"fpay_request",
+    text:"What is the request?",
+    choices:[
+      {label:"Rebill to Company A c/o FPAY", next:"fpay_companya_check"},
+      {label:"Rebill to Company B c/o FPAY", next:"fpay_companyb_check"},
+      {label:"Rebill to Company A c/o FPAY2", next:"fpay_companya2_check"},
+      {label:"Bill directly to FPAY", next:"fpay_direct_check"}
+    ]
+  },
+
+  /* Column 1 — Rebill to Company A c/o FPAY */
+  fpay_companya_check:{
+    id:"fpay_companya_check",
+    text:"Is the BOL debtor Company A?",
+    choices:[
+      {label:"YES", next:"fpay_companya_accr"},
+      {label:"NO", next:"fpay_companya_who"}
+    ]
+  },
+  fpay_companya_accr:{ id:"fpay_companya_accr", text:"CORR ACCR for proper billing.", choices:[]},
+  fpay_companya_who:{ id:"fpay_companya_who", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company B", next:"fpay_companya_rebill_as_b"},
+    {label:"Other", next:"fpay_companya_rebill_other"}
+  ]},
+  fpay_companya_rebill_as_b:{ id:"fpay_companya_rebill_as_b", text:"Company B c/o FPAY\n\nRebill Company A c/o FPAY — CORR LOA with correction fee.", choices:[]},
+  fpay_companya_rebill_other:{ id:"fpay_companya_rebill_other", text:"Rebill Company A c/o FPAY — CORR LOA with correction fee.", choices:[]},
+
+  /* Column 2 — Rebill to Company B c/o FPAY */
+  fpay_companyb_check:{
+    id:"fpay_companyb_check",
+    text:"Is the debtor per BOL Company B?",
+    choices:[
+      {label:"YES", next:"fpay_companyb_corr"},
+      {label:"NO", next:"fpay_companyb_who"}
+    ]
+  },
+  fpay_companyb_corr:{ id:"fpay_companyb_corr", text:"CORR LOA with correction fee.", choices:[]},
+  fpay_companyb_who:{ id:"fpay_companyb_who", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company A", next:"fpay_companyb_rebill_as_a"},
+    {label:"Other", next:"fpay_companyb_rebill_other"}
+  ]},
+  fpay_companyb_rebill_as_a:{ id:"fpay_companyb_rebill_as_a", text:"Company A\n\nRebill Company B c/o FPAY — CORR LOA with correction fee.", choices:[]},
+  fpay_companyb_rebill_other:{ id:"fpay_companyb_rebill_other", text:"Rebill Company B c/o FPAY — CORR LOA with correction fee.", choices:[]},
+
+  /* Column 3 — Rebill to Company A c/o FPAY2 */
+  fpay_companya2_check:{
+    id:"fpay_companya2_check",
+    text:"Is the debtor per BOL Company A c/o FPAY2?",
+    choices:[
+      {label:"YES", next:"fpay_companya2_rebill"},
+      {label:"NO", next:"fpay_companya2_who"}
+    ]
+  },
+  fpay_companya2_rebill:{ id:"fpay_companya2_rebill", text:"Rebill Company A c/o FPAY2. CORR ACCR for proper billing.", choices:[]},
+  fpay_companya2_who:{ id:"fpay_companya2_who", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company A", next:"fpay_companya2_rebill"},
+    {label:"Other", next:"fpay_direct_check"}
+  ]},
+
+  /* Column 4 — Bill directly to FPAY */
+  fpay_direct_check:{
+    id:"fpay_direct_check",
+    text:"Is the debtor per BOL Company A?",
+    choices:[
+      {label:"YES", next:"fpay_direct_corr"},
+      {label:"NO", next:"fpay_direct_who"}
+    ]
+  },
+  fpay_direct_corr:{ id:"fpay_direct_corr", text:"CORR LOA without correction fee.", choices:[]},
+  fpay_direct_who:{ id:"fpay_direct_who", text:"Who is the current Debtor per BOL?", choices:[
+    {label:"Company A", next:"fpay_direct_rebill_as_a"},
+    {label:"Other", next:"fpay_direct_rebill_other"}
+  ]},
+  fpay_direct_rebill_as_a:{ id:"fpay_direct_rebill_as_a", text:"Company A\n\nRebill Company A c/o FPAY2. CORR LOA with correction fee.", choices:[]},
+  fpay_direct_rebill_other:{ id:"fpay_direct_rebill_other", text:"Rebill directly to FPAY. CORR LOA with correction fee.", choices:[]},
+
+  /* -------------------- COLLECTOR FLOW -------------------- */
+  collector_start:{
+    id:"collector_start",
+    text:"Advise collector that PRO is billing correctly per BOL. Ask LOA from the new debtor.",
+    choices:[
+      {label:"Continue", next:"collector_loa_check"}
+    ]
+  },
+
+  collector_loa_check:{
+    id:"collector_loa_check",
+    text:"LOA Provided?",
+    choices:[
+      {label:"YES", next:"collector_loa_yes"},
+      {label:"NO", next:"collector_loa_no"}
+    ]
+  },
+
+  collector_loa_yes:{
+    id:"collector_loa_yes",
+    text:"Follow process for NEW DEBTOR update.",
+    choices:[]
+  },
+
+  collector_loa_no:{
+    id:"collector_loa_no",
+    text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.",
+    choices:[]
+  }
+
+}; // END NODES
+
+
+
+/* ---------- STATE ---------- */
+let path = [];
+let historyStack = [];
+let currentFinalRecommendation = "";
+let currentEditType = "";
+
+/* ---------- HELPERS ---------- */
+function escapeHtml(unsafe) {
+  if (unsafe === null || unsafe === undefined) return "";
+  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+/* ---------- RENDER ---------- */
+function renderNode(nodeObj, nodeKey="root") {
+  const flowArea = document.getElementById("flowArea");
+  const goBackBtn = document.getElementById("goBackBtn");
+  const startOverBtn = document.getElementById("startOverBtn");
+  const progressFill = document.getElementById("progressFill");
+  const progressText = document.getElementById("progressText");
+  const suggestedPanel = document.getElementById("suggestedPanel");
+
+  flowArea.innerHTML = "";
+
+  // Show recommendation if final
+  if (currentFinalRecommendation) {
+    document.getElementById("recommendation").innerHTML =
+      `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+  } else {
+    document.getElementById("recommendation").textContent = "No recommendation yet.";
+    suggestedPanel.style.display = "none";
+  }
+
+  if (nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length) {
+    const q = document.createElement("div");
+    q.innerHTML = `<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`;
+    flowArea.appendChild(q);
+
+    const list = document.createElement("div");
+    list.className = "choice-list";
+
+    nodeObj.choices.forEach(choice => {
+      const btn = document.createElement("div");
+      btn.className = "choice";
+      btn.textContent = choice.label;
+
+      btn.onclick = () => {
+        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) });
+        path.push({ question: nodeObj.text, answer: choice.label });
+
+        const nextNode = NODES[choice.next] || {};
+        if (nextNode && nextNode.text && (!nextNode.choices || nextNode.choices.length === 0)) {
+          currentFinalRecommendation = nextNode.text;
+          // show recommendation immediately
+          document.getElementById("recommendation").innerHTML =
+            `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+          // show suggested panel (left blank unless edited)
+          generateSuggestedCommentEmail(currentFinalRecommendation);
+        } else {
+          currentFinalRecommendation = "";
+          document.getElementById("recommendation").textContent = "No recommendation yet.";
+          suggestedPanel.style.display = "none";
+        }
+
+        // render next node and pass nodeKey so renderNode can use it for notes
+        renderNode(nextNode, choice.next);
+        updateSelectedPath();
+      };
+
+      list.appendChild(btn);
+    });
+
+    flowArea.appendChild(list);
+
+  } else if (nodeObj && nodeObj.text) {
+    // leaf node
+    currentFinalRecommendation = nodeObj.text;
+    document.getElementById("recommendation").innerHTML =
+      `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+    updateSelectedPath();
+    generateSuggestedCommentEmail(currentFinalRecommendation);
+  }
+
+  // inject notes for particular final nodes (they will show below recommendation)
+  // nodeKey is the key of the node currently rendered
+  if (nodeKey === "tpl_companya_corr" || nodeKey === "fpay_companya_corr") {
+    const recEl = document.getElementById("recommendation");
+    const notesHtml = `
+      <div class="note" style="margin-top:10px;">
+        <em>• If the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")} is already their ABT, no correction fee should be billed. (Example: Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL"} → Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY2" : "3PL2"} where the new provider is already the ABT.)</em><br/>
+        <em>• If the requesting party is the Shipper/Consignee asking to bill a new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}, deny the request. If they insist, request an LOA from the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}.</em>
+      </div>
+    `;
+    recEl.insertAdjacentHTML('beforeend', notesHtml);
+  }
+
+  goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
+  startOverBtn.style.display = path.length ? "inline-block" : "none";
+
+  // ---------- PROGRESS BAR ----------
+  const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
+  progressFill.style.width = Math.min(stepNum * 18, 100) + "%";
+  progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
+}
+
+/* ---------- PATH DISPLAY ---------- */
+function updateSelectedPath(){
+  const el = document.getElementById("selectedPath");
+  if (!path.length) { el.innerHTML = "No steps selected yet."; return; }
+  el.innerHTML = path.map((p, idx) =>
+    `<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`
+  ).join("<br>");
+}
+
+/* ---------- SUGGESTED COMMENT & EMAIL ---------- */
+function generateSuggestedCommentEmail(finalText) {
+  const commentBox = document.getElementById("suggestedComment");
+  const emailBox = document.getElementById("suggestedEmail");
+  const suggestedPanel = document.getElementById("suggestedPanel");
+
+  if (!finalText) {
+    suggestedPanel.style.display = "none";
+    commentBox.innerHTML = "";
+    emailBox.innerHTML = "";
+    return;
+  }
+
+  // Keep comment/email blank by default (user requested this earlier).
+  // If user previously saved edits for this exact finalText, show them.
+  const savedComment = localStorage.getItem(`comment_${finalText}`) || "";
+  const savedEmail = localStorage.getItem(`email_${finalText}`) || "";
+
+  commentBox.innerHTML = savedComment || "";
+  emailBox.innerHTML = savedEmail || "";
+
+  suggestedPanel.style.display = "block";
+}
+
+/* ---------- ADMIN EDIT ---------- */
+function attemptEdit(type){
+  currentEditType = type;
+  document.getElementById("adminPassword").value = "";
+  document.getElementById("passwordModal").style.display = "flex";
+}
+
+function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
+
+function checkPassword() {
+  if (document.getElementById("adminPassword").value === "admin") {
+    closePasswordModal();
+    openEditModal();
+  } else {
+    alert("Incorrect password!");
+  }
+}
+
+function openEditModal() {
+  const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
+  const currentBox = document.getElementById(currentBoxId);
+  document.getElementById("editTextarea").value = currentBox.innerText || currentBox.textContent || "";
+  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
+  document.getElementById("modalHint").textContent = "Edits will be saved locally for this exact recommendation text.";
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
+
+function saveEdit() {
+  const val = document.getElementById("editTextarea").value;
+  if (!currentFinalRecommendation) {
+    alert("No recommendation selected to save edits for!");
+    return;
+  }
+  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
+  const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
+  document.getElementById(currentBoxId).innerText = val;
+  document.getElementById("suggestedPanel").style.display = "block";
+  closeEditModal();
+}
+
+/* ---------- EVENTS ---------- */
+document.getElementById("goBackBtn").onclick = () => {
+  if (historyStack.length) {
+    const last = historyStack.pop();
+    path = last.path;
+    const nodeKey = last.nodeKey || "root";
+    renderNode(NODES[nodeKey], nodeKey);
+  }
+};
+
+document.getElementById("startOverBtn").onclick = () => {
+  path = [];
+  historyStack = [];
+  currentFinalRecommendation = "";
+  document.getElementById("selectedPath").textContent = "No steps selected yet.";
+  renderNode(NODES.root, "root");
+};
+
+document.getElementById("copyEmailBtn").onclick = () => {
+  const txt = document.getElementById("suggestedEmail").textContent || document.getElementById("suggestedEmail").innerText;
+  navigator.clipboard.writeText(txt).then(() => {
+    alert("Email copied!");
+  }).catch(() => {
+    alert("Unable to copy - your browser may block clipboard access.");
+  });
+};
+
+/* ---------- INIT ---------- */
+renderNode(NODES.root, "root");
+</script>
+
+</body>
+</html>
