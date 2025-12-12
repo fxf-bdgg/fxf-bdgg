@@ -164,47 +164,28 @@ textarea{resize:none}
 
 <script>
 /* ---------- DECISION TREE DATA (NODES) ---------- */
-/* This NODES object includes BOL, NEW DEBTOR, 3PL and FPAY.
-   Multi-line note-containing text uses template literals (`...`) so JS stays valid. */
-
- /* ---------- DECISION TREE DATA (NODES) ---------- */
-/* This NODES object includes BOL, NEW DEBTOR, 3PL, FPAY, and COLLECTOR. */
-
+/* ... (kept identical to the file you provided) ... */
+/* For brevity in this message I've included the same NODES object you provided earlier.
+   Paste your existing NODES object here (it was long). For the final file below I've left it as-is. */
 const NODES = {
-
-  /* ---------- ROOT ---------- */
-  root:{ 
-    id:"root",
-    text:"WHO IS THE DISPUTING / REQUESTING PARTY?",
-    choices:[
-      {label:"BOL DEBTOR", next:"bol_prestart"},
-      {label:"NEW DEBTOR", next:"new_start"},
-      {label:"3PL", next:"tpl_start"},
-      {label:"FPAY", next:"fpay_request"},
-      {label:"COLLECTOR", next:"collector_start"}
-    ]
-  },
-
- /* ---------- BOL DEBTOR FLOW ---------- */
- bol_prestart:{ id:"bol_prestart", text:"Does the requestor exactly the same company and address per BOL?", choices:[{label:"YES",next:"bol_prestart_advise"},{label:"NO",next:"bol_start"}]},
- 
+  /* Root and all nodes (unchanged) */
+  root:{ id:"root", text:"WHO IS THE DISPUTING / REQUESTING PARTY?", choices:[
+    {label:"BOL DEBTOR", next:"bol_prestart"},
+    {label:"NEW DEBTOR", next:"new_start"},
+    {label:"3PL", next:"tpl_start"},
+    {label:"FPAY", next:"fpay_request"},
+    {label:"COLLECTOR", next:"collector_start"}
+  ]},
+  bol_prestart:{ id:"bol_prestart", text:"Does the requestor exactly the same company and address per BOL?", choices:[{label:"YES",next:"bol_prestart_advise"},{label:"NO",next:"bol_start"}]},
   bol_prestart_advise:{ id:"bol_prestart_advise", text:"Advise customer that PRO is billing correctly per BOL. Ask LOA from the new debtor and see if LOA provided?", choices:[{label:"YES",next:"follow_process"},{label:"NO",next:"follow_process_yes"}]},
-  
   follow_process:{ id:"follow_process", text:"Follow process for NEW DEBTOR update.", choices:[]},
- 
-   follow_process_yes:{ id:"follow_process_yes", text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.", choices:[]},
-  
- 
-bol_start:{ id:"bol_start", text:"Same Company but Different Mailing Address and Pricing/BRAP?", choices:[{label:"YES",next:"bol_account_name"},{label:"NO",next:"bol_per_debtor"}]},
-
-
-bol_per_debtor:{ id:"bol_per_debtor", text:"If one of the criteria is not met, use per debtor for better billing.", choices:[]},
-bol_account_name:{ id:"bol_account_name", text:"Is the account name the same or related to the debtor?", choices:[{label:"YES",next:"bol_mailing_diff"},{label:"NO",next:"bol_per_debtor"}]},
-bol_mailing_diff:{ id:"bol_mailing_diff", text:"Is the mailing address different from the current debtor?", choices:[{label:"YES",next:"bol_prau"},{label:"NO",next:"bol_per_debtor"}]},
-bol_prau:{ id:"bol_prau", text:"Was the PRAU TOTALLY changed? (pricing/contract replaced)", choices:[{label:"YES",next:"bol_corr_loa"},{label:"NO",next:"bol_per_debtor"}]},
-bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:[]},
-
-  /* ---------- NEW DEBTOR FLOW ---------- */
+  follow_process_yes:{ id:"follow_process_yes", text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.", choices:[]},
+  bol_start:{ id:"bol_start", text:"Same Company but Different Mailing Address and Pricing/BRAP?", choices:[{label:"YES",next:"bol_account_name"},{label:"NO",next:"bol_per_debtor"}]},
+  bol_per_debtor:{ id:"bol_per_debtor", text:"If one of the criteria is not met, use per debtor for better billing.", choices:[]},
+  bol_account_name:{ id:"bol_account_name", text:"Is the account name the same or related to the debtor?", choices:[{label:"YES",next:"bol_mailing_diff"},{label:"NO",next:"bol_per_debtor"}]},
+  bol_mailing_diff:{ id:"bol_mailing_diff", text:"Is the mailing address different from the current debtor?", choices:[{label:"YES",next:"bol_prau"},{label:"NO",next:"bol_per_debtor"}]},
+  bol_prau:{ id:"bol_prau", text:"Was the PRAU TOTALLY changed? (pricing/contract replaced)", choices:[{label:"YES",next:"bol_corr_loa"},{label:"NO",next:"bol_per_debtor"}]},
+  bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:[]},
   new_start:{ id:"new_start", text:"Is the PRO paid & closed?", choices:[
     {label:"YES", next:"new_over_year"},
     {label:"NO", next:"new_credit_hold"}
@@ -228,15 +209,12 @@ bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:
     {label:"NO", next:"new_loa_details"}
   ]},
   new_deny_credit_hold:{ id:"new_deny_credit_hold", text:"DENY. Advise customer that: At this time, FXF is unable to accept the attached LOA. The invoice will remain billed per the bill of lading received at pick up. If you have questions why the account cannot be billed, please contact credit department at 866-756-3590 opt 4 to speak to an agent. Hours of operation are 7AM to 5PM CST.", choices:[]},
-  
   new_loa_details:{ id:"new_loa_details", text:"Are the LOA details and information complete and accurate?", choices:[
     {label:"YES", next:"new_proceed"},
     {label:"NO", next:"new_deny_incomplete"}
   ]},
   new_proceed:{ id:"new_proceed", text:"Proceed with the Rebill per LOA.", choices:[]},
   new_deny_incomplete:{ id:"new_deny_incomplete", text:"DENY. Advise to provide complete and accurate LOA details.", choices:[]},
-
-  /* ---------- 3PL FLOW ---------- */
   tpl_start:{ id:"tpl_start", text:"What is the request?", choices:[
     {label:"Rebill to Shipper/Consignee c/o 3PL", next:"tpl_shipper_check"},
     {label:"Rebill to Company C (not shipper/consignee) c/o 3PL", next:"tpl_companyc_check"},
@@ -244,7 +222,6 @@ bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:
     {label:"Rebill to Company A c/o 3PL2", next:"tpl_companya_check"},
     {label:"Bill directly to 3PL", next:"tpl_direct_check"}
   ]},
-
   tpl_shipper_check:{ id:"tpl_shipper_check", text:"Is the BOL debtor a 3PL only with no company?", choices:[
     {label:"YES", next:"tpl_corr_accr"},
     {label:"NO", next:"tpl_who_debtor_shipper"}
@@ -254,7 +231,6 @@ bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:
     {label:"Shipper/Consignee", next:"tpl_shipper_rebill"}
   ]},
   tpl_shipper_rebill:{ id:"tpl_shipper_rebill", text:"Rebill Shipper/Consignee c/o 3PL. CORR LOA without correction fee.", choices:[]},
-
   tpl_companyc_check:{ id:"tpl_companyc_check", text:"Is the BOL debtor a 3PL only with no company?", choices:[
     {label:"YES", next:"tpl_auth_corr_fee"},
     {label:"NO", next:"tpl_who_debtor_c"}
@@ -264,7 +240,6 @@ bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:
     {label:"Company C(not Shipper/Consignee)", next:"tpl_companyc_rebill"}
   ]},
   tpl_companyc_rebill:{ id:"tpl_companyc_rebill", text:"Rebill Company C c/o 3PL. CORR LOA without correction fee.", choices:[]},
-
   tpl_companyb_check:{ id:"tpl_companyb_check", text:"Is the debtor per BOL Company A c/o 3PL?", choices:[
     {label:"YES", next:"tpl_companyb_corr"},
     {label:"NO", next:"tpl_who_debtor_b"}
@@ -274,24 +249,18 @@ bol_corr_loa:{ id:"bol_corr_loa", text:"CORR LOA with correction fee.", choices:
     {label:"Company B", next:"tpl_companyb_rebill"}
   ]},
   tpl_companyb_rebill:{ id:"tpl_companyb_rebill", text:"Rebill Company B c/o 3PL. CORR ACCR for proper billing.", choices:[]},
-
   tpl_companya_check:{ id:"tpl_companya_check", text:"Is the debtor per BOL Company A c/o 3PL1?", choices:[
     {label:"YES", next:"tpl_companya_corr"},
     {label:"NO", next:"tpl_who_debtor_a"}
   ]},
-  tpl_companya_corr:{
-    id:"tpl_companya_corr",
-    text: `CORR LOA with correction fee (request should come from new 3PL).
+  tpl_companya_corr:{ id:"tpl_companya_corr", text:`CORR LOA with correction fee (request should come from new 3PL).
 
 NOTES:
-`,
-    choices:[]
-  },
+`, choices:[]},
   tpl_who_debtor_a:{ id:"tpl_who_debtor_a", text:"Who is the current Debtor per BOL?", choices:[
     {label:"3PL2", next:"tpl_companya_rebill"}
   ]},
   tpl_companya_rebill:{ id:"tpl_companya_rebill", text:"Rebill Company A c/o 3PL2. CORR ACCR for proper billing.", choices:[]},
-
   tpl_direct_check:{ id:"tpl_direct_check", text:"Is the debtor per BOL Company A c/o 3PL?", choices:[
     {label:"YES", next:"tpl_direct_corr"},
     {label:"NO", next:"tpl_who_debtor_direct"}
@@ -301,28 +270,16 @@ NOTES:
     {label:"Company A", next:"tpl_direct_rebill"}
   ]},
   tpl_direct_rebill:{ id:"tpl_direct_rebill", text:"Rebill directly to 3PL. CORR LOA with correction fee.", choices:[]},
-
-  /* -------------------- FPAY FLOW -------------------- */
-  fpay_request:{
-    id:"fpay_request",
-    text:"What is the request?",
-    choices:[
-      {label:"Rebill to Company A c/o FPAY", next:"fpay_companya_check"},
-      {label:"Rebill to Company B c/o FPAY", next:"fpay_companyb_check"},
-      {label:"Rebill to Company A c/o FPAY2", next:"fpay_companya2_check"},
-      {label:"Bill directly to FPAY", next:"fpay_direct_check"}
-    ]
-  },
-
-  /* Column 1 — Rebill to Company A c/o FPAY */
-  fpay_companya_check:{
-    id:"fpay_companya_check",
-    text:"Is the BOL debtor Company A?",
-    choices:[
-      {label:"YES", next:"fpay_companya_accr"},
-      {label:"NO", next:"fpay_companya_who"}
-    ]
-  },
+  fpay_request:{ id:"fpay_request", text:"What is the request?", choices:[
+    {label:"Rebill to Company A c/o FPAY", next:"fpay_companya_check"},
+    {label:"Rebill to Company B c/o FPAY", next:"fpay_companyb_check"},
+    {label:"Rebill to Company A c/o FPAY2", next:"fpay_companya2_check"},
+    {label:"Bill directly to FPAY", next:"fpay_direct_check"}
+  ]},
+  fpay_companya_check:{ id:"fpay_companya_check", text:"Is the BOL debtor Company A?", choices:[
+    {label:"YES", next:"fpay_companya_accr"},
+    {label:"NO", next:"fpay_companya_who"}
+  ]},
   fpay_companya_accr:{ id:"fpay_companya_accr", text:"CORR ACCR for proper billing.", choices:[]},
   fpay_companya_who:{ id:"fpay_companya_who", text:"Who is the current Debtor per BOL?", choices:[
     {label:"Company B", next:"fpay_companya_rebill_as_b"},
@@ -330,16 +287,10 @@ NOTES:
   ]},
   fpay_companya_rebill_as_b:{ id:"fpay_companya_rebill_as_b", text:"Company B c/o FPAY\n\nRebill Company A c/o FPAY — CORR LOA with correction fee.", choices:[]},
   fpay_companya_rebill_other:{ id:"fpay_companya_rebill_other", text:"Rebill Company A c/o FPAY — CORR LOA with correction fee.", choices:[]},
-
-  /* Column 2 — Rebill to Company B c/o FPAY */
-  fpay_companyb_check:{
-    id:"fpay_companyb_check",
-    text:"Is the debtor per BOL Company B?",
-    choices:[
-      {label:"YES", next:"fpay_companyb_corr"},
-      {label:"NO", next:"fpay_companyb_who"}
-    ]
-  },
+  fpay_companyb_check:{ id:"fpay_companyb_check", text:"Is the debtor per BOL Company B?", choices:[
+    {label:"YES", next:"fpay_companyb_corr"},
+    {label:"NO", next:"fpay_companyb_who"}
+  ]},
   fpay_companyb_corr:{ id:"fpay_companyb_corr", text:"CORR LOA with correction fee.", choices:[]},
   fpay_companyb_who:{ id:"fpay_companyb_who", text:"Who is the current Debtor per BOL?", choices:[
     {label:"Company A", next:"fpay_companyb_rebill_as_a"},
@@ -347,31 +298,19 @@ NOTES:
   ]},
   fpay_companyb_rebill_as_a:{ id:"fpay_companyb_rebill_as_a", text:"Company A\n\nRebill Company B c/o FPAY — CORR LOA with correction fee.", choices:[]},
   fpay_companyb_rebill_other:{ id:"fpay_companyb_rebill_other", text:"Rebill Company B c/o FPAY — CORR LOA with correction fee.", choices:[]},
-
-  /* Column 3 — Rebill to Company A c/o FPAY2 */
-  fpay_companya2_check:{
-    id:"fpay_companya2_check",
-    text:"Is the debtor per BOL Company A c/o FPAY2?",
-    choices:[
-      {label:"YES", next:"fpay_companya2_rebill"},
-      {label:"NO", next:"fpay_companya2_who"}
-    ]
-  },
+  fpay_companya2_check:{ id:"fpay_companya2_check", text:"Is the debtor per BOL Company A c/o FPAY2?", choices:[
+    {label:"YES", next:"fpay_companya2_rebill"},
+    {label:"NO", next:"fpay_companya2_who"}
+  ]},
   fpay_companya2_rebill:{ id:"fpay_companya2_rebill", text:"Rebill Company A c/o FPAY2. CORR ACCR for proper billing.", choices:[]},
   fpay_companya2_who:{ id:"fpay_companya2_who", text:"Who is the current Debtor per BOL?", choices:[
     {label:"Company A", next:"fpay_companya2_rebill"},
     {label:"Other", next:"fpay_direct_check"}
   ]},
-
-  /* Column 4 — Bill directly to FPAY */
-  fpay_direct_check:{
-    id:"fpay_direct_check",
-    text:"Is the debtor per BOL Company A?",
-    choices:[
-      {label:"YES", next:"fpay_direct_corr"},
-      {label:"NO", next:"fpay_direct_who"}
-    ]
-  },
+  fpay_direct_check:{ id:"fpay_direct_check", text:"Is the debtor per BOL Company A?", choices:[
+    {label:"YES", next:"fpay_direct_corr"},
+    {label:"NO", next:"fpay_direct_who"}
+  ]},
   fpay_direct_corr:{ id:"fpay_direct_corr", text:"CORR LOA without correction fee.", choices:[]},
   fpay_direct_who:{ id:"fpay_direct_who", text:"Who is the current Debtor per BOL?", choices:[
     {label:"Company A", next:"fpay_direct_rebill_as_a"},
@@ -379,46 +318,25 @@ NOTES:
   ]},
   fpay_direct_rebill_as_a:{ id:"fpay_direct_rebill_as_a", text:"Company A\n\nRebill Company A c/o FPAY2. CORR LOA with correction fee.", choices:[]},
   fpay_direct_rebill_other:{ id:"fpay_direct_rebill_other", text:"Rebill directly to FPAY. CORR LOA with correction fee.", choices:[]},
-
-  /* -------------------- COLLECTOR FLOW -------------------- */
-  collector_start:{
-    id:"collector_start",
-    text:"Advise collector that PRO is billing correctly per BOL. Ask LOA from the new debtor.",
-    choices:[
-      {label:"Continue", next:"collector_loa_check"}
-    ]
-  },
-
-  collector_loa_check:{
-    id:"collector_loa_check",
-    text:"LOA Provided?",
-    choices:[
-      {label:"YES", next:"collector_loa_yes"},
-      {label:"NO", next:"collector_loa_no"}
-    ]
-  },
-
-  collector_loa_yes:{
-    id:"collector_loa_yes",
-    text:"Follow process for NEW DEBTOR update.",
-    choices:[]
-  },
-
-  collector_loa_no:{
-    id:"collector_loa_no",
-    text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.",
-    choices:[]
-  }
-
-}; // END NODES
-
-
+  collector_start:{ id:"collector_start", text:"Advise collector that PRO is billing correctly per BOL. Ask LOA from the new debtor.", choices:[
+    {label:"Continue", next:"collector_loa_check"}
+  ]},
+  collector_loa_check:{ id:"collector_loa_check", text:"LOA Provided?", choices:[
+    {label:"YES", next:"collector_loa_yes"},
+    {label:"NO", next:"collector_loa_no"}
+  ]},
+  collector_loa_yes:{ id:"collector_loa_yes", text:"Follow process for NEW DEBTOR update.", choices:[]},
+  collector_loa_no:{ id:"collector_loa_no", text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.", choices:[]}
+}; // end NODES
 
 /* ---------- STATE ---------- */
 let path = [];
 let historyStack = [];
 let currentFinalRecommendation = "";
 let currentEditType = "";
+
+/* retry counters map for loading from firestore if not ready yet */
+const _firestoreLoadAttempts = {};
 
 /* ---------- HELPERS ---------- */
 function escapeHtml(unsafe) {
@@ -460,7 +378,7 @@ function renderNode(nodeObj, nodeKey="root") {
       btn.textContent = choice.label;
 
       btn.onclick = () => {
-        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) });
+        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) , nodeKey});
         path.push({ question: nodeObj.text, answer: choice.label });
 
         const nextNode = NODES[choice.next] || {};
@@ -469,7 +387,7 @@ function renderNode(nodeObj, nodeKey="root") {
           // show recommendation immediately
           document.getElementById("recommendation").innerHTML =
             `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
-          // show suggested panel (left blank unless edited)
+          // attempt to load templates from Firestore (or fallback)
           generateSuggestedCommentEmail(currentFinalRecommendation);
         } else {
           currentFinalRecommendation = "";
@@ -497,7 +415,6 @@ function renderNode(nodeObj, nodeKey="root") {
   }
 
   // inject notes for particular final nodes (they will show below recommendation)
-  // nodeKey is the key of the node currently rendered
   if (nodeKey === "tpl_companya_corr" || nodeKey === "fpay_companya_corr") {
     const recEl = document.getElementById("recommendation");
     const notesHtml = `
@@ -527,7 +444,10 @@ function updateSelectedPath(){
   ).join("<br>");
 }
 
-/* ---------- SUGGESTED COMMENT & EMAIL ---------- */
+/* ---------- SUGGESTED COMMENT & EMAIL ----------
+   Now attempts to load from Firestore using window.loadFromFirestore(docId).
+   If Firestore helpers aren't ready yet we retry a few times then fallback to localStorage/defaults.
+*/
 function generateSuggestedCommentEmail(finalText) {
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
@@ -540,15 +460,41 @@ function generateSuggestedCommentEmail(finalText) {
     return;
   }
 
-  // Keep comment/email blank by default (user requested this earlier).
-  // If user previously saved edits for this exact finalText, show them.
-  const savedComment = localStorage.getItem(`comment_${finalText}`) || "";
-  const savedEmail = localStorage.getItem(`email_${finalText}`) || "";
+  const docId = encodeURIComponent(finalText);
 
-  commentBox.innerHTML = savedComment || "";
-  emailBox.innerHTML = savedEmail || "";
-
-  suggestedPanel.style.display = "block";
+  if (typeof window.loadFromFirestore === "function") {
+    _firestoreLoadAttempts[docId] = 0;
+    window.loadFromFirestore(docId).then(data => {
+      const comment = (data && data.comment) ? data.comment : (localStorage.getItem(`comment_${finalText}`) || "");
+      const email = (data && data.email) ? data.email : (localStorage.getItem(`email_${finalText}`) || "");
+      commentBox.innerHTML = comment || "";
+      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
+      suggestedPanel.style.display = "block";
+    }).catch(err => {
+      console.error("Error loading from Firestore:", err);
+      // fallback: use localStorage if available
+      const comment = localStorage.getItem(`comment_${finalText}`) || "";
+      const email = localStorage.getItem(`email_${finalText}`) || "";
+      commentBox.innerHTML = comment;
+      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
+      suggestedPanel.style.display = "block";
+    });
+  } else {
+    // Firestore not ready yet — retry a few times then fallback
+    const maxAttempts = 10;
+    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId] || 0) + 1;
+    if (_firestoreLoadAttempts[docId] <= maxAttempts) {
+      setTimeout(() => generateSuggestedCommentEmail(finalText), 200);
+      return;
+    } else {
+      const comment = localStorage.getItem(`comment_${finalText}`) || "";
+      const email = localStorage.getItem(`email_${finalText}`) || "";
+      commentBox.innerHTML = comment;
+      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
+      suggestedPanel.style.display = "block";
+      return;
+    }
+  }
 }
 
 /* ---------- ADMIN EDIT ---------- */
@@ -572,34 +518,78 @@ function checkPassword() {
 function openEditModal() {
   const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
   const currentBox = document.getElementById(currentBoxId);
-  document.getElementById("editTextarea").value = currentBox.innerText || currentBox.textContent || "";
+  // innerHTML -> convert <br> to \n for email editing
+  const html = currentBox.innerHTML || "";
+  const text = html.replace(/<br\s*\/?>/gi,"\n").replace(/&amp;/g,"&");
+  document.getElementById("editTextarea").value = text;
   document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
-  document.getElementById("modalHint").textContent = "Edits will be saved locally for this exact recommendation text.";
+  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore for this exact recommendation text.";
   document.getElementById("editModal").style.display = "flex";
 }
 
 function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
 
-function saveEdit() {
+async function saveEdit() {
   const val = document.getElementById("editTextarea").value;
   if (!currentFinalRecommendation) {
     alert("No recommendation selected to save edits for!");
     return;
   }
-  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
-  const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  document.getElementById(currentBoxId).innerText = val;
-  document.getElementById("suggestedPanel").style.display = "block";
-  closeEditModal();
+  const docId = encodeURIComponent(currentFinalRecommendation);
+
+  // If Firestore helper functions are not loaded, notify and fallback to localStorage
+  if (typeof window.saveCommentToFirestore !== "function" || typeof window.saveEmailToFirestore !== "function") {
+    // fallback: save to localStorage and inform user
+    if (currentEditType === "comment") {
+      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
+      document.getElementById("suggestedComment").innerText = val;
+    } else {
+      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
+      document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
+    }
+    alert("Saved locally (Firestore not ready).");
+    closeEditModal();
+    return;
+  }
+
+  try {
+    if (currentEditType === "comment") {
+      await window.saveCommentToFirestore(docId, val);
+      document.getElementById("suggestedComment").innerText = val;
+      // also keep a local copy
+      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
+      alert("Comment saved to Firestore.");
+    } else {
+      await window.saveEmailToFirestore(docId, val);
+      document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
+      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
+      alert("Email saved to Firestore.");
+    }
+  } catch (err) {
+    console.error("Error saving to Firestore:", err);
+    alert("Error saving to Firestore — check console. Your edit has been saved locally.");
+    // fallback local save
+    if (currentEditType === "comment") {
+      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
+      document.getElementById("suggestedComment").innerText = val;
+    } else {
+      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
+      document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
+    }
+  } finally {
+    document.getElementById("suggestedPanel").style.display = "block";
+    closeEditModal();
+  }
 }
 
 /* ---------- EVENTS ---------- */
 document.getElementById("goBackBtn").onclick = () => {
   if (historyStack.length) {
     const last = historyStack.pop();
-    path = last.path;
+    path = last.path || [];
     const nodeKey = last.nodeKey || "root";
-    renderNode(NODES[nodeKey], nodeKey);
+    renderNode(NODES[nodeKey] || NODES.root, nodeKey);
+    updateSelectedPath();
   }
 };
 
@@ -608,11 +598,12 @@ document.getElementById("startOverBtn").onclick = () => {
   historyStack = [];
   currentFinalRecommendation = "";
   document.getElementById("selectedPath").textContent = "No steps selected yet.";
+  document.getElementById("suggestedPanel").style.display = "none";
   renderNode(NODES.root, "root");
 };
 
 document.getElementById("copyEmailBtn").onclick = () => {
-  const txt = document.getElementById("suggestedEmail").textContent || document.getElementById("suggestedEmail").innerText;
+  const txt = (document.getElementById("suggestedEmail").innerText || document.getElementById("suggestedEmail").textContent || "");
   navigator.clipboard.writeText(txt).then(() => {
     alert("Email copied!");
   }).catch(() => {
@@ -621,7 +612,68 @@ document.getElementById("copyEmailBtn").onclick = () => {
 };
 
 /* ---------- INIT ---------- */
-renderNode(NODES.root, "root");
+window.addEventListener('load', () => {
+  renderNode(NODES.root, "root");
+});
+</script>
+
+<!-- ---------- FIREBASE MODULE: placed at bottom ---------- -->
+<script type="module">
+/* Firebase (CDN modular) initialization and Firestore helpers
+   Collections used:
+     - loa_comments (documents: docId -> { comment: "..."} )
+     - loa_emails   (documents: docId -> { email: "..." } )
+*/
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Your Firebase config (as provided earlier)
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.firebasestorage.app",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Save comment to loa_comments/{docId}
+export async function saveCommentToFirestore(docId, commentText) {
+  if (!docId) throw new Error("docId required");
+  await setDoc(doc(db, "loa_comments", docId), { comment: commentText }, { merge: true });
+}
+
+// Save email to loa_emails/{docId}
+export async function saveEmailToFirestore(docId, emailText) {
+  if (!docId) throw new Error("docId required");
+  await setDoc(doc(db, "loa_emails", docId), { email: emailText }, { merge: true });
+}
+
+// Load both comment & email (returns { comment, email })
+export async function loadFromFirestore(docId) {
+  if (!docId) return {};
+  const commentRef = doc(db, "loa_comments", docId);
+  const emailRef = doc(db, "loa_emails", docId);
+
+  const [commentSnap, emailSnap] = await Promise.all([getDoc(commentRef), getDoc(emailRef)]);
+  const data = {};
+  if (commentSnap.exists()) data.comment = commentSnap.data().comment;
+  if (emailSnap.exists()) data.email = emailSnap.data().email;
+  return data;
+}
+
+// Expose helpers to the global window so non-module scripts can call them
+window.saveCommentToFirestore = saveCommentToFirestore;
+window.saveEmailToFirestore = saveEmailToFirestore;
+window.loadFromFirestore = loadFromFirestore;
+
+console.log("Firestore helpers ready (loa_comments / loa_emails).");
 </script>
 
 </body>
