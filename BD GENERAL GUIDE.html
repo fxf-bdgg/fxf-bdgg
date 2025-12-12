@@ -225,16 +225,24 @@ textarea{resize:none}
   </div>
 </div>
 
-<footer style="display:flex;align-items:center;justify-content:space-between;">
-  <p>© 2025 EBS Operations</p>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <span style="font-size:12px;color:white;">
-      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
-    </span>
-  </div>
-</footer>
+<!-- Firebase compat CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
 <script>
+/* ---------- FIREBASE (compat) INIT ---------- */
+/* Uses the bdgg-database config you provided earlier */
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.firebasestorage.app",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 /* ---------- Decision Tree Data (full) ---------- */
 const NODES = {
  /* ---------------- Prepaid ---------------- */
@@ -590,7 +598,7 @@ function renderNode(nodeObj,nodeKey="root"){
   goBackBtn.style.display=historyStack.length?"inline-block":"none";
   startOverBtn.style.display=path.length?"inline-block":"none";
   
-const stepNum = path.length + 1;
+  const stepNum = path.length + 1;
   progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; // arbitrary max 5 steps for smooth fill
   progressText.textContent = `Step ${stepNum}`;
 }
@@ -614,31 +622,69 @@ function countTotalSteps(nodeObj) {
   }));
 }
 
-/* ---------- Suggested Comment & Email ---------- */
-function generateSuggestedCommentEmail(recommendation){
+/* ---------- Suggested Comment & Email (FIRESTORE-backed) ---------- */
+
+/**
+ * We store comments in collection "comments" and emails in collection "emails".
+ * Document ID is the encoded final recommendation text (encodeURIComponent).
+ */
+
+function docIdFromText(text) {
+  return encodeURIComponent(text);
+}
+
+async function generateSuggestedCommentEmail(recommendation){
   const commentEl = document.getElementById("suggestedComment");
   const emailEl = document.getElementById("suggestedEmail");
-  let commentText="", emailText="";
+  const suggestedPanel = document.getElementById("suggestedPanel");
 
-  // Example mapping based on recommendation text
+  // Default templates (fallback if no saved doc)
+  let commentText="", emailText="";
   if(recommendation.includes("Collect")){
     commentText = "VS-BLER-CASE#-CHANGED TERMS TO COLLECT PER BOL";
   } else if(recommendation.includes("Prepaid")){
     commentText = "VS-BLER-CASE#-CHANGED TERMS TO PREPAID PER BOL";
   } else if(recommendation.includes("rebilling the account no.") || recommendation.includes("per BOL")){
     commentText = "VS-BLER-CASE#-CHANGED BT CODE TO ######### PER BOL";
+  } else {
+    commentText = "";
   }
 
-  // load custom edits from localStorage if exist
-  const customComment = localStorage.getItem(`comment_${recommendation}`);
-  const customEmail = localStorage.getItem(`email_${recommendation}`);
+  emailText = `Hi,\n\nPro ######### has been reviewed and updated to bill the correct debtor per BOL. Revised Invoice will be sent accordingly.\n\nThank you,\nEBS Operations - Invoicing Solutions`;
 
-  commentEl.textContent = customComment || commentText;
-  emailEl.textContent = customEmail || 
-    `Hi,\n\nPro ######### has been reviewed and updated to bill the correct debtor per BOL. Revised Invoice will be sent accordingly.\n\nThank you,\nEBS Operations - Invoicing Solutions`;
+  commentEl.textContent = ""; emailEl.textContent = "";
+  suggestedPanel.style.display = "block";
+
+  const id = docIdFromText(recommendation);
+
+  try {
+    const commentDoc = await db.collection("comments").doc(id).get();
+    if (commentDoc.exists) {
+      const d = commentDoc.data();
+      commentEl.textContent = (d && d.text) ? d.text : commentText;
+    } else {
+      commentEl.textContent = commentText;
+    }
+  } catch (err) {
+    console.error("Error loading comment from Firestore:", err);
+    commentEl.textContent = commentText;
+  }
+
+  try {
+    const emailDoc = await db.collection("emails").doc(id).get();
+    if (emailDoc.exists) {
+      const d = emailDoc.data();
+      emailEl.textContent = (d && d.text) ? d.text : emailText;
+    } else {
+      emailEl.textContent = emailText;
+    }
+  } catch (err) {
+    console.error("Error loading email from Firestore:", err);
+    emailEl.textContent = emailText;
+  }
 }
 
-/* ---------- Admin Edit Logic ---------- */
+/* ---------- Admin Edit Logic (saves to Firestore) ---------- */
 function attemptEdit(type){
   currentEditType = type;
   document.getElementById("adminPassword").value="";
@@ -663,19 +709,46 @@ function openEditModal(){
 
 function closeEditModal(){document.getElementById("editModal").style.display="none";}
 
-function saveEdit(){
+async function saveEdit(){
   const val = document.getElementById("editTextarea").value;
-  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
-  generateSuggestedCommentEmail(currentFinalRecommendation);
-  closeEditModal();
+  if(!currentFinalRecommendation){
+    alert("No recommendation selected to save edits for!");
+    return;
+  }
+  const id = docIdFromText(currentFinalRecommendation);
+
+  try {
+    if (currentEditType === "comment") {
+      await db.collection("comments").doc(id).set({
+        text: val,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      document.getElementById("suggestedComment").innerText = val;
+    } else {
+      await db.collection("emails").doc(id).set({
+        text: val,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      document.getElementById("suggestedEmail").innerText = val;
+    }
+    closeEditModal();
+    alert("Saved to Firestore.");
+  } catch (err) {
+    console.error("Error saving to Firestore:", err);
+    alert("Failed to save to Firestore. Check console for details.");
+  }
 }
 
 /* ---------- Copy Email ---------- */
 document.getElementById("copyEmailBtn").onclick = ()=>{
-  navigator.clipboard.writeText(document.getElementById("suggestedEmail").textContent);
-  alert("Email copied to clipboard!");
+  const txt = document.getElementById("suggestedEmail").textContent || document.getElementById("suggestedEmail").innerText;
+  navigator.clipboard.writeText(txt).then(()=> {
+    alert("Email copied to clipboard!");
+  }).catch(err=>{
+    console.error("Clipboard error:", err);
+    alert("Unable to copy to clipboard.");
+  });
 }
 </script>
 </body>
 </html>
-
