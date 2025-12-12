@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Weight Dispute – Reweigh Guide</title>
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#64748b;
+  --accent:#4d148c;
+  --accent-2:#ff6600;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:#0f172a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
+header, footer{background:var(--accent);color:white;padding:16px 28px;}
+.container{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 420px;gap:20px;align-items:start;padding:28px 0;flex:1}
+.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 28px rgba(2,6,23,0.06);overflow:hidden}
+h1{margin:0;font-size:22px;color:var(--accent)}
+p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
+.progress-container{display:flex;align-items:center;gap:10px;margin:14px 0}
+.progress-bar{flex:1;height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:var(--accent);transition:width .3s}
+.progress-text{font-size:13px;color:var(--muted)}
+.node{padding:12px;border-radius:10px;border:1px solid rgba(3,7,18,0.05);background:linear-gradient(180deg,#ffffff,#fbfeff);margin:10px 0;min-height:64px}
+.choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.choice{padding:8px 12px;border-radius:999px;background:#eef8f7;border:1px solid rgba(4,20,20,0.03);cursor:pointer;font-weight:600}
+.choice:hover{background:#e0f2fe}
+.choice.active{background:var(--accent);color:white}
+.path{margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed rgba(3,7,18,0.04);font-size:13px}
+.path strong{color:var(--accent)}
+.result{margin-top:12px;padding:12px;border-radius:10px;background:#e6fbfb;border-left:4px solid var(--accent-2);animation:fadeIn 0.4s ease-in;min-height:56px}
+.note{margin-top:6px;font-size:13px;color:var(--muted);font-style:italic}
+.controls{display:flex;gap:8px;margin-top:12px}
+button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:600}
+button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
+.output-card{margin-top:16px;padding:14px;border-radius:10px;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.05);animation:fadeIn 0.45s ease-in;position:relative}
+.output-header{font-weight:700;color:var(--accent);margin-bottom:8px ;color:#000 !important;display:flex;justify-content:space-between;align-items:center;}
+.output-box{
+  padding:10px;
+  border-left:4px solid var(--accent-2);
+  background:#f8fafc;
+  border-radius:8px;
+  white-space:pre-wrap;
+   font-size:11px; 
+}
+.copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
+.copy-btn:hover{opacity:.85}
+.extra-note{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic}
+.edit-icon{cursor:pointer;font-size:16px;color:var(--accent);margin-left:8px}
+.edit-icon:hover{text-decoration:underline}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:white;padding:20px;border-radius:10px;min-width:300px;text-align:center}
+textarea{resize:none}
+@keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:1200px){.container{grid-template-columns:1fr}}
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease;}
+.modal-content { background: #fff; padding: 25px 30px; border-radius: 12px; min-width: 500px; max-width: 600px; box-shadow: 0 12px 28px rgba(0,0,0,0.2); text-align: center; font-family: Inter, sans-serif; }
+.modal-content h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; font-weight: 600; color: var(--accent); }
+.modal-content input[type="password"], .modal-content textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 10px; font-family: Inter, sans-serif; }
+.modal-content textarea { min-height: 120px; resize: vertical; }
+.modal-content button { border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-left: 6px; cursor: pointer; transition: all 0.2s ease; }
+.modal-content button:hover { opacity: 0.9; }
+.modal-content .save-btn { background-color: var(--accent); color: #fff; }
+.modal-content .cancel-btn { background-color: #e5e7eb; color: #111827; }
+@media(max-width:500px){ .modal-content { width: 90%; min-width: unset; padding:20px; } }
+</style>
+
+<!-- Firebase compat CDN (works without bundler) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+</head>
+<body>
+
+<header style="display:flex;align-items:center;justify-content:space-between;">
+  <div style="display:flex;align-items:center;gap:12px;">
+     <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
+    <h1>Weight Dispute / Reweigh Guide</h1>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="window.location.href='index.html'">Main Page</button>
+    <button onclick="window.location.href='BD GENERAL GUIDE.html'">Go to BD General Guide</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h1>Weight Dispute / Reweigh Guide</h1>
+    <p class="lead">Follow the flow below to determine the recommended reweigh action according to policy.</p>
+    <div class="progress-container">
+      <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      <div id="progressText" class="progress-text"></div>
+    </div>
+    <div id="flowArea" class="node"></div>
+    <div class="controls">
+      <button id="goBackBtn" class="secondary" style="display:none;">← Go Back</button>
+      <button id="startOverBtn" class="secondary" style="display:none;">Start Over</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="node">
+      <strong>Selected Path</strong>
+      <div id="selectedPath" class="path">No steps selected yet.</div>
+    </div>
+    <div class="node">
+      <strong>Recommended Action</strong>
+      <div id="recommendation" class="result">No recommendation yet.</div>
+    </div>
+  </div>
+
+  <div class="card" id="suggestedPanel" style="display:none;">
+    <div class="output-card" id="commentCard">
+      <div class="output-header">
+        Suggested Comment
+        <span class="edit-icon" onclick="attemptEdit('comment')" title="Do you want to update the Comment?">✏️</span>
+      </div>
+      <div id="suggestedComment" class="output-box"></div>
+    </div>
+    <div class="output-card" id="emailCard">
+      <div class="output-header">
+        Suggested Email
+        <span class="edit-icon" onclick="attemptEdit('email')" title="Do you want to update the Email?">✏️</span>
+      </div>
+      <div id="suggestedEmail" class="output-box"></div>
+      <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
+    </div>
+    <div id="generalNote" class="note">Note: These are suggested templates. Personalized emails or comments are always more appreciated.</div>
+  </div>
+</div>
+
+<footer style="display:flex;align-items:center;justify-content:space-between;">
+  <p>© 2025 EBS Operations</p>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:white;">
+      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
+    </span>
+  </div>
+</footer>
+
+<!-- Password Modal -->
+<div id="passwordModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Password to Edit</h3>
+    <input type="password" id="adminPassword" placeholder="Password">
+    <div style="margin-top:18px;">
+      <button class="save-btn" onclick="checkPassword()">Submit</button>
+      <button class="cancel-btn" onclick="closePasswordModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Edit</h3>
+    <div id="modalHint" class="note" style="margin-bottom:6px;">Edits will be saved to Firestore (comments & emails collections).</div>
+    <textarea id="editTextarea"></textarea>
+    <div style="margin-top:18px;text-align:right;">
+      <button class="save-btn" onclick="saveEdit()">Save</button>
+      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- FIREBASE (compat) INIT ---------- */
+/* Using compat CDN so file works without bundler */
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.firebasestorage.app",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ---------- DECISION TREE DATA (NODES) ---------- */
+/* Full Reweigh decision tree (root = 'root') */
+
+const NODES = {
+
+  root: {
+    text: "What is the dispute of the customer?",
+    choices: [
+      { label: "Weight of the shipment (request to remove reweigh and bill it back per BOL weight)", next: "remove_reweigh_root" },
+      { label: "Weight of the shipment (request is to apply reweigh)", next: "apply_reweigh_root" },
+      { label: "Pallet Weight", next: "pallet_weight" },
+      { label: "Reweigh Certificate", next: "reweigh_certificate" },
+      { label: "Others (not Weight Related)", next: "others_not_weight" }
+    ]
+  },
+
+  /* ----------------------------------------------------------
+      SECTION 1 — REMOVE REWEIGH / BILL BACK PER BOL
+  -----------------------------------------------------------*/
+
+  remove_reweigh_root: {
+    text: "Was the shipment reweighed?",
+    choices: [
+      { label: "YES", next: "remove_reweigh_delivered" },
+      { label: "NO", next: "remove_reweigh_not_reweighed" }
+    ]
+  },
+
+  remove_reweigh_not_reweighed: {
+    text: "If customer is disputing the weight but shipment was not reweighed, move the case to Billing Dispute.",
+    choices: []
+  },
+
+  remove_reweigh_delivered: {
+    text: "Was the shipment delivered?",
+    choices: [
+      { label: "YES", next: "remove_reweigh_validity_check" },
+      { label: "NO", next: "pend_not_delivered" }
+    ]
+  },
+
+  pend_not_delivered: {
+    text: 'Pend the case since shipment has not been delivered and respond to the customer: "This request has been received and will be reviewed once the shipment is delivered. Thank you for your patience during the interim."',
+    choices: []
+  },
+
+  remove_reweigh_validity_check: {
+    text: "Was the Reweigh valid and done correctly?",
+    choices: [
+      { label: "YES", next: "remove_reweigh_customer_doc" },
+      { label: "NO", next: "remove_reweigh_invalid_root" }
+    ]
+  },
+
+  remove_reweigh_customer_doc: {
+    text: "Did the customer provide a document and claim that the reweigh is inaccurate?",
+    choices: [
+      { label: "YES", next: "remove_reweigh_doc_valid" },
+      { label: "NO", next: "remove_reweigh_no_doc_revnj" }
+    ]
+  },
+
+  remove_reweigh_doc_valid: {
+    text: "Was the document valid and can be used to reverse the reweigh?",
+    choices: [
+      { label: "YES", next: "remove_reweigh_doc_outcome" },
+      { label: "NO", next: "remove_reweigh_doc_invalid_revnj" }
+    ]
+  },
+
+  remove_reweigh_doc_outcome: {
+    text: "If reweigh will be reversed, will the invoice amount increase or decrease?",
+    choices: [
+      { label: "Increase", next: "increase_warn_litro" },
+      { label: "Decrease", next: "correction_litro" }
+    ]
+  },
+
+  increase_warn_litro: {
+    text: "Advise the customer that reversing the reweigh will result in an increased invoice amount. Did the customer agree to proceed?",
+    choices: [
+      { label: "Customer Agrees", next: "correction_litro" },
+      { label: "Customer Declines", next: "case_denied" }
+    ]
+  },
+
+  correction_litro: {
+    text: "Proceed with the Correction following LITRO.",
+    choices: []
+  },
+
+  case_denied: {
+    text: "Close the case as Denied.",
+    choices: []
+  },
+
+  remove_reweigh_doc_invalid_revnj: {
+    text: "Try to upload the case in FPAD. Is the customer eligible for Courtesy Adjustment (REVNJ)?",
+    choices: [
+      { label: "YES", next: "revnj_reverse" },
+      { label: "NO", next: "request_valid_doc" }
+    ]
+  },
+
+  remove_reweigh_no_doc_revnj: {
+    text: "Per FPAD BOT, is the customer eligible for Courtesy Adjustment (REVNJ)?",
+    choices: [
+      { label: "YES", next: "revnj_reverse" },
+      { label: "NO", next: "request_valid_doc" }
+    ]
+  },
+
+  revnj_reverse: {
+    text: "Reverse the Reweigh per REVNJ Process.",
+    choices: []
+  },
+
+  request_valid_doc: {
+    text: "Advise the customer that the reweigh is valid and the document they provided is invalid. Request documentation supporting the BOL weight.",
+    choices: []
+  },
+
+  /* INVALID REWEIGH BRANCH */
+
+  remove_reweigh_invalid_root: {
+    text: "What is the Reweigh Code that makes the Reweigh invalid?",
+    choices: [
+      { label: "NDOCO - No reweigh certificate imaged", next: "ndoco_branch" },
+      { label: "BILLO - Incorrect biller weight entry", next: "billo_branch" },
+      { label: "RERRO - Service Center processed incorrectly", next: "rerro_branch" },
+      { label: "MIXDO - Freight were mixed up during reweigh", next: "mixdo_branch" }
+    ]
+  },
+
+  /* NDOCO */
+  ndoco_branch: {
+    text: "If reweigh will be reversed, will the invoice amount increase or decrease?",
+    choices: [
+      { label: "Increase", next: "increase_warn_ndoco" },
+      { label: "Decrease", next: "correction_ndoco" }
+    ]
+  },
+
+  increase_warn_ndoco: {
+    text: "Advise the customer that reversing the reweigh will increase the invoice. Did the customer agree?",
+    choices: [
+      { label: "Customer Agrees", next: "correction_ndoco" },
+      { label: "Customer Declines", next: "case_denied" }
+    ]
+  },
+
+  correction_ndoco: {
+    text: "Proceed with the Correction following NDOCO.",
+    choices: []
+  },
+
+  /* BILLO */
+  billo_branch: {
+    text: "If reweigh will be reversed, will the invoice amount increase or decrease?",
+    choices: [
+      { label: "Increase", next: "increase_warn_billo" },
+      { label: "Decrease", next: "correction_billo" }
+    ]
+  },
+
+  increase_warn_billo: {
+    text: "Advise customer about increased invoice. Did the customer agree?",
+    choices: [
+      { label: "Customer Agrees", next: "correction_billo" },
+      { label: "Customer Declines", next: "case_denied" }
+    ]
+  },
+
+  correction_billo: {
+    text: "Proceed with the Correction following BILLO.",
+    choices: []
+  },
+
+  /* RERRO */
+  rerro_branch: {
+    text: "Choose one below that matches your case:",
+    choices: [
+      { label: "Reweigh Certificate Error - weights switched", next: "rerro_cert_error" },
+      { label: "Confirmation from Service Center/Freight Analysis Manager that reweigh was done incorrectly", next: "rerro_fam" }
+    ]
+  },
+
+  rerro_cert_error: {
+    text: "If reweigh will be reversed, will invoice increase or decrease?",
+    choices: [
+      { label: "Increase", next: "increase_warn_rerro" },
+      { label: "Decrease", next: "correction_rerro" }
+    ]
+  },
+
+  increase_warn_rerro: {
+    text: "Advise customer about increased invoice. Did the customer agree?",
+    choices: [
+      { label: "Customer Agrees", next: "correction_rerro" },
+      { label: "Customer Declines", next: "case_denied" }
+    ]
+  },
+
+  correction_rerro: {
+    text: "Proceed with the Correction following RERRO.",
+    choices: []
+  },
+
+  rerro_fam: {
+    text: "Proceed with reversing the Reweigh following RERRO.",
+    choices: []
+  },
+
+  /* MIXDO */
+  mixdo_branch: {
+    text: "Freight were mixed up during reweigh; proceed with reversing the Reweigh following MIXDO.",
+    choices: []
+  },
+
+  /* ----------------------------------------------------------
+      SECTION 2 — APPLY REWEIGH
+  -----------------------------------------------------------*/
+
+  apply_reweigh_root: {
+    text: "Was the shipment reweighed?",
+    choices: [
+      { label: "YES", next: "apply_reweigh_delivered" },
+      { label: "NO", next: "apply_reweigh_not_reweighed" }
+    ]
+  },
+
+  apply_reweigh_not_reweighed: {
+    text: "Deny the request and advise that the shipment was not reweighed.",
+    choices: []
+  },
+
+  apply_reweigh_delivered: {
+    text: "Was the shipment delivered?",
+    choices: [
+      { label: "YES", next: "apply_reweigh_reason" },
+      { label: "NO", next: "pend_not_delivered" }
+    ]
+  },
+
+  apply_reweigh_reason: {
+    text: "What is the reason why Reweigh was not applied? Is there any comment stating the reweigh is invalid?",
+    choices: [
+      { label: "YES", next: "apply_reweigh_invalid_comment" },
+      { label: "NO", next: "apply_reweigh_compare_hu" }
+    ]
+  },
+
+  apply_reweigh_invalid_comment: {
+    text: "Advise customer that the reweigh was invalid and cannot be applied. Request documentation supporting the reweighed weight.",
+    choices: []
+  },
+
+  apply_reweigh_compare_hu: {
+    text: "Do the handling units on the Reweigh Cert and BOL not match?",
+    choices: [
+      { label: "YES", next: "apply_reweigh_invalid_hu" },
+      { label: "NO", next: "apply_reweigh_weight_diff" }
+    ]
+  },
+
+  apply_reweigh_invalid_hu: {
+    text: "Advise customer the reweigh was invalid (HU mismatch). Request documentation supporting the reweighed weight.",
+    choices: []
+  },
+
+  apply_reweigh_weight_diff: {
+    text: "Is there a big difference between BOL weight and reweighed weight?",
+    choices: [
+      { label: "YES (26%+)", next: "apply_reweigh_invalid_big_diff" },
+      { label: "NO (25% or less)", next: "apply_reweigh_proceed" }
+    ]
+  },
+
+  apply_reweigh_invalid_big_diff: {
+    text: "Reweigh is invalid due to large variance. Request documentation supporting the reweighed weight.",
+    choices: []
+  },
+
+  apply_reweigh_proceed: {
+    text: "Proceed and apply the Reweighed weight.",
+    choices: []
+  },
+
+  /* ----------------------------------------------------------
+      PALLET WEIGHT / REWEIGH CERTIFICATE / OTHERS
+  -----------------------------------------------------------*/
+
+  pallet_weight: {
+    text: "Explain to the customer why pallet weight was applied. Check OS for details.",
+    choices: []
+  },
+
+  reweigh_certificate: {
+    text: "Move the case to Invoice Reprint.",
+    choices: []
+  },
+
+  others_not_weight: {
+    text: "Move the case to the appropriate queue based on the dispute.",
+    choices: []
+  }
+
+}; // end NODES
+
+
+/* ---------- STATE ---------- */
+let path = [];
+let historyStack = [];
+let currentFinalRecommendation = "";
+let currentEditType = "";
+
+/* ---------- HELPERS ---------- */
+function escapeHtml(unsafe) {
+  if (unsafe === null || unsafe === undefined) return "";
+  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+/* ---------- RENDER ---------- */
+function renderNode(nodeObj, nodeKey="root") {
+  const flowArea = document.getElementById("flowArea");
+  const goBackBtn = document.getElementById("goBackBtn");
+  const startOverBtn = document.getElementById("startOverBtn");
+  const progressFill = document.getElementById("progressFill");
+  const progressText = document.getElementById("progressText");
+  const suggestedPanel = document.getElementById("suggestedPanel");
+
+  flowArea.innerHTML = "";
+
+  // Show recommendation if final
+  if (currentFinalRecommendation) {
+    document.getElementById("recommendation").innerHTML =
+      `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+  } else {
+    document.getElementById("recommendation").textContent = "No recommendation yet.";
+    suggestedPanel.style.display = "none";
+  }
+
+  if (nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length) {
+    const q = document.createElement("div");
+    q.innerHTML = `<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`;
+    flowArea.appendChild(q);
+
+    const list = document.createElement("div");
+    list.className = "choice-list";
+
+    nodeObj.choices.forEach(choice => {
+      const btn = document.createElement("div");
+      btn.className = "choice";
+      btn.textContent = choice.label;
+
+      btn.onclick = () => {
+        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) });
+        path.push({ question: nodeObj.text, answer: choice.label });
+
+        const nextNode = NODES[choice.next] || {};
+        if (nextNode && nextNode.text && (!nextNode.choices || nextNode.choices.length === 0)) {
+          currentFinalRecommendation = nextNode.text;
+          // show recommendation immediately
+          document.getElementById("recommendation").innerHTML =
+            `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+          // show suggested panel (left blank unless edited)
+          generateSuggestedCommentEmail(currentFinalRecommendation);
+        } else {
+          currentFinalRecommendation = "";
+          document.getElementById("recommendation").textContent = "No recommendation yet.";
+          suggestedPanel.style.display = "none";
+        }
+
+        // render next node and pass nodeKey so renderNode can use it for notes
+        renderNode(nextNode, choice.next);
+        updateSelectedPath();
+      };
+
+      list.appendChild(btn);
+    });
+
+    flowArea.appendChild(list);
+
+  } else if (nodeObj && nodeObj.text) {
+    // leaf node
+    currentFinalRecommendation = nodeObj.text;
+    document.getElementById("recommendation").innerHTML =
+      `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+    updateSelectedPath();
+    generateSuggestedCommentEmail(currentFinalRecommendation);
+  }
+
+  // inject notes for particular final nodes (they will show below recommendation)
+  if (nodeKey === "tpl_companya_corr" || nodeKey === "fpay_companya_corr") {
+    const recEl = document.getElementById("recommendation");
+    const notesHtml = `
+      <div class="note" style="margin-top:10px;">
+        <em>• If the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")} is already their ABT, no correction fee should be billed. (Example: Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL"} → Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY2" : "3PL2"} where the new provider is already the ABT.)</em><br/>
+        <em>• If the requesting party is the Shipper/Consignee asking to bill a new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}, deny the request. If they insist, request an LOA from the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}.</em>
+      </div>
+    `;
+    recEl.insertAdjacentHTML('beforeend', notesHtml);
+  }
+
+  goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
+  startOverBtn.style.display = path.length ? "inline-block" : "none";
+
+  // ---------- PROGRESS BAR ----------
+  const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
+  progressFill.style.width = Math.min(stepNum * 18, 100) + "%";
+  progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
+}
+
+/* ---------- PATH DISPLAY ---------- */
+function updateSelectedPath(){
+  const el = document.getElementById("selectedPath");
+  if (!path.length) { el.innerHTML = "No steps selected yet."; return; }
+  el.innerHTML = path.map((p, idx) =>
+    `<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`
+  ).join("<br>");
+}
+
+/* ---------- SUGGESTED COMMENT & EMAIL (FIRESTORE-backed) ---------- */
+
+/**
+ * We store comments in collection "comments" and emails in collection "emails".
+ * Document ID is the encoded final recommendation text (encodeURIComponent).
+ */
+
+function docIdFromText(text) {
+  // keep it reversible & safe for Firestore doc id
+  return encodeURIComponent(text);
+}
+
+async function generateSuggestedCommentEmail(finalText) {
+  const commentBox = document.getElementById("suggestedComment");
+  const emailBox = document.getElementById("suggestedEmail");
+  const suggestedPanel = document.getElementById("suggestedPanel");
+
+  if (!finalText) {
+    suggestedPanel.style.display = "none";
+    commentBox.innerHTML = "";
+    emailBox.innerHTML = "";
+    return;
+  }
+
+  const id = docIdFromText(finalText);
+
+  try {
+    // fetch comment
+    const commentDoc = await db.collection("comments").doc(id).get();
+    if (commentDoc.exists) {
+      const data = commentDoc.data();
+      commentBox.innerHTML = data.text || "";
+    } else {
+      commentBox.innerHTML = "";
+    }
+
+    // fetch email
+    const emailDoc = await db.collection("emails").doc(id).get();
+    if (emailDoc.exists) {
+      const data = emailDoc.data();
+      emailBox.innerHTML = data.text || "";
+    } else {
+      emailBox.innerHTML = "";
+    }
+
+    suggestedPanel.style.display = "block";
+
+  } catch (err) {
+    console.error("Error loading templates from Firestore:", err);
+    // fallback to empty
+    commentBox.innerHTML = "";
+    emailBox.innerHTML = "";
+    suggestedPanel.style.display = "block";
+  }
+}
+
+/* ---------- ADMIN EDIT (now saving to Firestore) ---------- */
+function attemptEdit(type){
+  currentEditType = type;
+  document.getElementById("adminPassword").value = "";
+  document.getElementById("passwordModal").style.display = "flex";
+}
+
+function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
+
+function checkPassword() {
+  if (document.getElementById("adminPassword").value === "admin") {
+    closePasswordModal();
+    openEditModal();
+  } else {
+    alert("Incorrect password!");
+  }
+}
+
+function openEditModal() {
+  const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
+  const currentBox = document.getElementById(currentBoxId);
+  document.getElementById("editTextarea").value = currentBox.innerText || currentBox.textContent || "";
+  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
+  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore (comments & emails collections).";
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
+
+async function saveEdit() {
+  const val = document.getElementById("editTextarea").value;
+  if (!currentFinalRecommendation) {
+    alert("No recommendation selected to save edits for!");
+    return;
+  }
+
+  const id = docIdFromText(currentFinalRecommendation);
+
+  try {
+    if (currentEditType === "comment") {
+      // set comment doc
+      await db.collection("comments").doc(id).set({
+        text: val,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      document.getElementById("suggestedComment").innerText = val;
+    } else {
+      // set email doc
+      await db.collection("emails").doc(id).set({
+        text: val,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      document.getElementById("suggestedEmail").innerText = val;
+    }
+
+    document.getElementById("suggestedPanel").style.display = "block";
+    closeEditModal();
+    alert("Saved to Firestore.");
+
+  } catch (err) {
+    console.error("Error saving to Firestore:", err);
+    alert("Failed to save to Firestore. See console for details.");
+  }
+}
+
+/* ---------- EVENTS ---------- */
+document.getElementById("goBackBtn").onclick = () => {
+  if (historyStack.length) {
+    const last = historyStack.pop();
+    path = last.path || [];
+    const nodeKey = last.nodeKey || "root";
+    currentFinalRecommendation = "";
+    renderNode(NODES[nodeKey], nodeKey);
+    updateSelectedPath();
+  }
+};
+
+document.getElementById("startOverBtn").onclick = () => {
+  path = [];
+  historyStack = [];
+  currentFinalRecommendation = "";
+  document.getElementById("selectedPath").textContent = "No steps selected yet.";
+  document.getElementById("suggestedPanel").style.display = "none";
+  renderNode(NODES.root, "root");
+};
+
+document.getElementById("copyEmailBtn").onclick = () => {
+  const txt = document.getElementById("suggestedEmail").textContent || document.getElementById("suggestedEmail").innerText;
+  navigator.clipboard.writeText(txt).then(() => {
+    alert("Email copied!");
+  }).catch(() => {
+    alert("Unable to copy - your browser may block clipboard access.");
+  });
+};
+
+/* ---------- INIT ---------- */
+renderNode(NODES.root, "root");
+</script>
+
+</body>
+</html>
