@@ -232,8 +232,7 @@ textarea{resize:none}
 
 <script>
 /* ---------- DECISION TREE ---------- */
-/* ---------- Updated Decision Tree ---------- */
-/* ---------- OVC DECISION TREE (structured with stable IDs) ---------- */
+/* ---------- OVC DECISION TREE (kept same) ---------- */
 const TREE = {
   id: "root",
   text: "Is the invoice paid and closed?",
@@ -244,7 +243,6 @@ const TREE = {
 };
 
 const NODES = {
-  /* Root branch */
   paid_closed: {
     id: "paid_closed",
     text: "Is it within 180 + 7 days?",
@@ -253,8 +251,7 @@ const NODES = {
       { label: "No", next: "billers_error" }
     ]
   },
-  
-   billers_error: {
+  billers_error: {
     id: "billers_error",
     text: "Is it a biller's error?",
     choices: [
@@ -263,14 +260,7 @@ const NODES = {
     ]
   },
   not_billers_error: { id: "not_billers_error", text: "Deny the claim. Claims should be file within 180+7 days per item 438", choices: [] },
-  
-  not_paid_closed: {
-    id: "not_paid_closed",
-    text: "Move the case to the appropriate queue(BD or PRICING).",
-    choices: []
-  },
-
-  /* Paid -> within window */
+  not_paid_closed: { id: "not_paid_closed", text: "Move the case to the appropriate queue(BD or PRICING).", choices: [] },
   within_days: {
     id: "within_days",
     text: "Is there an OVC form provided?",
@@ -280,14 +270,8 @@ const NODES = {
     ]
   },
   proceed_review: { id: "proceed_review", text: "Proceed on reviewing the claim.", choices: [] },
-  
   ask_for_form: { id: "ask_for_form", text: "Respond to the customer and ask for the OVC form.", choices: [] },
-
-  /* Deny */
   deny_claim: { id: "deny_claim", text: "Deny the claim. Claims should be filed within 180 + 7 days per per item 438.", choices: [] },
-
-  /* Types of disputes */
-  /* This node will present categories */
   type_of_dispute: {
     id: "type_of_dispute",
     text: "Review Claim. What is the type of dispute?",
@@ -303,114 +287,81 @@ const NODES = {
       { label: "GTE / GAMD and CDW", next: "otc_gems_cow" }
     ]
   },
-
-  /* Specific actions for each dispute type */
   priority_plus: {
     id: "priority_plus",
     text: "Send dispute to Priorityplus@fedex.com using OSV email. Is the dispute accepted by the Reviewing Party?",
-    choices: [    { label: "Yes", next: "process_on_tms" },
-    			{ label: "No", next: "educate_customer" },
-    ]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
   intra_canada: {
     id: "intra_canada",
     text: "Send dispute to Domesticrates@fedex.com using OSV email. Is the dispute accepted by the Reviewing Party?",
-    choices: [{ label: "Yes", next: "process_on_tms" },
-    			{ label: "No", next: "educate_customer" },
-                ]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
   inspected_shipment: {
     id: "inspected_shipment",
     text: "Send dispute to Freightresearch@fedex.com using OSV email. Is the dispute accepted by the Reviewing Party?",
-    choices: [{ label: "Yes", next: "process_on_tms" },
-    			{ label: "No", next: "educate_customer",  },]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
-  
-  
-  
   reweigh_concern: {
     id: "reweigh_concern",
     text: "Follow Reweigh Process and use FBC to calculate the credit. Did we pull up the claim amount after autorating?",
-    choices: [{ label: "Yes", next: "final_note" },
-    			{ label: "No", next: "final_notes"}]
+    choices: [{ label: "Yes", next: "final_note" }, { label: "No", next: "final_notes"}]
   },
-  
   billing_dispute: {
     id: "billing_dispute",
     text: "Follow Billing Dispute Process and use FBC to calculate the credit. Did we pull up the claim amount after autorating?",
-    choices: [{ label: "Yes", next: "final_note" },
-    			{ label: "No", next: "final_notes" }]
+    choices: [{ label: "Yes", next: "final_note" }, { label: "No", next: "final_notes" }]
   },
   pricing_concern: {
     id: "pricing_concern",
     text: "Follow Pricing Process and use FBC to calculate the credit. Did we pull up the claim amount after autorating?",
-    choices: [{ label: "Yes", next: "final_note" },
-    			{ label: "No", next: "final_notes" }]
+    choices: [{ label: "Yes", next: "final_note" }, { label: "No", next: "final_notes" }]
   },
-  
-  
-  
-  
   international_shipment: {
     id: "international_shipment",
     text: "Send dispute to Tina Stewart and Andrea Staats email. Is the dispute accepted by the Reviewing Party?",
-    choices: [{ label: "Yes", next: "process_on_tms" },
-    			{ label: "No", next: "educate_customer" }]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
   detention_cases: {
     id: "detention_cases",
     text: "Move the case to SBL Emails queue and add OVC+Dispute' on the subject line. Is the dispute accepted by the Reviewing Party?",
-    choices: [{ label: "Yes", next: "process_on_tms" },
-    			{ label: "No", next: "educate_customer" }]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
   otc_gems_cow: {
     id: "otc_gems_cow",
     text: "Move the case to FXF Guaranteed Service Dispute Queue. Is the dispute accepted by the Reviewing Party?",
-    choices: [{ label: "Yes", next: "process_on_tms" },
-    			{ label: "No", next: "educate_customer" }]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
-
-  /* After dispute routed: acceptance by reviewing party (shared node pattern) */
   reviewing_party_response: {
     id: "reviewing_party_response",
     text: "Dispute accepted by the Reviewing Party?",
-    choices: [
-      { label: "Yes", next: "process_on_tms" },
-      { label: "No", next: "educate_customer" }
-    ]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
   process_on_tms: { id: "process_on_tms", text: "Go ahead and process the claim on TFMS.", choices: [] },
   educate_customer: { id: "educate_customer", text: "Educate the customer accordingly.", choices: [] },
-
-  /* FBC computation and autorate check */
   use_fbc: { id: "use_fbc", text: "Use FBC to calculate the credit.", choices: [] },
-
   autorate_check: {
     id: "autorate_check",
     text: "After autorating, did we pull up the claim amount?",
-    choices: [
-      { label: "Yes", next: "process_on_tms" },
-      { label: "No", next: "educate_customer" }
-    ]
+    choices: [{ label: "Yes", next: "process_on_tms" }, { label: "No", next: "educate_customer" }]
   },
-
-  /* Final note node */
   final_note: { id: "final_note", text: "<p>Go ahead and process the claim on TFMS.</p><p><em> NOTE: For Billing Incorrectly Pros, correction needs to be done on FBC.</p></em>", choices: [] },
-  
   final_notes: { id: "final_notes", text: "Educate the customer accordingly.<br><br><em> NOTE: For Billing Incorrectly Pros, correction needs to be done on FBC.</em>", choices: [] }
 };
-
-
 
 /* ---------- STATE ---------- */
 let path = [];
 let historyStack = [];
-let currentFinalRecommendation = ""; 
+let currentFinalRecommendation = "";
 let currentEditType = "";
 
+/* retry counters map for loading from firestore if not ready yet */
+const _firestoreLoadAttempts = {};
+
 /* ---------- HELPERS ---------- */
-function escapeHtml(unsafe) { 
-  return unsafe.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); 
+function escapeHtml(unsafe) {
+  if (!unsafe) return "";
+  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
 
 /* ---------- RENDER ---------- */
@@ -422,15 +373,10 @@ function renderNode(nodeObj, nodeKey="root") {
   const suggestedPanel = document.getElementById("suggestedPanel");
 
   flowArea.innerHTML = "";
-
-  // Show recommendation if final
-  if (currentFinalRecommendation) {
-    document.getElementById("recommendation").innerHTML =
-      `<strong>${currentFinalRecommendation.replace(/\n/g, "<br>")}</strong>`;
-  } else {
-    document.getElementById("recommendation").textContent = "No recommendation yet.";
-    suggestedPanel.style.display = "none";
-  }
+  document.getElementById("recommendation").innerHTML = "No recommendation yet.";
+  document.getElementById("suggestedComment").innerHTML = "";
+  document.getElementById("suggestedEmail").textContent = "";
+  suggestedPanel.style.display = "none";
 
   if (nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length) {
     const q = document.createElement("div");
@@ -454,7 +400,7 @@ function renderNode(nodeObj, nodeKey="root") {
           currentFinalRecommendation = nextNode.text;
           document.getElementById("recommendation").innerHTML =
             `<strong>${currentFinalRecommendation.replace(/\n/g, "<br>")}</strong>`;
-          generateSuggestedCommentEmail(currentFinalRecommendation); // show panel
+          generateSuggestedCommentEmail(currentFinalRecommendation); // load templates
         } else {
           currentFinalRecommendation = "";
           document.getElementById("recommendation").textContent = "No recommendation yet.";
@@ -481,21 +427,22 @@ function renderNode(nodeObj, nodeKey="root") {
   goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
   startOverBtn.style.display = path.length ? "inline-block" : "none";
 
-  // ---------- PROGRESS BAR (fill only, no step numbers) ----------
- const stepNum = path.length + 1;
-  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; // arbitrary max 5 steps for smooth fill
-  progressText.textContent = `Step ${stepNum}`;
+  const stepNum = path.length + 1;
+  progressFill.style.width = Math.min(stepNum * 20, 100) + "%";
+  document.getElementById("progressText").textContent = `Step ${stepNum}`;
 }
 
 /* ---------- PATH DISPLAY ---------- */
 function updateSelectedPath(){
   const el = document.getElementById("selectedPath");
+  if (!path.length) { el.innerHTML = "No steps selected yet."; return; }
   el.innerHTML = path.map((p, idx) =>
     `<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`
   ).join("<br>");
 }
 
 /* ---------- SUGGESTED COMMENT & EMAIL ---------- */
+/* Attempts Firestore first; falls back after retries */
 function generateSuggestedCommentEmail(finalText) {
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
@@ -508,13 +455,36 @@ function generateSuggestedCommentEmail(finalText) {
     return;
   }
 
-  // Load saved edits from localStorage if they exist
-  const savedComment = localStorage.getItem(`comment_${finalText}`) || "";
-  const savedEmail = localStorage.getItem(`email_${finalText}`) || "";
+  const docId = encodeURIComponent(finalText);
 
-  commentBox.innerHTML = savedComment;
-  emailBox.innerHTML = savedEmail;
-  suggestedPanel.style.display = "block";
+  if (typeof window.loadFromFirestore === "function") {
+    _firestoreLoadAttempts[docId] = 0;
+    window.loadFromFirestore(docId).then(data => {
+      const comment = (data && data.comment) ? data.comment : `VS-BLER-CASE#-${finalText}`;
+      const email = (data && data.email) ? data.email : `Hi,\n\n${finalText}\n\nThank you,\nEBS Operations - Invoicing Solutions`;
+      commentBox.innerHTML = comment;
+      emailBox.innerHTML = email.replace(/\n/g,"<br>");
+      suggestedPanel.style.display = "block";
+    }).catch(err => {
+      console.error("Error loading OVC templates:", err);
+      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
+      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+      suggestedPanel.style.display = "block";
+    });
+  } else {
+    // retry a few times
+    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId] || 0) + 1;
+    if (_firestoreLoadAttempts[docId] <= 10) {
+      setTimeout(() => generateSuggestedCommentEmail(finalText), 200);
+      return;
+    } else {
+      // fallback
+      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
+      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+      suggestedPanel.style.display = "block";
+      return;
+    }
+  }
 }
 
 /* ---------- ADMIN EDIT ---------- */
@@ -537,8 +507,11 @@ function checkPassword() {
 
 function openEditModal() {
   const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  document.getElementById("editTextarea").value = document.getElementById(currentBox).innerHTML;
+  // preserve <br> -> convert to newline for textarea
+  const currentHtml = document.getElementById(currentBox).innerHTML || "";
+  document.getElementById("editTextarea").value = currentHtml.replace(/<br\s*\/?>/ig, "\n");
   document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
+  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore (collection: ovc_templates).";
   document.getElementById("editModal").style.display = "flex";
 }
 
@@ -550,19 +523,44 @@ function saveEdit() {
     alert("No recommendation selected to save edits for!");
     return;
   }
-  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
-  const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  document.getElementById(currentBox).innerHTML = val;
-  document.getElementById("suggestedPanel").style.display = "block";
-  closeEditModal();
+  const docId = encodeURIComponent(currentFinalRecommendation);
+
+  if (typeof window.saveTemplateToFirestore !== "function" || typeof window.loadFromFirestore !== "function") {
+    alert("Saving is not ready yet — please try again in a moment.");
+    closeEditModal();
+    return;
+  }
+
+  // Build payload to merge
+  const payload = {};
+  if (currentEditType === "comment") payload.comment = val;
+  else payload.email = val;
+
+  window.saveTemplateToFirestore(docId, payload)
+    .then(() => {
+      // update UI immediately
+      if (currentEditType === "comment") {
+        document.getElementById("suggestedComment").innerHTML = val;
+      } else {
+        document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
+      }
+      document.getElementById("suggestedPanel").style.display = "block";
+      closeEditModal();
+      alert("Saved to Firestore!");
+    })
+    .catch(err => {
+      console.error("Error saving OVC template:", err);
+      alert("Error saving to Firestore. Check console.");
+    });
 }
 
 /* ---------- EVENTS ---------- */
 document.getElementById("goBackBtn").onclick = () => {
   if (historyStack.length) {
     const last = historyStack.pop();
-    path = last.path;
+    path = last.path || [];
     renderNode(NODES[last.nodeKey] || TREE, last.nodeKey);
+    updateSelectedPath();
   }
 };
 
@@ -571,16 +569,73 @@ document.getElementById("startOverBtn").onclick = () => {
   historyStack = [];
   currentFinalRecommendation = "";
   document.getElementById("selectedPath").textContent = "No steps selected yet.";
+  document.getElementById("suggestedPanel").style.display = "none";
   renderNode(TREE, "root");
 };
 
 document.getElementById("copyEmailBtn").onclick = () => {
-  navigator.clipboard.writeText(document.getElementById("suggestedEmail").textContent);
-  alert("Email copied!");
+  const txt = (document.getElementById("suggestedEmail").innerText || document.getElementById("suggestedEmail").textContent || "");
+  navigator.clipboard.writeText(txt).then(() => {
+    alert("Email copied!");
+  }).catch(() => {
+    alert("Unable to copy - your browser may block clipboard access.");
+  });
 };
 
 /* ---------- INIT ---------- */
-renderNode(TREE, "root");
+window.addEventListener('load', () => {
+  renderNode(TREE, "root");
+});
+</script>
+
+<!-- ---------- FIREBASE MODULE (bottom) ---------- -->
+<script type="module">
+/* Firestore helpers for OVC templates
+   Collection used: 'ovc_templates'
+   Document ID: encodeURIComponent(finalRecommendationText)
+   Document fields: { comment: "...", email: "..." }
+*/
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// <-- your firebase config (as provided) -->
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.firebasestorage.app",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Save partial template to ovc_templates/{docId} (merge)
+async function saveTemplateToFirestore(docId, partial) {
+  if (!docId) throw new Error("docId required");
+  if (!partial || typeof partial !== "object") throw new Error("partial object required");
+  await setDoc(doc(db, "ovc_templates", docId), partial, { merge: true });
+}
+
+// Load template (both fields)
+async function loadFromFirestore(docId) {
+  if (!docId) return {};
+  const docRef = doc(db, "ovc_templates", docId);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return {};
+  const d = snap.data() || {};
+  return { comment: d.comment || null, email: d.email || null };
+}
+
+// Expose to window so the non-module script can call them
+window.saveTemplateToFirestore = saveTemplateToFirestore;
+window.loadFromFirestore = loadFromFirestore;
+
+console.log("OVC Firestore helpers ready (collection: ovc_templates).");
 </script>
 
 </body>
