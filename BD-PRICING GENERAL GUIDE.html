@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -58,83 +58,17 @@ button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
 textarea{resize:none}
 @keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media(max-width:1200px){.container{grid-template-columns:1fr}}
-
-/* ---------- MODAL STYLES ---------- */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.45);
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-  background: #fff;
-  padding: 25px 30px;
-  border-radius: 12px;
-  min-width: 500px;      
-  max-width: 600px;       
-  box-shadow: 0 12px 28px rgba(0,0,0,0.2);
-  text-align: center;
-  font-family: Inter, sans-serif;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.modal-content input[type="password"], 
-.modal-content textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
-  margin-top: 10px;
-  font-family: Inter, sans-serif;
-}
-
-.modal-content textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-.modal-content button {
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  margin-left: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-content button:hover {
-  opacity: 0.9;
-}
-
-.modal-content .save-btn {
-  background-color: var(--accent);
-  color: #fff;
-}
-
-.modal-content .cancel-btn {
-  background-color: #e5e7eb;
-  color: #111827;
-}
-
-@media(max-width:500px){
-  .modal-content { width: 90%; min-width: unset; padding:20px; }
-}
+/* MODAL STYLES */
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.45); align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.3s ease;}
+.modal-content { background: #fff; padding: 25px 30px; border-radius: 12px; min-width: 500px; max-width: 600px; box-shadow: 0 12px 28px rgba(0,0,0,0.2); text-align: center; font-family: Inter, sans-serif; }
+.modal-content h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; font-weight: 600; color: var(--accent); }
+.modal-content input[type="password"], .modal-content textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 14px; margin-top: 10px; font-family: Inter, sans-serif; }
+.modal-content textarea { min-height: 120px; resize: vertical; }
+.modal-content button { border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-left: 6px; cursor: pointer; transition: all 0.2s ease; }
+.modal-content button:hover { opacity: 0.9; }
+.modal-content .save-btn { background-color: var(--accent); color: #fff; }
+.modal-content .cancel-btn { background-color: #e5e7eb; color: #111827; }
+@media(max-width:500px){ .modal-content { width: 90%; min-width: unset; padding:20px; } }
 </style>
 </head>
 <body>
@@ -196,15 +130,6 @@ textarea{resize:none}
   </div>
 </div>
 
-<footer style="display:flex;align-items:center;justify-content:space-between;">
-  <p>© 2025 EBS Operations</p>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <span style="font-size:12px;color:white;">
-      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
-    </span>
-  </div>
-</footer>
-
 <!-- Password Modal -->
 <div id="passwordModal" class="modal">
   <div class="modal-content">
@@ -230,104 +155,115 @@ textarea{resize:none}
   </div>
 </div>
 
+<footer style="display:flex;align-items:center;justify-content:space-between;">
+  <p>© 2025 EBS Operations</p>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:white;">
+      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
+    </span>
+  </div>
+</footer>
+
+<!-- ---------- MAIN DECISION TREE + UI LOGIC ---------- -->
 <script>
 /* ---------- DECISION TREE ---------- */
-/* ---------- Updated Decision Tree ---------- */
+/* (kept the same structure you provided earlier) */
 const TREE = {
-id: "root",
-text: "Does the customer have a surcharge exception?",
-choices: [
-{ label: "Yes", next: "yes_exception" },
-{ label: "No", next: "no_exception" }
-]
+  id: "root",
+  text: "Does the customer have a surcharge exception?",
+  choices: [
+    { label: "Yes", next: "yes_exception" },
+    { label: "No", next: "no_exception" }
+  ]
 };
 
 const NODES = {
-/* YES branch */
-yes_exception: {
-text: "Yes — which case?",
-choices: [
-{ label: "Yes, but does not apply on PRO after autorating", next: "no_apply_after_auto" },
-{ label: "Yes, has surcharge exception effective at the time of shipment", next: "yes_apply_effective" }
-]
-},
-no_apply_after_auto: {
-text: "Run a quote to verify whether their pricing is already fixed.",
-choices: [
-{ label: "Rate quote does NOT pull correct pricing", next: "quote_not_correct" },
-{ label: "Rate quote pulls correct pricing", next: "quote_correct" }
-]
-},
-quote_not_correct: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
-quote_correct: { text: "Email Training Team for approval to manually rate the invoice.", choices: [] },
+  yes_exception: {
+    text: "Yes — which case?",
+    choices: [
+      { label: "Yes, but does not apply on PRO after autorating", next: "no_apply_after_auto" },
+      { label: "Yes, has surcharge exception effective at the time of shipment", next: "yes_apply_effective" }
+    ]
+  },
+  no_apply_after_auto: {
+    text: "Run a quote to verify whether their pricing is already fixed.",
+    choices: [
+      { label: "Rate quote does NOT pull correct pricing", next: "quote_not_correct" },
+      { label: "Rate quote pulls correct pricing", next: "quote_correct" }
+    ]
+  },
+  quote_not_correct: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
+  quote_correct: { text: "Email Training Team for approval to manually rate the invoice.", choices: [] },
 
-yes_apply_effective: {
-text: "Read carefully and understand the exception. Can it be applied on PRO?",
-choices: [
-{ label: "Surcharge is manually rated accessorial (Storage/Detention)", next: "manually_rated" },
-{ label: "Surcharge is NOT manually rated", next: "not_manually_rated" }
-]
-},
-manually_rated: { text: "Manually apply the customer's accessorial exception on PRO.", choices: [] },
-not_manually_rated: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
+  yes_apply_effective: {
+    text: "Read carefully and understand the exception. Can it be applied on PRO?",
+    choices: [
+      { label: "Surcharge is manually rated accessorial (Storage/Detention)", next: "manually_rated" },
+      { label: "Surcharge is NOT manually rated", next: "not_manually_rated" }
+    ]
+  },
+  manually_rated: { text: "Manually apply the customer's accessorial exception on PRO.", choices: [] },
+  not_manually_rated: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
 
-/* NO branch */
-no_exception: {
-text: "Which situation?",
-choices: [
-{ label: "No previous exception, but customer published agreement later", next: "published_agreement" },
-{ label: "Does the customer have exception BEFORE and AFTER shipment?", next: "before_after_question" }
-]
-},
-published_agreement: {
-text: "Effective date of the agreement?",
-choices: [
-{ label: "More than 180 days from ship date", next: "published_more" },
-{ label: "Within 180 days from ship date", next: "published_within" }
-]
-},
-published_more: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] },
-published_within: { text: "Apply the pricing exception.", choices: [] },
+  no_exception: {
+    text: "Which situation?",
+    choices: [
+      { label: "No previous exception, but customer published agreement later", next: "published_agreement" },
+      { label: "Does the customer have exception BEFORE and AFTER shipment?", next: "before_after_question" }
+    ]
+  },
+  published_agreement: {
+    text: "Effective date of the agreement?",
+    choices: [
+      { label: "More than 180 days from ship date", next: "published_more" },
+      { label: "Within 180 days from ship date", next: "published_within" }
+    ]
+  },
+  published_more: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] },
+  published_within: { text: "Apply the pricing exception.", choices: [] },
 
-before_after_question: {
-text: "Does the customer have a surcharge exception before and after the shipment?",
-choices: [
-{ label: "Yes", next: "yes_before_after" },
-{ label: "No", next: "no_before_after" }
-]
-},
-yes_before_after: {
-text: "Verify if the customer has a pricing gap.",
-choices: [
-{ label: "Gap less than 2 weeks (≤14 days)", next: "gap_less" },
-{ label: "Gap more than 2 weeks (≥15 days)", next: "gap_more" }
-]
-},
-gap_less: { text: "If we aren’t overriding a previous agreement or anything like that and all we are doing is applying the customer’s pricing, simply due to nothing more than a gap which was 2 weeks or less, go ahead and rerate without asking for approval.", choices: [] },
+  before_after_question: {
+    text: "Does the customer have a surcharge exception before and after the shipment?",
+    choices: [
+      { label: "Yes", next: "yes_before_after" },
+      { label: "No", next: "no_before_after" }
+    ]
+  },
+  yes_before_after: {
+    text: "Verify if the customer has a pricing gap.",
+    choices: [
+      { label: "Gap less than 2 weeks (≤14 days)", next: "gap_less" },
+      { label: "Gap more than 2 weeks (≥15 days)", next: "gap_more" }
+    ]
+  },
+  gap_less: { text: "If we aren’t overriding a previous agreement or anything like that and all we are doing is applying the customer’s pricing, simply due to nothing more than a gap which was 2 weeks or less, go ahead and rerate without asking for approval.", choices: [] },
 
-gap_more: {
-text: "Who are you talking to?",
-choices: [
-{ label: "Customer", next: "gap_customer" },
-{ label: "Sales Rep", next: "gap_salesrep" }
-]
-},
-gap_customer: { text: "Send an email to the Training Team, who will forward the case to Dustin Carlton. Dustin will then reach out to the Sales Rep who will be sending a Rerate Request.", choices: [] },
-
-
-gap_salesrep: { text: "Advise the Sales Rep to fill out a Back Date Form and send a Rerate request.", choices: [] },
-
-no_before_after: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] }
+  gap_more: {
+    text: "Who are you talking to?",
+    choices: [
+      { label: "Customer", next: "gap_customer" },
+      { label: "Sales Rep", next: "gap_salesrep" }
+    ]
+  },
+  gap_customer: { text: "Send an email to the Training Team, who will forward the case to Dustin Carlton. Dustin will then reach out to the Sales Rep who will be sending a Rerate Request.", choices: [] },
+  gap_salesrep: { text: "Advise the Sales Rep to fill out a Back Date Form and send a Rerate request.", choices: [] },
+  no_before_after: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] }
 };
 
 /* ---------- STATE ---------- */
 let path = [];
 let historyStack = [];
-let currentFinalRecommendation = ""; 
+let currentFinalRecommendation = "";
 let currentEditType = "";
 
+/* retry counters map for loading from firestore if not ready yet */
+const _firestoreLoadAttempts = {};
+
 /* ---------- HELPERS ---------- */
-function escapeHtml(unsafe) { return unsafe.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function escapeHtml(unsafe) { 
+  if (unsafe === null || unsafe === undefined) return "";
+  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
 
 /* ---------- RENDER ---------- */
 function renderNode(nodeObj,nodeKey="root") {
@@ -338,7 +274,11 @@ function renderNode(nodeObj,nodeKey="root") {
   const progressText=document.getElementById("progressText");
   const suggestedPanel=document.getElementById("suggestedPanel");
 
-  flowArea.innerHTML=""; document.getElementById("recommendation").innerHTML="No recommendation yet."; suggestedPanel.style.display="none";
+  flowArea.innerHTML="";
+  document.getElementById("recommendation").innerHTML="No recommendation yet.";
+  document.getElementById("suggestedComment").innerHTML="";
+  document.getElementById("suggestedEmail").textContent="";
+  suggestedPanel.style.display="none";
 
   if(nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length){
     const q=document.createElement("div"); q.innerHTML=`<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`; flowArea.appendChild(q);
@@ -346,46 +286,94 @@ function renderNode(nodeObj,nodeKey="root") {
     nodeObj.choices.forEach(choice=>{
       const btn=document.createElement("div"); btn.className="choice"; btn.textContent=choice.label;
       btn.onclick=()=>{
-        historyStack.push({nodeKey,path:JSON.parse(JSON.stringify(path))});
+        historyStack.push({nodeKey, path: JSON.parse(JSON.stringify(path))});
         path.push({question:nodeObj.text,answer:choice.label});
-        const nextNode=NODES[choice.next]||{};
-        if(nextNode && nextNode.text && (!nextNode.choices||nextNode.choices.length===0)) currentFinalRecommendation=nextNode.text; else currentFinalRecommendation="";
+        const nextNode = NODES[choice.next] || (choice.action?{action:choice.action,note:choice.note}: {});
+        if(nextNode.action) currentFinalRecommendation = nextNode.action;
         renderNode(nextNode,choice.next);
         updateSelectedPath();
-      }; list.appendChild(btn);
+        if(nextNode.action) generateSuggestedCommentEmail(nextNode.action);
+      }; 
+      list.appendChild(btn);
     }); flowArea.appendChild(list);
-  } else if(nodeObj && nodeObj.text){ currentFinalRecommendation=nodeObj.text; document.getElementById("recommendation").innerHTML=`<strong>${escapeHtml(currentFinalRecommendation)}</strong>`;
-  
-  updateSelectedPath(); generateSuggestedCommentEmail(currentFinalRecommendation); }
-  
-  goBackBtn.style.display=historyStack.length?"inline-block":"none"; startOverBtn.style.display=path.length?"inline-block":"none";
-  
- const stepNum = path.length + 1;
-  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; // arbitrary max 5 steps for smooth fill
-  progressText.textContent = `Step ${stepNum}`;
+  } else if(nodeObj && nodeObj.text){
+    // final-action node
+    const actionText = nodeObj.action || nodeObj.text;
+    currentFinalRecommendation = actionText;
+    document.getElementById("recommendation").innerHTML = `<strong>${escapeHtml(actionText)}</strong>${nodeObj.note?`<div class="note">${escapeHtml(nodeObj.note)}</div>`:''}`;
+    updateSelectedPath();
+    generateSuggestedCommentEmail(actionText);
+  }
+
+  goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
+  startOverBtn.style.display = path.length ? "inline-block" : "none";
+
+  const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
+  progressFill.style.width = Math.min(stepNum * 20, 100) + "%";
+  progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
 }
 
+/* ---------- PATH DISPLAY ---------- */
 function updateSelectedPath(){
   const el=document.getElementById("selectedPath");
-  el.innerHTML=path.map((p,idx)=>`<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`).join("<br>");
+  if(!path.length){ el.innerHTML = "No steps selected yet."; return; }
+  el.innerHTML = path.map((p,idx)=>`<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`).join("<br>");
 }
 
+/* ---------- SUGGESTED COMMENT & EMAIL ---------- */
+/* This function attempts to load saved templates from Firestore.
+   If Firestore module isn't ready yet (load function not attached), it will retry a few times then fallback to defaults.
+*/
 function generateSuggestedCommentEmail(finalText) {
-  if (!finalText) return;
-
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
+  const suggestedPanel = document.getElementById("suggestedPanel");
 
-  // Load saved edits from localStorage (use innerHTML to preserve formatting)
-  const storedComment = localStorage.getItem(`comment_${finalText}`);
-  const storedEmail = localStorage.getItem(`email_${finalText}`);
+  if (!finalText) {
+    suggestedPanel.style.display = "none";
+    commentBox.innerHTML = "";
+    emailBox.innerHTML = "";
+    return;
+  }
 
-  // Only fallback to default if nothing is stored
-  commentBox.innerHTML = storedComment !== null ? storedComment : `VS-BLER-CASE#-${finalText}`;
-  emailBox.innerHTML = storedEmail !== null ? storedEmail : `Hi,<br><br>${finalText}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+  // create a safe document id (encode)
+  const docId = encodeURIComponent(finalText);
 
-  // Make sure the suggested panel is visible
-  document.getElementById("suggestedPanel").style.display = "block";
+  // if loadFromFirestore is available, use it
+  if (typeof window.loadFromFirestore === "function") {
+    // reset attempts counter for this finalText
+    _firestoreLoadAttempts[docId] = 0;
+    window.loadFromFirestore(docId).then(data => {
+      const comment = (data && data.comment) ? data.comment : `VS-BLER-CASE#-${finalText}`;
+      const email = (data && data.email) ? data.email : `Hi,\n\n${finalText}\n\nThank you,\nEBS Operations - Invoicing Solutions`;
+      // keep HTML formatting for email box (allow <br> if any)
+      commentBox.innerHTML = comment;
+      // show as preformatted text in output box while preserving line breaks:
+      emailBox.innerHTML = email.replace(/\n/g,"<br>");
+      suggestedPanel.style.display = "block";
+    }).catch(err => {
+      console.error("Error loading from Firestore:", err);
+      // fallback to defaults if load fails
+      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
+      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+      suggestedPanel.style.display = "block";
+    });
+  } else {
+    // Firestore not ready yet — retry a few times then fallback
+    const maxAttempts = 10;
+    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId] || 0) + 1;
+    if (_firestoreLoadAttempts[docId] <= maxAttempts) {
+      // try again shortly
+      setTimeout(() => generateSuggestedCommentEmail(finalText), 200);
+      return;
+    } else {
+      // fallback to defaults
+      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
+      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+      suggestedPanel.style.display = "block";
+      return;
+    }
+  }
 }
 
 /* ---------- ADMIN EDIT ---------- */
@@ -395,9 +383,7 @@ function attemptEdit(type){
   document.getElementById("passwordModal").style.display = "flex";
 }
 
-function closePasswordModal() {
-  document.getElementById("passwordModal").style.display = "none";
-}
+function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
 
 function checkPassword() {
   if (document.getElementById("adminPassword").value === "admin") {
@@ -409,15 +395,21 @@ function checkPassword() {
 }
 
 function openEditModal() {
-  const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  document.getElementById("editTextarea").value = document.getElementById(currentBox).innerHTML;
+  if (!currentFinalRecommendation) {
+    alert("Select a recommendation first before editing.");
+    return;
+  }
+  const currentBox = currentEditType === "comment" ? document.getElementById("suggestedComment") : document.getElementById("suggestedEmail");
+  // read innerHTML so we can preserve line breaks for email
+  const currentContent = currentBox ? currentBox.innerHTML : "";
+  // convert <br> back to newlines for textarea
+  document.getElementById("editTextarea").value = currentContent.replace(/<br\s*\/?>/g,"\n");
   document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
+  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore for this exact recommendation text.";
   document.getElementById("editModal").style.display = "flex";
 }
 
-function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-}
+function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
 
 function saveEdit() {
   const val = document.getElementById("editTextarea").value;
@@ -425,29 +417,147 @@ function saveEdit() {
     alert("No recommendation selected to save edits for!");
     return;
   }
-  // Save to localStorage
-  localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
-  // Update the displayed box immediately
-  const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  document.getElementById(currentBox).innerHTML = val;
-  // Ensure panel is visible
-  document.getElementById("suggestedPanel").style.display = "block";
-  closeEditModal();
+  const docId = encodeURIComponent(currentFinalRecommendation);
+
+  // Firestore helpers must be available (exposed by module)
+  if (typeof window.saveCommentToFirestore !== "function" || typeof window.saveEmailToFirestore !== "function") {
+    alert("Saving is not ready yet — please try again in a moment.");
+    closeEditModal();
+    return;
+  }
+
+  if (currentEditType === "comment") {
+    window.saveCommentToFirestore(docId, val)
+      .then(() => {
+        document.getElementById("suggestedComment").innerHTML = val;
+        document.getElementById("suggestedPanel").style.display = "block";
+        alert("Comment saved to Firestore.");
+        closeEditModal();
+      })
+      .catch(err => {
+        console.error("Error saving comment:", err);
+        alert("Error saving comment to Firestore. Check console.");
+      });
+  } else {
+    window.saveEmailToFirestore(docId, val)
+      .then(() => {
+        document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
+        document.getElementById("suggestedPanel").style.display = "block";
+        alert("Email saved to Firestore.");
+        closeEditModal();
+      })
+      .catch(err => {
+        console.error("Error saving email:", err);
+        alert("Error saving email to Firestore. Check console.");
+      });
+  }
 }
 
 /* ---------- EVENTS ---------- */
-document.getElementById("goBackBtn").onclick=()=>{ if(historyStack.length){ const last=historyStack.pop(); path=last.path; renderNode(NODES[last.nodeKey]||TREE,last.nodeKey); }};
-document.getElementById("startOverBtn").onclick = () => {
-path = [];
-historyStack = [];
-currentFinalRecommendation = "";
-document.getElementById("selectedPath").textContent = "No steps selected yet.";
-renderNode(TREE, "root");
+document.getElementById("goBackBtn").onclick = () => {
+  if (historyStack.length) {
+    const last = historyStack.pop();
+    path = last.path || [];
+    renderNode(NODES[last.nodeKey] || TREE, last.nodeKey);
+    updateSelectedPath();
+  }
 };
-document.getElementById("copyEmailBtn").onclick=()=>{ navigator.clipboard.writeText(document.getElementById("suggestedEmail").textContent); alert("Email copied!"); };
+
+document.getElementById("startOverBtn").onclick = () => {
+  path = [];
+  historyStack = [];
+  currentFinalRecommendation = "";
+  document.getElementById("selectedPath").textContent = "No steps selected yet.";
+  document.getElementById("suggestedPanel").style.display = "none";
+  renderNode(TREE, "root");
+};
+
+document.getElementById("copyEmailBtn").onclick = () => {
+  const txt = (document.getElementById("suggestedEmail").innerText || document.getElementById("suggestedEmail").textContent || "");
+  navigator.clipboard.writeText(txt).then(() => {
+    alert("Email copied!");
+  }).catch(() => {
+    alert("Unable to copy - your browser may block clipboard access.");
+  });
+};
 
 /* ---------- INIT ---------- */
-renderNode(TREE,"root");
+window.addEventListener('load', () => {
+  renderNode(TREE, "root");
+});
+</script>
+
+<!-- ---------- FIREBASE MODULE: placed at bottom as requested (Option A) ---------- -->
+<script type="module">
+/* Firebase (CDN modular) initialization and Firestore helpers
+   Uses two collections:
+     - pricing_comments (documents: docId -> { comment: "..."} )
+     - pricing_emails   (documents: docId -> { email: "..." } )
+*/
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Your Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.firebasestorage.app",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Save comment to pricing_comments/{docId}
+export async function saveCommentToFirestore(docId, commentText) {
+  if (!docId) throw new Error("docId required");
+  try {
+    await setDoc(doc(db, "pricing_comments", docId), { comment: commentText }, { merge: true });
+  } catch (err) {
+    console.error("saveCommentToFirestore error:", err);
+    throw err;
+  }
+}
+
+// Save email to pricing_emails/{docId}
+export async function saveEmailToFirestore(docId, emailText) {
+  if (!docId) throw new Error("docId required");
+  try {
+    await setDoc(doc(db, "pricing_emails", docId), { email: emailText }, { merge: true });
+  } catch (err) {
+    console.error("saveEmailToFirestore error:", err);
+    throw err;
+  }
+}
+
+// Load both comment & email (returns { comment, email })
+export async function loadFromFirestore(docId) {
+  if (!docId) return {};
+  try {
+    const commentRef = doc(db, "pricing_comments", docId);
+    const emailRef = doc(db, "pricing_emails", docId);
+    const [commentSnap, emailSnap] = await Promise.all([getDoc(commentRef), getDoc(emailRef)]);
+    const data = {};
+    if (commentSnap.exists()) data.comment = commentSnap.data().comment;
+    if (emailSnap.exists()) data.email = emailSnap.data().email;
+    return data;
+  } catch (err) {
+    console.error("loadFromFirestore error:", err);
+    throw err;
+  }
+}
+
+// Expose helpers to the global window so non-module scripts can call them
+window.saveCommentToFirestore = saveCommentToFirestore;
+window.saveEmailToFirestore = saveEmailToFirestore;
+window.loadFromFirestore = loadFromFirestore;
+
+console.log("Firestore helpers ready (pricing_comments / pricing_emails).");
 </script>
 
 </body>
