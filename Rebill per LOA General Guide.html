@@ -46,7 +46,7 @@ button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
   background:#f8fafc;
   border-radius:8px;
   white-space:pre-wrap;
-   font-size:11px; 
+  font-size:11px; 
 }
 .copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
 .copy-btn:hover{opacity:.85}
@@ -82,7 +82,6 @@ textarea{resize:none}
     <button onclick="window.location.href='BD GENERAL GUIDE.html'">Go to BD General Guide</button>
   </div>
 </header>
-
 <div class="container">
   <div class="card">
     <h1>Rebill per LOA Guide</h1>
@@ -97,7 +96,6 @@ textarea{resize:none}
       <button id="startOverBtn" class="secondary" style="display:none;">Start Over</button>
     </div>
   </div>
-
   <div class="card">
     <div class="node">
       <strong>Selected Path</strong>
@@ -117,13 +115,24 @@ textarea{resize:none}
       </div>
       <div id="suggestedComment" class="output-box"></div>
     </div>
+    
+    <!-- CORR CODE -->
+    <div class="output-card" id="corrCard">
+      <div class="output-header">
+        Possible CORR CODE
+        <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
+      </div>
+      <div id="suggestedCorrCode" class="output-box"></div>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('suggestedCorrCode').innerText).then(()=>alert('CORR Code copied!'));">📋 Copy CORR</button>
+    </div>
+    
     <div class="output-card" id="emailCard">
       <div class="output-header">
         Suggested Email
         <span class="edit-icon" onclick="attemptEdit('email')" title="Do you want to update the Email?">✏️</span>
       </div>
       <div id="suggestedEmail" class="output-box"></div>
-      <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
+      <button class="copy-btn" id="copyEmailBtn">📋 Copy Email</button>
     </div>
     <div id="generalNote" class="note">Note: These are suggested templates. Personalized emails or comments are always more appreciated.</div>
   </div>
@@ -162,12 +171,9 @@ textarea{resize:none}
     </div>
   </div>
 </div>
-
 <script>
 /* ---------- DECISION TREE DATA (NODES) ---------- */
-/* ... (kept identical to the file you provided) ... */
-/* For brevity in this message I've included the same NODES object you provided earlier.
-   Paste your existing NODES object here (it was long). For the final file below I've left it as-is. */
+
 const NODES = {
   /* Root and all nodes (unchanged) */
   root:{ id:"root", text:"WHO IS THE DISPUTING / REQUESTING PARTY?", choices:[
@@ -336,9 +342,6 @@ let historyStack = [];
 let currentFinalRecommendation = "";
 let currentEditType = "";
 
-/* retry counters map for loading from firestore if not ready yet */
-const _firestoreLoadAttempts = {};
-
 /* ---------- HELPERS ---------- */
 function escapeHtml(unsafe) {
   if (unsafe === null || unsafe === undefined) return "";
@@ -356,7 +359,6 @@ function renderNode(nodeObj, nodeKey="root") {
 
   flowArea.innerHTML = "";
 
-  // Show recommendation if final
   if (currentFinalRecommendation) {
     document.getElementById("recommendation").innerHTML =
       `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
@@ -377,18 +379,15 @@ function renderNode(nodeObj, nodeKey="root") {
       const btn = document.createElement("div");
       btn.className = "choice";
       btn.textContent = choice.label;
-
       btn.onclick = () => {
-        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) , nodeKey});
+        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)), nodeKey });
         path.push({ question: nodeObj.text, answer: choice.label });
 
         const nextNode = NODES[choice.next] || {};
         if (nextNode && nextNode.text && (!nextNode.choices || nextNode.choices.length === 0)) {
           currentFinalRecommendation = nextNode.text;
-          // show recommendation immediately
           document.getElementById("recommendation").innerHTML =
             `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
-          // attempt to load templates from Firestore (or fallback)
           generateSuggestedCommentEmail(currentFinalRecommendation);
         } else {
           currentFinalRecommendation = "";
@@ -396,7 +395,6 @@ function renderNode(nodeObj, nodeKey="root") {
           suggestedPanel.style.display = "none";
         }
 
-        // render next node and pass nodeKey so renderNode can use it for notes
         renderNode(nextNode, choice.next);
         updateSelectedPath();
       };
@@ -405,9 +403,7 @@ function renderNode(nodeObj, nodeKey="root") {
     });
 
     flowArea.appendChild(list);
-
   } else if (nodeObj && nodeObj.text) {
-    // leaf node
     currentFinalRecommendation = nodeObj.text;
     document.getElementById("recommendation").innerHTML =
       `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
@@ -415,22 +411,9 @@ function renderNode(nodeObj, nodeKey="root") {
     generateSuggestedCommentEmail(currentFinalRecommendation);
   }
 
-  // inject notes for particular final nodes (they will show below recommendation)
-  if (nodeKey === "tpl_companya_corr" || nodeKey === "fpay_companya_corr") {
-    const recEl = document.getElementById("recommendation");
-    const notesHtml = `
-      <div class="note" style="margin-top:10px;">
-        <em>• If the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")} is already their ABT, no correction fee should be billed. (Example: Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL"} → Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY2" : "3PL2"} where the new provider is already the ABT.)</em><br/>
-        <em>• If the requesting party is the Shipper/Consignee asking to bill a new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}, deny the request. If they insist, request an LOA from the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}.</em>
-      </div>
-    `;
-    recEl.insertAdjacentHTML('beforeend', notesHtml);
-  }
-
   goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
   startOverBtn.style.display = path.length ? "inline-block" : "none";
 
-  // ---------- PROGRESS BAR ----------
   const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
   progressFill.style.width = Math.min(stepNum * 18, 100) + "%";
   progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
@@ -445,56 +428,49 @@ function updateSelectedPath(){
   ).join("<br>");
 }
 
-/* ---------- SUGGESTED COMMENT & EMAIL ----------
-   Now attempts to load from Firestore using window.loadFromFirestore(docId).
-   If Firestore helpers aren't ready yet we retry a few times then fallback to localStorage/defaults.
-*/
+/* ---------- SUGGESTED COMMENT / EMAIL / CORR CODE ---------- */
 function generateSuggestedCommentEmail(finalText) {
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
+  const corrBox = document.getElementById("suggestedCorrCode");
   const suggestedPanel = document.getElementById("suggestedPanel");
 
   if (!finalText) {
     suggestedPanel.style.display = "none";
     commentBox.innerHTML = "";
     emailBox.innerHTML = "";
+    corrBox.innerHTML = "";
     return;
   }
 
   const docId = encodeURIComponent(finalText);
 
   if (typeof window.loadFromFirestore === "function") {
-    _firestoreLoadAttempts[docId] = 0;
     window.loadFromFirestore(docId).then(data => {
-      const comment = (data && data.comment) ? data.comment : (localStorage.getItem(`comment_${finalText}`) || "");
-      const email = (data && data.email) ? data.email : (localStorage.getItem(`email_${finalText}`) || "");
-      commentBox.innerHTML = comment || "";
-      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
-      suggestedPanel.style.display = "block";
-    }).catch(err => {
-      console.error("Error loading from Firestore:", err);
-      // fallback: use localStorage if available
-      const comment = localStorage.getItem(`comment_${finalText}`) || "";
-      const email = localStorage.getItem(`email_${finalText}`) || "";
+      const comment = data?.comment || localStorage.getItem(`comment_${finalText}`) || "";
+      const email = data?.email || localStorage.getItem(`email_${finalText}`) || "";
+      const corr = data?.corr || localStorage.getItem(`corr_${finalText}`) || "";
       commentBox.innerHTML = comment;
       emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
+      corrBox.innerHTML = corr;
+      suggestedPanel.style.display = "block";
+    }).catch(() => {
+      const comment = localStorage.getItem(`comment_${finalText}`) || "";
+      const email = localStorage.getItem(`email_${finalText}`) || "";
+      const corr = localStorage.getItem(`corr_${finalText}`) || "";
+      commentBox.innerHTML = comment;
+      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
+      corrBox.innerHTML = corr;
       suggestedPanel.style.display = "block";
     });
   } else {
-    // Firestore not ready yet — retry a few times then fallback
-    const maxAttempts = 10;
-    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId] || 0) + 1;
-    if (_firestoreLoadAttempts[docId] <= maxAttempts) {
-      setTimeout(() => generateSuggestedCommentEmail(finalText), 200);
-      return;
-    } else {
-      const comment = localStorage.getItem(`comment_${finalText}`) || "";
-      const email = localStorage.getItem(`email_${finalText}`) || "";
-      commentBox.innerHTML = comment;
-      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
-      suggestedPanel.style.display = "block";
-      return;
-    }
+    const comment = localStorage.getItem(`comment_${finalText}`) || "";
+    const email = localStorage.getItem(`email_${finalText}`) || "";
+    const corr = localStorage.getItem(`corr_${finalText}`) || "";
+    commentBox.innerHTML = comment;
+    emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
+    corrBox.innerHTML = corr;
+    suggestedPanel.style.display = "block";
   }
 }
 
@@ -511,19 +487,17 @@ function checkPassword() {
   if (document.getElementById("adminPassword").value === "admin") {
     closePasswordModal();
     openEditModal();
-  } else {
-    alert("Incorrect password!");
-  }
+  } else alert("Incorrect password!");
 }
 
 function openEditModal() {
-  const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
+  const boxMap = { comment: "suggestedComment", email: "suggestedEmail", corr: "suggestedCorrCode" };
+  const currentBoxId = boxMap[currentEditType];
   const currentBox = document.getElementById(currentBoxId);
-  // innerHTML -> convert <br> to \n for email editing
   const html = currentBox.innerHTML || "";
   const text = html.replace(/<br\s*\/?>/gi,"\n").replace(/&amp;/g,"&");
   document.getElementById("editTextarea").value = text;
-  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
+  document.getElementById("modalTitle").textContent = `Edit ${currentEditType.toUpperCase()}`;
   document.getElementById("modalHint").textContent = "Edits will be saved to Firestore for this exact recommendation text.";
   document.getElementById("editModal").style.display = "flex";
 }
@@ -532,55 +506,31 @@ function closeEditModal() { document.getElementById("editModal").style.display =
 
 async function saveEdit() {
   const val = document.getElementById("editTextarea").value;
-  if (!currentFinalRecommendation) {
-    alert("No recommendation selected to save edits for!");
-    return;
-  }
-  const docId = encodeURIComponent(currentFinalRecommendation);
+  if (!currentFinalRecommendation) return alert("No recommendation selected to save edits for!");
 
-  // If Firestore helper functions are not loaded, notify and fallback to localStorage
-  if (typeof window.saveCommentToFirestore !== "function" || typeof window.saveEmailToFirestore !== "function") {
-    // fallback: save to localStorage and inform user
-    if (currentEditType === "comment") {
-      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
-      document.getElementById("suggestedComment").innerText = val;
-    } else {
-      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
-      document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
-    }
-    alert("Saved locally (Firestore not ready).");
-    closeEditModal();
-    return;
-  }
+  const docId = encodeURIComponent(currentFinalRecommendation);
+  const boxMap = { comment: "suggestedComment", email: "suggestedEmail", corr: "suggestedCorrCode" };
+  const boxId = boxMap[currentEditType];
 
   try {
-    if (currentEditType === "comment") {
+    if (currentEditType === "comment" && typeof window.saveCommentToFirestore === "function") {
       await window.saveCommentToFirestore(docId, val);
-      document.getElementById("suggestedComment").innerText = val;
-      // also keep a local copy
-      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
-      alert("Comment saved to Firestore.");
-    } else {
+    } else if (currentEditType === "email" && typeof window.saveEmailToFirestore === "function") {
       await window.saveEmailToFirestore(docId, val);
-      document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
-      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
-      alert("Email saved to Firestore.");
+    } else if (currentEditType === "corr" && typeof window.saveCorrToFirestore === "function") {
+      await window.saveCorrToFirestore(docId, val);
     }
-  } catch (err) {
-    console.error("Error saving to Firestore:", err);
-    alert("Error saving to Firestore — check console. Your edit has been saved locally.");
-    // fallback local save
-    if (currentEditType === "comment") {
-      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
-      document.getElementById("suggestedComment").innerText = val;
-    } else {
-      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
-      document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
-    }
-  } finally {
-    document.getElementById("suggestedPanel").style.display = "block";
-    closeEditModal();
-  }
+
+    // Fallback localStorage
+    localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
+    document.getElementById(boxId).innerHTML = currentEditType === "email" ? val.replace(/\n/g,"<br>") : val;
+    alert(`${currentEditType.toUpperCase()} saved successfully.`);
+  } catch(err) {
+    console.error(err);
+    localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
+    document.getElementById(boxId).innerHTML = currentEditType === "email" ? val.replace(/\n/g,"<br>") : val;
+    alert(`Error saving ${currentEditType} — saved locally.`);
+  } finally { closeEditModal(); document.getElementById("suggestedPanel").style.display = "block"; }
 }
 
 /* ---------- EVENTS ---------- */
@@ -604,77 +554,13 @@ document.getElementById("startOverBtn").onclick = () => {
 };
 
 document.getElementById("copyEmailBtn").onclick = () => {
-  const txt = (document.getElementById("suggestedEmail").innerText || document.getElementById("suggestedEmail").textContent || "");
-  navigator.clipboard.writeText(txt).then(() => {
-    alert("Email copied!");
-  }).catch(() => {
-    alert("Unable to copy - your browser may block clipboard access.");
-  });
+  const txt = document.getElementById("suggestedEmail").innerText || "";
+  navigator.clipboard.writeText(txt).then(() => alert("Email copied!"))
+  .catch(() => alert("Unable to copy - your browser may block clipboard access."));
 };
 
 /* ---------- INIT ---------- */
-window.addEventListener('load', () => {
-  renderNode(NODES.root, "root");
-});
-</script>
-
-<!-- ---------- FIREBASE MODULE: placed at bottom ---------- -->
-<script type="module">
-/* Firebase (CDN modular) initialization and Firestore helpers
-   Collections used:
-     - loa_comments (documents: docId -> { comment: "..."} )
-     - loa_emails   (documents: docId -> { email: "..." } )
-*/
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// Your Firebase config (as provided earlier)
-const firebaseConfig = {
-  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
-  authDomain: "bdgg-database.firebaseapp.com",
-  projectId: "bdgg-database",
-  storageBucket: "bdgg-database.firebasestorage.app",
-  messagingSenderId: "43574975434",
-  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Save comment to loa_comments/{docId}
-export async function saveCommentToFirestore(docId, commentText) {
-  if (!docId) throw new Error("docId required");
-  await setDoc(doc(db, "loa_comments", docId), { comment: commentText }, { merge: true });
-}
-
-// Save email to loa_emails/{docId}
-export async function saveEmailToFirestore(docId, emailText) {
-  if (!docId) throw new Error("docId required");
-  await setDoc(doc(db, "loa_emails", docId), { email: emailText }, { merge: true });
-}
-
-// Load both comment & email (returns { comment, email })
-export async function loadFromFirestore(docId) {
-  if (!docId) return {};
-  const commentRef = doc(db, "loa_comments", docId);
-  const emailRef = doc(db, "loa_emails", docId);
-
-  const [commentSnap, emailSnap] = await Promise.all([getDoc(commentRef), getDoc(emailRef)]);
-  const data = {};
-  if (commentSnap.exists()) data.comment = commentSnap.data().comment;
-  if (emailSnap.exists()) data.email = emailSnap.data().email;
-  return data;
-}
-
-// Expose helpers to the global window so non-module scripts can call them
-window.saveCommentToFirestore = saveCommentToFirestore;
-window.saveEmailToFirestore = saveEmailToFirestore;
-window.loadFromFirestore = loadFromFirestore;
-
-console.log("Firestore helpers ready (loa_comments / loa_emails).");
+window.addEventListener('load', () => { renderNode(NODES.root, "root"); });
 </script>
 
 </body>
