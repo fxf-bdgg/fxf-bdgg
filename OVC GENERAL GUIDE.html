@@ -364,15 +364,7 @@ let path = [];
 let historyStack = [];
 let currentFinalRecommendation = "";
 let currentEditType = "";
-
-/* retry counters map for loading from firestore if not ready yet */
 const _firestoreLoadAttempts = {};
-
-/* ---------- HELPERS ---------- */
-function escapeHtml(unsafe) {
-  if (!unsafe) return "";
-  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-}
 
 /* ---------- RENDER ---------- */
 function renderNode(nodeObj, nodeKey="root") {
@@ -385,12 +377,13 @@ function renderNode(nodeObj, nodeKey="root") {
   flowArea.innerHTML = "";
   document.getElementById("recommendation").innerHTML = "No recommendation yet.";
   document.getElementById("suggestedComment").innerHTML = "";
-  document.getElementById("suggestedEmail").textContent = "";
+  document.getElementById("suggestedEmail").innerHTML = "";
+  document.getElementById("suggestedCorrCode").innerHTML = "";
   suggestedPanel.style.display = "none";
 
   if (nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length) {
     const q = document.createElement("div");
-    q.innerHTML = `<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`;
+    q.innerHTML = `<strong style="font-size:16px">${nodeObj.text}</strong>`;
     flowArea.appendChild(q);
 
     const list = document.createElement("div");
@@ -400,7 +393,6 @@ function renderNode(nodeObj, nodeKey="root") {
       const btn = document.createElement("div");
       btn.className = "choice";
       btn.textContent = choice.label;
-
       btn.onclick = () => {
         historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) });
         path.push({ question: nodeObj.text, answer: choice.label });
@@ -408,210 +400,161 @@ function renderNode(nodeObj, nodeKey="root") {
         const nextNode = NODES[choice.next] || {};
         if (nextNode && nextNode.text && (!nextNode.choices || nextNode.choices.length === 0)) {
           currentFinalRecommendation = nextNode.text;
-          document.getElementById("recommendation").innerHTML =
-            `<strong>${currentFinalRecommendation.replace(/\n/g, "<br>")}</strong>`;
-          generateSuggestedCommentEmail(currentFinalRecommendation); // load templates
+          document.getElementById("recommendation").innerHTML = `<strong>${currentFinalRecommendation}</strong>`;
+          generateSuggestedTemplates(currentFinalRecommendation);
         } else {
           currentFinalRecommendation = "";
-          document.getElementById("recommendation").textContent = "No recommendation yet.";
           suggestedPanel.style.display = "none";
         }
 
         renderNode(nextNode, choice.next);
         updateSelectedPath();
       };
-
       list.appendChild(btn);
     });
 
     flowArea.appendChild(list);
-
   } else if (nodeObj && nodeObj.text) {
     currentFinalRecommendation = nodeObj.text;
-    document.getElementById("recommendation").innerHTML =
-      `<strong>${currentFinalRecommendation.replace(/\n/g, "<br>")}</strong>`;
+    document.getElementById("recommendation").innerHTML = `<strong>${currentFinalRecommendation}</strong>`;
     updateSelectedPath();
-    generateSuggestedCommentEmail(currentFinalRecommendation);
+    generateSuggestedTemplates(currentFinalRecommendation);
   }
 
   goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
   startOverBtn.style.display = path.length ? "inline-block" : "none";
 
   const stepNum = path.length + 1;
-  progressFill.style.width = Math.min(stepNum * 20, 100) + "%";
+  progressFill.style.width = Math.min(stepNum*20,100)+"%";
   document.getElementById("progressText").textContent = `Step ${stepNum}`;
 }
 
-/* ---------- PATH DISPLAY ---------- */
 function updateSelectedPath(){
   const el = document.getElementById("selectedPath");
   if (!path.length) { el.innerHTML = "No steps selected yet."; return; }
-  el.innerHTML = path.map((p, idx) =>
-    `<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`
+  el.innerHTML = path.map((p,idx) =>
+    `<strong>Step ${idx+1}:</strong> ${p.question} → <strong><em>${p.answer}</em></strong>`
   ).join("<br>");
 }
 
-/* ---------- SUGGESTED COMMENT & EMAIL ---------- */
-/* Attempts Firestore first; falls back after retries */
-function generateSuggestedCommentEmail(finalText) {
+/* ---------- SUGGESTED COMMENT, EMAIL & CORR CODE ---------- */
+function generateSuggestedTemplates(finalText){
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
-  const suggestedPanel = document.getElementById("suggestedPanel");
+  const corrBox = document.getElementById("suggestedCorrCode");
+  const panel = document.getElementById("suggestedPanel");
 
-  if (!finalText) {
-    suggestedPanel.style.display = "none";
-    commentBox.innerHTML = "";
-    emailBox.innerHTML = "";
-    return;
-  }
-
+  if (!finalText) { panel.style.display="none"; return; }
   const docId = encodeURIComponent(finalText);
 
   if (typeof window.loadFromFirestore === "function") {
     _firestoreLoadAttempts[docId] = 0;
-    window.loadFromFirestore(docId).then(data => {
-      const comment = (data && data.comment) ? data.comment : `VS-BLER-CASE#-${finalText}`;
-      const email = (data && data.email) ? data.email : `Hi,\n\n${finalText}\n\nThank you,\nEBS Operations - Invoicing Solutions`;
-      commentBox.innerHTML = comment;
-      emailBox.innerHTML = email.replace(/\n/g,"<br>");
-      suggestedPanel.style.display = "block";
-    }).catch(err => {
-      console.error("Error loading OVC templates:", err);
+    window.loadFromFirestore(docId).then(data=>{
+      commentBox.innerHTML = data.comment || `VS-BLER-CASE#-${finalText}`;
+      emailBox.innerHTML = data.email ? data.email.replace(/\n/g,"<br>") : `Hi,<br><br>${finalText}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+      corrBox.innerHTML = data.corr || `CORR-${finalText}`;
+      panel.style.display="block";
+    }).catch(err=>{
+      console.error(err);
       commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
-      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
-      suggestedPanel.style.display = "block";
+      emailBox.innerHTML = `Hi,<br><br>${finalText}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+      corrBox.innerHTML = `CORR-${finalText}`;
+      panel.style.display="block";
     });
   } else {
-    // retry a few times
-    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId] || 0) + 1;
-    if (_firestoreLoadAttempts[docId] <= 10) {
-      setTimeout(() => generateSuggestedCommentEmail(finalText), 200);
-      return;
-    } else {
-      // fallback
-      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
-      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
-      suggestedPanel.style.display = "block";
-      return;
+    // fallback retries
+    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId]||0)+1;
+    if(_firestoreLoadAttempts[docId]<=10){
+      setTimeout(()=>generateSuggestedTemplates(finalText),200); return;
     }
+    commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
+    emailBox.innerHTML = `Hi,<br><br>${finalText}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
+    corrBox.innerHTML = `CORR-${finalText}`;
+    panel.style.display="block";
   }
 }
 
 /* ---------- ADMIN EDIT ---------- */
 function attemptEdit(type){
   currentEditType = type;
-  document.getElementById("adminPassword").value = "";
-  document.getElementById("passwordModal").style.display = "flex";
+  document.getElementById("adminPassword").value="";
+  document.getElementById("passwordModal").style.display="flex";
 }
 
-function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
+function closePasswordModal(){document.getElementById("passwordModal").style.display="none";}
 
-function checkPassword() {
-  if (document.getElementById("adminPassword").value === "admin") {
+function checkPassword(){
+  if(document.getElementById("adminPassword").value==="admin"){
     closePasswordModal();
     openEditModal();
-  } else {
-    alert("Incorrect password!");
-  }
+  }else alert("Incorrect password!");
 }
 
-function openEditModal() {
-  const currentBox = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  // preserve <br> -> convert to newline for textarea
-  const currentHtml = document.getElementById(currentBox).innerHTML || "";
-  document.getElementById("editTextarea").value = currentHtml.replace(/<br\s*\/?>/ig, "\n");
-  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
-  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore (collection: ovc_templates).";
-  document.getElementById("editModal").style.display = "flex";
+function openEditModal(){
+  const currentBox = currentEditType==="comment"?"suggestedComment":(currentEditType==="email"?"suggestedEmail":"suggestedCorrCode");
+  const currentHtml = document.getElementById(currentBox).innerHTML||"";
+  document.getElementById("editTextarea").value = currentHtml.replace(/<br\s*\/?>/ig,"\n");
+  document.getElementById("modalTitle").textContent=`Edit ${currentEditType.toUpperCase()}`;
+  document.getElementById("modalHint").textContent="Edits will be saved to Firestore (collection: ovc_templates).";
+  document.getElementById("editModal").style.display="flex";
 }
 
-function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
+function closeEditModal(){document.getElementById("editModal").style.display="none";}
 
-function saveEdit() {
-  const val = document.getElementById("editTextarea").value;
-  if (!currentFinalRecommendation) {
-    alert("No recommendation selected to save edits for!");
-    return;
-  }
-  const docId = encodeURIComponent(currentFinalRecommendation);
+function saveEdit(){
+  const val=document.getElementById("editTextarea").value;
+  if(!currentFinalRecommendation){alert("No recommendation selected to save!");return;}
+  const docId=encodeURIComponent(currentFinalRecommendation);
+  if(typeof window.saveTemplateToFirestore!=="function"){alert("Saving not ready yet.");closeEditModal();return;}
+  const payload={};
+  if(currentEditType==="comment") payload.comment=val;
+  else if(currentEditType==="email") payload.email=val;
+  else if(currentEditType==="corr") payload.corr=val;
 
-  if (typeof window.saveTemplateToFirestore !== "function" || typeof window.loadFromFirestore !== "function") {
-    alert("Saving is not ready yet — please try again in a moment.");
+  window.saveTemplateToFirestore(docId,payload).then(()=>{
+    if(currentEditType==="comment") document.getElementById("suggestedComment").innerHTML=val;
+    else if(currentEditType==="email") document.getElementById("suggestedEmail").innerHTML=val.replace(/\n/g,"<br>");
+    else if(currentEditType==="corr") document.getElementById("suggestedCorrCode").innerHTML=val;
+    document.getElementById("suggestedPanel").style.display="block";
     closeEditModal();
-    return;
-  }
-
-  // Build payload to merge
-  const payload = {};
-  if (currentEditType === "comment") payload.comment = val;
-  else payload.email = val;
-
-  window.saveTemplateToFirestore(docId, payload)
-    .then(() => {
-      // update UI immediately
-      if (currentEditType === "comment") {
-        document.getElementById("suggestedComment").innerHTML = val;
-      } else {
-        document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
-      }
-      document.getElementById("suggestedPanel").style.display = "block";
-      closeEditModal();
-      alert("Saved to Firestore!");
-    })
-    .catch(err => {
-      console.error("Error saving OVC template:", err);
-      alert("Error saving to Firestore. Check console.");
-    });
+    alert("Saved to Firestore!");
+  }).catch(err=>{
+    console.error(err);
+    alert("Error saving to Firestore. Check console.");
+  });
 }
 
-/* ---------- EVENTS ---------- */
-document.getElementById("goBackBtn").onclick = () => {
-  if (historyStack.length) {
-    const last = historyStack.pop();
-    path = last.path || [];
-    renderNode(NODES[last.nodeKey] || TREE, last.nodeKey);
+/* ---------- BUTTON EVENTS ---------- */
+document.getElementById("goBackBtn").onclick = ()=>{
+  if(historyStack.length){
+    const last=historyStack.pop();
+    path=last.path||[];
+    renderNode(NODES[last.nodeKey]||TREE,last.nodeKey);
     updateSelectedPath();
   }
 };
 
-document.getElementById("startOverBtn").onclick = () => {
-  path = [];
-  historyStack = [];
-  currentFinalRecommendation = "";
-  document.getElementById("selectedPath").textContent = "No steps selected yet.";
-  document.getElementById("suggestedPanel").style.display = "none";
-  renderNode(TREE, "root");
+document.getElementById("startOverBtn").onclick = ()=>{
+  path=[]; historyStack=[]; currentFinalRecommendation="";
+  document.getElementById("selectedPath").textContent="No steps selected yet.";
+  document.getElementById("suggestedPanel").style.display="none";
+  renderNode(TREE,"root");
 };
 
-document.getElementById("copyEmailBtn").onclick = () => {
-  const txt = (document.getElementById("suggestedEmail").innerText || document.getElementById("suggestedEmail").textContent || "");
-  navigator.clipboard.writeText(txt).then(() => {
-    alert("Email copied!");
-  }).catch(() => {
-    alert("Unable to copy - your browser may block clipboard access.");
-  });
+document.getElementById("copyEmailBtn").onclick = ()=>{
+  const txt=document.getElementById("suggestedEmail").innerText||"";
+  navigator.clipboard.writeText(txt).then(()=>alert("Email copied!")).catch(()=>alert("Unable to copy."));
 };
 
 /* ---------- INIT ---------- */
-window.addEventListener('load', () => {
-  renderNode(TREE, "root");
-});
+window.addEventListener('load',()=>{renderNode(TREE,"root");});
 </script>
 
-<!-- ---------- FIREBASE MODULE (bottom) ---------- -->
+<!-- ---------- FIREBASE MODULE ---------- -->
 <script type="module">
-/* Firestore helpers for OVC templates
-   Collection used: 'ovc_templates'
-   Document ID: encodeURIComponent(finalRecommendationText)
-   Document fields: { comment: "...", email: "..." }
-*/
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// <-- your firebase config (as provided) -->
 const firebaseConfig = {
   apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
   authDomain: "bdgg-database.firebaseapp.com",
@@ -624,28 +567,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Save partial template to ovc_templates/{docId} (merge)
-async function saveTemplateToFirestore(docId, partial) {
-  if (!docId) throw new Error("docId required");
-  if (!partial || typeof partial !== "object") throw new Error("partial object required");
-  await setDoc(doc(db, "ovc_templates", docId), partial, { merge: true });
+async function saveTemplateToFirestore(docId, partial){
+  if(!docId) throw new Error("docId required");
+  if(!partial||typeof partial!=="object") throw new Error("partial object required");
+  await setDoc(doc(db,"ovc_templates",docId),partial,{merge:true});
 }
 
-// Load template (both fields)
-async function loadFromFirestore(docId) {
-  if (!docId) return {};
-  const docRef = doc(db, "ovc_templates", docId);
+async function loadFromFirestore(docId){
+  if(!docId) return {};
+  const docRef = doc(db,"ovc_templates",docId);
   const snap = await getDoc(docRef);
-  if (!snap.exists()) return {};
-  const d = snap.data() || {};
-  return { comment: d.comment || null, email: d.email || null };
+  if(!snap.exists()) return {};
+  return snap.data() || {};
 }
 
-// Expose to window so the non-module script can call them
 window.saveTemplateToFirestore = saveTemplateToFirestore;
 window.loadFromFirestore = loadFromFirestore;
-
-console.log("OVC Firestore helpers ready (collection: ovc_templates).");
 </script>
 
 </body>
