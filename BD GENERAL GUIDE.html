@@ -189,6 +189,16 @@ textarea{resize:none}
         </div>
         <div id="suggestedComment" class="output-box"></div>
       </div>
+      
+      <!-- ✅ NEW: CORR CODE -->
+    <div class="output-card" id="corrCard">
+      <div class="output-header">
+        Possible CORR CODE
+        <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
+      </div>
+      <div id="suggestedCorrCode" class="output-box"></div>
+    </div>
+      
       <div class="output-card" id="emailCard">
         <div class="output-header">
           Suggested Email
@@ -559,7 +569,8 @@ const TREE = {
 
 
 /* ---------- UI Logic ---------- */
-let path=[]; let historyStack=[];
+let path=[]; 
+let historyStack=[];
 const TOTAL_DECISION_NODES=15;
 let currentFinalRecommendation = "";
 let currentEditType = "";
@@ -574,8 +585,9 @@ function renderNode(nodeObj,nodeKey="root"){
 
   flowArea.innerHTML="";
   document.getElementById("recommendation").innerHTML="No recommendation yet.";
-  document.getElementById("suggestedComment").innerHTML="";
+  document.getElementById("suggestedComment").textContent="";
   document.getElementById("suggestedEmail").textContent="";
+  document.getElementById("suggestedCorrCode").textContent="";
   suggestedPanel.style.display="none";
 
   if(nodeObj.choices){
@@ -589,7 +601,7 @@ function renderNode(nodeObj,nodeKey="root"){
       btn.onclick=()=>{
         historyStack.push({nodeKey,path:JSON.parse(JSON.stringify(path))});
         path.push({question:nodeObj.text,answer:choice.label});
-        const nextNode=NODES[choice.next]||(choice.action?{action:choice.action,note:choice.note}:{});
+        const nextNode=NODES[choice.next]||(choice.action?{action:choice.action,note:choice.note}:{});        
         if(nextNode.action) currentFinalRecommendation=nextNode.action;
         renderNode(nextNode,choice.next);
         updateSelectedPath();
@@ -609,7 +621,7 @@ function renderNode(nodeObj,nodeKey="root"){
   startOverBtn.style.display=path.length?"inline-block":"none";
   
   const stepNum = path.length + 1;
-  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; // arbitrary max 5 steps for smooth fill
+  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; 
   progressText.textContent = `Step ${stepNum}`;
 }
 
@@ -625,19 +637,13 @@ window.onload=()=>{renderNode(TREE,"root");};
 
 function countTotalSteps(nodeObj) {
   if(!nodeObj.choices) return 1;
-  // For total steps, take the max of all branches
   return 1 + Math.max(...nodeObj.choices.map(c => {
     const nextNode = NODES[c.next] || (c.action ? {action:c.action} : {});
     return countTotalSteps(nextNode);
   }));
 }
 
-/* ---------- Suggested Comment & Email (FIRESTORE-backed) ---------- */
-
-/**
- * We store comments in collection "comments" and emails in collection "emails".
- * Document ID is the encoded final recommendation text (encodeURIComponent).
- */
+/* ---------- Suggested Comment, Email & CORR CODE ---------- */
 
 function docIdFromText(text) {
   return encodeURIComponent(text);
@@ -646,35 +652,32 @@ function docIdFromText(text) {
 async function generateSuggestedCommentEmail(recommendation){
   const commentEl = document.getElementById("suggestedComment");
   const emailEl = document.getElementById("suggestedEmail");
+  const corrEl = document.getElementById("suggestedCorrCode");
   const suggestedPanel = document.getElementById("suggestedPanel");
 
-  // Default templates (fallback if no saved doc)
-  let commentText="", emailText="";
+  let commentText="", emailText="", corrText="";
+
   if(recommendation.includes("Collect")){
     commentText = "VS-BLER-CASE#-CHANGED TERMS TO COLLECT PER BOL";
+    corrText = "CORR-001";
   } else if(recommendation.includes("Prepaid")){
     commentText = "VS-BLER-CASE#-CHANGED TERMS TO PREPAID PER BOL";
+    corrText = "CORR-002";
   } else if(recommendation.includes("rebilling the account no.") || recommendation.includes("per BOL")){
     commentText = "VS-BLER-CASE#-CHANGED BT CODE TO ######### PER BOL";
-  } else {
-    commentText = "";
+    corrText = "CORR-003";
   }
 
   emailText = `Hi,\n\nPro ######### has been reviewed and updated to bill the correct debtor per BOL. Revised Invoice will be sent accordingly.\n\nThank you,\nEBS Operations - Invoicing Solutions`;
 
-  commentEl.textContent = ""; emailEl.textContent = "";
+  commentEl.textContent = ""; emailEl.textContent = ""; corrEl.textContent = "";
   suggestedPanel.style.display = "block";
 
   const id = docIdFromText(recommendation);
 
   try {
     const commentDoc = await db.collection("comments").doc(id).get();
-    if (commentDoc.exists) {
-      const d = commentDoc.data();
-      commentEl.textContent = (d && d.text) ? d.text : commentText;
-    } else {
-      commentEl.textContent = commentText;
-    }
+    commentEl.textContent = commentDoc.exists && commentDoc.data().text ? commentDoc.data().text : commentText;
   } catch (err) {
     console.error("Error loading comment from Firestore:", err);
     commentEl.textContent = commentText;
@@ -682,19 +685,22 @@ async function generateSuggestedCommentEmail(recommendation){
 
   try {
     const emailDoc = await db.collection("emails").doc(id).get();
-    if (emailDoc.exists) {
-      const d = emailDoc.data();
-      emailEl.textContent = (d && d.text) ? d.text : emailText;
-    } else {
-      emailEl.textContent = emailText;
-    }
+    emailEl.textContent = emailDoc.exists && emailDoc.data().text ? emailDoc.data().text : emailText;
   } catch (err) {
     console.error("Error loading email from Firestore:", err);
     emailEl.textContent = emailText;
   }
+
+  try {
+    const corrDoc = await db.collection("corr").doc(id).get();
+    corrEl.textContent = corrDoc.exists && corrDoc.data().text ? corrDoc.data().text : corrText;
+  } catch (err) {
+    console.error("Error loading CORR code from Firestore:", err);
+    corrEl.textContent = corrText;
+  }
 }
 
-/* ---------- Admin Edit Logic (saves to Firestore) ---------- */
+/* ---------- Admin Edit Logic ---------- */
 function attemptEdit(type){
   currentEditType = type;
   document.getElementById("adminPassword").value="";
@@ -712,8 +718,10 @@ function checkPassword(){
 function openEditModal(){
   document.getElementById("editTextarea").value = currentEditType==="comment" 
     ? document.getElementById("suggestedComment").textContent
-    : document.getElementById("suggestedEmail").textContent;
-  document.getElementById("modalTitle").textContent = `Edit ${currentEditType==="comment"?"Comment":"Email"}`;
+    : currentEditType==="email"
+      ? document.getElementById("suggestedEmail").textContent
+      : document.getElementById("suggestedCorrCode").textContent;
+  document.getElementById("modalTitle").textContent = `Edit ${currentEditType==="comment"?"Comment":currentEditType==="email"?"Email":"CORR Code"}`;
   document.getElementById("editModal").style.display="flex";
 }
 
@@ -729,17 +737,14 @@ async function saveEdit(){
 
   try {
     if (currentEditType === "comment") {
-      await db.collection("comments").doc(id).set({
-        text: val,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+      await db.collection("comments").doc(id).set({ text: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       document.getElementById("suggestedComment").innerText = val;
-    } else {
-      await db.collection("emails").doc(id).set({
-        text: val,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+    } else if (currentEditType === "email") {
+      await db.collection("emails").doc(id).set({ text: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       document.getElementById("suggestedEmail").innerText = val;
+    } else if (currentEditType === "corr") {
+      await db.collection("corr").doc(id).set({ text: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      document.getElementById("suggestedCorrCode").innerText = val;
     }
     closeEditModal();
     alert("Saved to Firestore.");
