@@ -118,6 +118,17 @@ textarea{resize:none}
       </div>
       <div id="suggestedComment" class="output-box"></div>
     </div>
+    
+     <!-- ✅ NEW: CORR CODE -->
+    <div class="output-card" id="corrCard">
+      <div class="output-header">
+        Possible CORR CODE
+        <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
+      </div>
+      <div id="suggestedCorrCode" class="output-box"></div>
+    </div>
+    
+    
     <div class="output-card" id="emailCard">
       <div class="output-header">
         Suggested Email
@@ -167,340 +178,361 @@ textarea{resize:none}
 <!-- ---------- MAIN DECISION TREE + UI LOGIC ---------- -->
 <script>
 /* ---------- DECISION TREE ---------- */
-/* (kept the same structure you provided earlier) */
 const TREE = {
   id: "root",
-  text: "Does the customer have a surcharge exception?",
+  text: "Does the customer have a pricing exception?",
   choices: [
-    { label: "Yes", next: "yes_exception" },
-    { label: "No", next: "no_exception" }
+    { label: "Yes", next: "has_pricing_exception" },
+    { label: "No", next: "no_pricing_exception" }
   ]
 };
 
 const NODES = {
-  yes_exception: {
-    text: "Yes — which case?",
+  /* ================= YES PATH ================= */
+  has_pricing_exception: {
+    text: "Does the customer have their own fuel exception?",
     choices: [
-      { label: "Yes, but does not apply on PRO after autorating", next: "no_apply_after_auto" },
-      { label: "Yes, has surcharge exception effective at the time of shipment", next: "yes_apply_effective" }
+      { label: "Yes", next: "own_fuel_exception" },
+      { label: "No, using FXF Fuel scale", next: "fxf_fuel_scale" }
     ]
   },
-  no_apply_after_auto: {
-    text: "Run a quote to verify whether their pricing is already fixed.",
-    choices: [
-      { label: "Rate quote does NOT pull correct pricing", next: "quote_not_correct" },
-      { label: "Rate quote pulls correct pricing", next: "quote_correct" }
-    ]
-  },
-  quote_not_correct: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
-  quote_correct: { text: "Email Training Team for approval to manually rate the invoice.", choices: [] },
 
-  yes_apply_effective: {
-    text: "Read carefully and understand the exception. Can it be applied on PRO?",
+  own_fuel_exception: {
+    text: "Find the customer's fuel exception.",
     choices: [
-      { label: "Surcharge is manually rated accessorial (Storage/Detention)", next: "manually_rated" },
-      { label: "Surcharge is NOT manually rated", next: "not_manually_rated" }
+      { label: "Continue", next: "verify_correct_fuel" }
     ]
   },
-  manually_rated: { text: "Manually apply the customer's accessorial exception on PRO.", choices: [] },
-  not_manually_rated: { text: "Verify whether eRPT is needed by following the eRPT guideline.", choices: [] },
 
-  no_exception: {
-    text: "Which situation?",
+  verify_correct_fuel: {
+    text: "Verify if the correct fuel is being applied.",
     choices: [
-      { label: "No previous exception, but customer published agreement later", next: "published_agreement" },
-      { label: "Does the customer have exception BEFORE and AFTER shipment?", next: "before_after_question" }
+      { label: "Fuel applied correctly", next: "fuel_correct" },
+      { label: "Fuel applied incorrectly", next: "fuel_incorrect" }
     ]
   },
-  published_agreement: {
+
+  fuel_correct: {
+    text: "Advise the customer accordingly regarding their fuel exception.",
+    choices: []
+  },
+
+  fuel_incorrect: {
+    text: "Verify if ePRT is needed.",
+    choices: []
+  },
+
+  fxf_fuel_scale: {
+    text: "Check the national average and apply using FXF Fuel referencing FXF Rules Item 570.",
+    choices: []
+  },
+
+  /* ================= NO PATH ================= */
+  no_pricing_exception: {
+    text: "Which situation applies?",
+    choices: [
+      {
+        label: "No previous exception, but customer later published an agreement with FedEx",
+        next: "published_later"
+      },
+      {
+        label: "Customer has surcharge exception before and after shipment",
+        next: "before_after_surcharge"
+      }
+    ]
+  },
+
+  /* --- Published later agreement --- */
+  published_later: {
     text: "Effective date of the agreement?",
     choices: [
-      { label: "More than 180 days from ship date", next: "published_more" },
-      { label: "Within 180 days from ship date", next: "published_within" }
+      {
+        label: "More than 180 days from ship date",
+        next: "published_more_180"
+      },
+      {
+        label: "Within 180 days from ship date",
+        next: "published_within_180"
+      }
     ]
   },
-  published_more: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] },
-  published_within: { text: "Apply the pricing exception.", choices: [] },
 
-  before_after_question: {
+  published_more_180: {
+    text: "Inform the customer appropriately regarding their pricing details.",
+    choices: []
+  },
+
+  published_within_180: {
+    text: "Apply the pricing exception.",
+    choices: []
+  },
+
+  /* --- Before & After Surcharge --- */
+  before_after_surcharge: {
     text: "Does the customer have a surcharge exception before and after the shipment?",
     choices: [
-      { label: "Yes", next: "yes_before_after" },
-      { label: "No", next: "no_before_after" }
+      { label: "Yes", next: "verify_pricing_gap" },
+      { label: "No", next: "inform_pricing_details" }
     ]
   },
-  yes_before_after: {
+
+  verify_pricing_gap: {
     text: "Verify if the customer has a pricing gap.",
     choices: [
-      { label: "Gap less than 2 weeks (≤14 days)", next: "gap_less" },
-      { label: "Gap more than 2 weeks (≥15 days)", next: "gap_more" }
+      {
+        label: "Gap is 14 days or less",
+        next: "gap_less_14"
+      },
+      {
+        label: "Gap is 15 days or more",
+        next: "gap_more_15"
+      }
     ]
   },
-  gap_less: { text: "If we aren’t overriding a previous agreement or anything like that and all we are doing is applying the customer’s pricing, simply due to nothing more than a gap which was 2 weeks or less, go ahead and rerate without asking for approval.", choices: [] },
 
-  gap_more: {
+  gap_less_14: {
+    text:
+      "If we aren’t overriding a previous agreement and are simply applying the customer’s pricing due to a gap of 2 weeks or less, go ahead and rerate without asking for approval.",
+    choices: []
+  },
+
+  gap_more_15: {
     text: "Who are you talking to?",
     choices: [
       { label: "Customer", next: "gap_customer" },
-      { label: "Sales Rep", next: "gap_salesrep" }
+      { label: "Sales Representative", next: "gap_sales_rep" }
     ]
   },
-  gap_customer: { text: "Send an email to the Training Team, who will forward the case to Dustin Carlton. Dustin will then reach out to the Sales Rep who will be sending a Rerate Request.", choices: [] },
-  gap_salesrep: { text: "Advise the Sales Rep to fill out a Back Date Form and send a Rerate request.", choices: [] },
-  no_before_after: { text: "Inform the customer appropriately regarding their pricing details.", choices: [] }
+
+  gap_customer: {
+    text:
+      "Send an email to the Training Team, who will forward the case to Dustin Carlton. Dustin will then reach out to the Sales Rep who will be sending a Rerate Request.",
+    choices: []
+  },
+
+  gap_sales_rep: {
+    text:
+      "Advise the Sales Rep to fill out a Back Date Form and send a Rerate request.",
+    choices: []
+  },
+
+  inform_pricing_details: {
+    text: "Inform the customer appropriately regarding their pricing details.",
+    choices: []
+  }
 };
+
 
 /* ---------- STATE ---------- */
 let path = [];
 let historyStack = [];
 let currentFinalRecommendation = "";
 let currentEditType = "";
-
-/* retry counters map for loading from firestore if not ready yet */
 const _firestoreLoadAttempts = {};
 
+function updateProgress(){
+  const progressFill = document.getElementById("progressFill");
+  const progressText = document.getElementById("progressText");
+
+  const step = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
+  const percent = Math.min(step * 20, 100);
+
+  progressFill.style.width = percent + "%";
+  progressText.textContent = `Step ${step}`;
+}
+
 /* ---------- HELPERS ---------- */
-function escapeHtml(unsafe) { 
+function escapeHtml(unsafe) {
   if (unsafe === null || unsafe === undefined) return "";
-  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+  return String(unsafe).replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+  }[m]));
 }
 
 /* ---------- RENDER ---------- */
-function renderNode(nodeObj,nodeKey="root") {
-  const flowArea=document.getElementById("flowArea");
-  const goBackBtn=document.getElementById("goBackBtn");
-  const startOverBtn=document.getElementById("startOverBtn");
-  const progressFill=document.getElementById("progressFill");
-  const progressText=document.getElementById("progressText");
-  const suggestedPanel=document.getElementById("suggestedPanel");
+function renderNode(nodeObj, nodeKey = "root") {
+  const flowArea = document.getElementById("flowArea");
+  const suggestedPanel = document.getElementById("suggestedPanel");
 
-  flowArea.innerHTML="";
-  document.getElementById("recommendation").innerHTML="No recommendation yet.";
-  document.getElementById("suggestedComment").innerHTML="";
-  document.getElementById("suggestedEmail").textContent="";
-  suggestedPanel.style.display="none";
+  flowArea.innerHTML = "";
+  document.getElementById("recommendation").innerHTML = "No recommendation yet.";
+  document.getElementById("suggestedComment").innerHTML = "";
+  document.getElementById("suggestedCorrCode").innerHTML = "";
+  document.getElementById("suggestedEmail").innerHTML = "";
+  suggestedPanel.style.display = "none";
 
-  if(nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length){
-    const q=document.createElement("div"); q.innerHTML=`<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`; flowArea.appendChild(q);
-    const list=document.createElement("div"); list.className="choice-list";
-    nodeObj.choices.forEach(choice=>{
-      const btn=document.createElement("div"); btn.className="choice"; btn.textContent=choice.label;
-      btn.onclick=()=>{
-        historyStack.push({nodeKey, path: JSON.parse(JSON.stringify(path))});
-        path.push({question:nodeObj.text,answer:choice.label});
-        const nextNode = NODES[choice.next] || (choice.action?{action:choice.action,note:choice.note}: {});
-        if(nextNode.action) currentFinalRecommendation = nextNode.action;
-        renderNode(nextNode,choice.next);
+  currentFinalRecommendation = "";
+
+  if (nodeObj?.choices?.length) {
+    flowArea.innerHTML = `<strong>${escapeHtml(nodeObj.text)}</strong>`;
+
+    const list = document.createElement("div");
+    list.className = "choice-list";
+
+    nodeObj.choices.forEach(choice => {
+      const btn = document.createElement("div");
+      btn.className = "choice";
+      btn.textContent = choice.label;
+
+      btn.onclick = () => {
+        historyStack.push({ nodeKey, path: [...path] });
+        path.push({ question: nodeObj.text, answer: choice.label });
+
+        const nextNode = NODES[choice.next];
+        if (!nextNode) {
+          alert("Configuration error: missing node");
+          return;
+        }
+
+        renderNode(nextNode, choice.next);
         updateSelectedPath();
-        if(nextNode.action) generateSuggestedCommentEmail(nextNode.action);
-      }; 
+        updateProgress();
+      };
+
       list.appendChild(btn);
-    }); flowArea.appendChild(list);
-  } else if(nodeObj && nodeObj.text){
-    // final-action node
-    const actionText = nodeObj.action || nodeObj.text;
-    currentFinalRecommendation = actionText;
-    document.getElementById("recommendation").innerHTML = `<strong>${escapeHtml(actionText)}</strong>${nodeObj.note?`<div class="note">${escapeHtml(nodeObj.note)}</div>`:''}`;
+    });
+
+    flowArea.appendChild(list);
+  } else {
+    // FINAL NODE
+    currentFinalRecommendation = nodeObj.text;
+
+    document.getElementById("recommendation").innerHTML =
+      `<strong>${escapeHtml(nodeObj.text)}</strong>`;
+
     updateSelectedPath();
-    generateSuggestedCommentEmail(actionText);
+    generateSuggestedCommentEmail(nodeObj.text);
+    updateProgress();
   }
 
-  goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
-  startOverBtn.style.display = path.length ? "inline-block" : "none";
+  document.getElementById("goBackBtn").style.display =
+    historyStack.length ? "inline-block" : "none";
 
-  const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
-  progressFill.style.width = Math.min(stepNum * 20, 100) + "%";
-  progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
+  document.getElementById("startOverBtn").style.display =
+    path.length ? "inline-block" : "none";
 }
 
-/* ---------- PATH DISPLAY ---------- */
+
+/* ---------- PATH ---------- */
 function updateSelectedPath(){
   const el=document.getElementById("selectedPath");
   if(!path.length){ el.innerHTML = "No steps selected yet."; return; }
   el.innerHTML = path.map((p,idx)=>`<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`).join("<br>");
 }
 
-/* ---------- SUGGESTED COMMENT & EMAIL ---------- */
-/* This function attempts to load saved templates from Firestore.
-   If Firestore module isn't ready yet (load function not attached), it will retry a few times then fallback to defaults.
-*/
-function generateSuggestedCommentEmail(finalText) {
-  const commentBox = document.getElementById("suggestedComment");
-  const emailBox = document.getElementById("suggestedEmail");
-  const suggestedPanel = document.getElementById("suggestedPanel");
+/* ---------- LOAD SUGGESTED ---------- */
+function generateSuggestedCommentEmail(finalText){
+  const commentBox=document.getElementById("suggestedComment");
+  const corrBox=document.getElementById("suggestedCorrCode");
+  const emailBox=document.getElementById("suggestedEmail");
+  const panel=document.getElementById("suggestedPanel");
 
-  if (!finalText) {
-    suggestedPanel.style.display = "none";
-    commentBox.innerHTML = "";
-    emailBox.innerHTML = "";
-    return;
-  }
+  if(!finalText) return;
 
-  // create a safe document id (encode)
-  const docId = encodeURIComponent(finalText);
+  const docId=encodeURIComponent(finalText);
 
-  // if loadFromFirestore is available, use it
-  if (typeof window.loadFromFirestore === "function") {
-    // reset attempts counter for this finalText
-    _firestoreLoadAttempts[docId] = 0;
-    window.loadFromFirestore(docId).then(data => {
-      const comment = (data && data.comment) ? data.comment : `VS-BLER-CASE#-${finalText}`;
-      const email = (data && data.email) ? data.email : `Hi,\n\n${finalText}\n\nThank you,\nEBS Operations - Invoicing Solutions`;
-      // keep HTML formatting for email box (allow <br> if any)
-      commentBox.innerHTML = comment;
-      // show as preformatted text in output box while preserving line breaks:
-      emailBox.innerHTML = email.replace(/\n/g,"<br>");
-      suggestedPanel.style.display = "block";
-    }).catch(err => {
-      console.error("Error loading from Firestore:", err);
-      // fallback to defaults if load fails
-      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
-      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
-      suggestedPanel.style.display = "block";
+  if(typeof window.loadFromFirestore==="function"){
+    _firestoreLoadAttempts[docId]=0;
+    window.loadFromFirestore(docId).then(data=>{
+      commentBox.innerHTML=data.comment || `VS-BLER-CASE#-${finalText}`;
+      corrBox.innerHTML=data.corrCode || "";
+      emailBox.innerHTML=(data.email || `Hi,\n\n${finalText}\n\nThank you,\nEBS Operations - Invoicing Solutions`).replace(/\n/g,"<br>");
+      panel.style.display="block";
     });
   } else {
-    // Firestore not ready yet — retry a few times then fallback
-    const maxAttempts = 10;
-    _firestoreLoadAttempts[docId] = (_firestoreLoadAttempts[docId] || 0) + 1;
-    if (_firestoreLoadAttempts[docId] <= maxAttempts) {
-      // try again shortly
-      setTimeout(() => generateSuggestedCommentEmail(finalText), 200);
-      return;
-    } else {
-      // fallback to defaults
-      commentBox.innerHTML = `VS-BLER-CASE#-${finalText}`;
-      emailBox.innerHTML = `Hi,<br><br>${escapeHtml(finalText)}<br><br>Thank you,<br>EBS Operations - Invoicing Solutions`;
-      suggestedPanel.style.display = "block";
-      return;
+    _firestoreLoadAttempts[docId]=(_firestoreLoadAttempts[docId]||0)+1;
+    if(_firestoreLoadAttempts[docId]<10){
+      setTimeout(()=>generateSuggestedCommentEmail(finalText),200);
     }
   }
 }
 
-/* ---------- ADMIN EDIT ---------- */
+/* ---------- EDIT ---------- */
 function attemptEdit(type){
-  currentEditType = type;
-  document.getElementById("adminPassword").value = "";
-  document.getElementById("passwordModal").style.display = "flex";
+  currentEditType=type;
+  document.getElementById("adminPassword").value="";
+  document.getElementById("passwordModal").style.display="flex";
 }
 
-function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
-
-function checkPassword() {
-  if (document.getElementById("adminPassword").value === "admin") {
-    closePasswordModal();
+function checkPassword(){
+  if(document.getElementById("adminPassword").value==="admin"){
+    document.getElementById("passwordModal").style.display="none";
     openEditModal();
-  } else {
-    alert("Incorrect password!");
-  }
+  } else alert("Incorrect password");
 }
 
-function openEditModal() {
-  if (!currentFinalRecommendation) {
-    alert("Select a recommendation first before editing.");
-    return;
-  }
-  const currentBox = currentEditType === "comment" ? document.getElementById("suggestedComment") : document.getElementById("suggestedEmail");
-  // read innerHTML so we can preserve line breaks for email
-  const currentContent = currentBox ? currentBox.innerHTML : "";
-  // convert <br> back to newlines for textarea
-  document.getElementById("editTextarea").value = currentContent.replace(/<br\s*\/?>/g,"\n");
-  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
-  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore for this exact recommendation text.";
-  document.getElementById("editModal").style.display = "flex";
+function openEditModal(){
+  if(!currentFinalRecommendation) return;
+  const map={
+    comment:"suggestedComment",
+    corr:"suggestedCorrCode",
+    email:"suggestedEmail"
+  };
+  const el=document.getElementById(map[currentEditType]);
+  document.getElementById("editTextarea").value=
+    el.innerHTML.replace(/<br\s*\/?>/g,"\n");
+  document.getElementById("modalTitle").textContent=
+    currentEditType==="corr"?"Edit CORR CODE":"Edit "+currentEditType;
+  document.getElementById("editModal").style.display="flex";
 }
 
-function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
+function saveEdit(){
+  const val=document.getElementById("editTextarea").value;
+  const docId=encodeURIComponent(currentFinalRecommendation);
 
-function saveEdit() {
-  const val = document.getElementById("editTextarea").value;
-  if (!currentFinalRecommendation) {
-    alert("No recommendation selected to save edits for!");
-    return;
+  if(currentEditType==="comment"){
+    saveCommentToFirestore(docId,val)
+      .then(()=>document.getElementById("suggestedComment").innerHTML=val);
   }
-  const docId = encodeURIComponent(currentFinalRecommendation);
-
-  // Firestore helpers must be available (exposed by module)
-  if (typeof window.saveCommentToFirestore !== "function" || typeof window.saveEmailToFirestore !== "function") {
-    alert("Saving is not ready yet — please try again in a moment.");
-    closeEditModal();
-    return;
+  if(currentEditType==="corr"){
+    saveCorrCodeToFirestore(docId,val)
+      .then(()=>document.getElementById("suggestedCorrCode").innerHTML=val);
   }
-
-  if (currentEditType === "comment") {
-    window.saveCommentToFirestore(docId, val)
-      .then(() => {
-        document.getElementById("suggestedComment").innerHTML = val;
-        document.getElementById("suggestedPanel").style.display = "block";
-        alert("Comment saved to Firestore.");
-        closeEditModal();
-      })
-      .catch(err => {
-        console.error("Error saving comment:", err);
-        alert("Error saving comment to Firestore. Check console.");
-      });
-  } else {
-    window.saveEmailToFirestore(docId, val)
-      .then(() => {
-        document.getElementById("suggestedEmail").innerHTML = val.replace(/\n/g,"<br>");
-        document.getElementById("suggestedPanel").style.display = "block";
-        alert("Email saved to Firestore.");
-        closeEditModal();
-      })
-      .catch(err => {
-        console.error("Error saving email:", err);
-        alert("Error saving email to Firestore. Check console.");
-      });
+  if(currentEditType==="email"){
+    saveEmailToFirestore(docId,val)
+      .then(()=>document.getElementById("suggestedEmail").innerHTML=val.replace(/\n/g,"<br>"));
   }
+  document.getElementById("editModal").style.display="none";
 }
 
-/* ---------- EVENTS ---------- */
 document.getElementById("goBackBtn").onclick = () => {
-  if (historyStack.length) {
-    const last = historyStack.pop();
-    path = last.path || [];
-    renderNode(NODES[last.nodeKey] || TREE, last.nodeKey);
-    updateSelectedPath();
-  }
+  if (!historyStack.length) return;
+
+  const last = historyStack.pop();
+  path = last.path || [];
+
+  renderNode(NODES[last.nodeKey] || TREE, last.nodeKey);
+  updateSelectedPath();
+  updateProgress();
 };
 
 document.getElementById("startOverBtn").onclick = () => {
   path = [];
   historyStack = [];
   currentFinalRecommendation = "";
-  document.getElementById("selectedPath").textContent = "No steps selected yet.";
+
+  document.getElementById("selectedPath").textContent =
+    "No steps selected yet.";
+
   document.getElementById("suggestedPanel").style.display = "none";
+
   renderNode(TREE, "root");
+  updateProgress();
 };
 
-document.getElementById("copyEmailBtn").onclick = () => {
-  const txt = (document.getElementById("suggestedEmail").innerText || document.getElementById("suggestedEmail").textContent || "");
-  navigator.clipboard.writeText(txt).then(() => {
-    alert("Email copied!");
-  }).catch(() => {
-    alert("Unable to copy - your browser may block clipboard access.");
-  });
-};
 
 /* ---------- INIT ---------- */
-window.addEventListener('load', () => {
+window.addEventListener("load", () => {
   renderNode(TREE, "root");
+  updateProgress();
 });
 </script>
 
 <!-- ---------- FIREBASE MODULE: placed at bottom as requested (Option A) ---------- -->
 <script type="module">
-/* Firebase (CDN modular) initialization and Firestore helpers
-   Uses two collections:
-     - pricing_comments (documents: docId -> { comment: "..."} )
-     - pricing_emails   (documents: docId -> { email: "..." } )
-*/
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
   authDomain: "bdgg-database.firebaseapp.com",
@@ -510,55 +542,38 @@ const firebaseConfig = {
   appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
 
-// Save comment to pricing_comments/{docId}
-export async function saveCommentToFirestore(docId, commentText) {
-  if (!docId) throw new Error("docId required");
-  try {
-    await setDoc(doc(db, "pricing_comments", docId), { comment: commentText }, { merge: true });
-  } catch (err) {
-    console.error("saveCommentToFirestore error:", err);
-    throw err;
-  }
+export async function saveCommentToFirestore(id,val){
+  return setDoc(doc(db,"pricing_comments",id),{comment:val},{merge:true});
+}
+export async function saveEmailToFirestore(id,val){
+  return setDoc(doc(db,"pricing_emails",id),{email:val},{merge:true});
+}
+export async function saveCorrCodeToFirestore(id,val){
+  return setDoc(doc(db,"pricing_corr_codes",id),{corrCode:val},{merge:true});
 }
 
-// Save email to pricing_emails/{docId}
-export async function saveEmailToFirestore(docId, emailText) {
-  if (!docId) throw new Error("docId required");
-  try {
-    await setDoc(doc(db, "pricing_emails", docId), { email: emailText }, { merge: true });
-  } catch (err) {
-    console.error("saveEmailToFirestore error:", err);
-    throw err;
-  }
+export async function loadFromFirestore(id){
+  const [c,e,r]=await Promise.all([
+    getDoc(doc(db,"pricing_comments",id)),
+    getDoc(doc(db,"pricing_emails",id)),
+    getDoc(doc(db,"pricing_corr_codes",id))
+  ]);
+  return {
+    comment:c.exists()?c.data().comment:"",
+    email:e.exists()?e.data().email:"",
+    corrCode:r.exists()?r.data().corrCode:""
+  };
 }
 
-// Load both comment & email (returns { comment, email })
-export async function loadFromFirestore(docId) {
-  if (!docId) return {};
-  try {
-    const commentRef = doc(db, "pricing_comments", docId);
-    const emailRef = doc(db, "pricing_emails", docId);
-    const [commentSnap, emailSnap] = await Promise.all([getDoc(commentRef), getDoc(emailRef)]);
-    const data = {};
-    if (commentSnap.exists()) data.comment = commentSnap.data().comment;
-    if (emailSnap.exists()) data.email = emailSnap.data().email;
-    return data;
-  } catch (err) {
-    console.error("loadFromFirestore error:", err);
-    throw err;
-  }
-}
-
-// Expose helpers to the global window so non-module scripts can call them
-window.saveCommentToFirestore = saveCommentToFirestore;
-window.saveEmailToFirestore = saveEmailToFirestore;
-window.loadFromFirestore = loadFromFirestore;
-
-console.log("Firestore helpers ready (pricing_comments / pricing_emails).");
+window.saveCommentToFirestore=saveCommentToFirestore;
+window.saveEmailToFirestore=saveEmailToFirestore;
+window.saveCorrCodeToFirestore=saveCorrCodeToFirestore;
+window.loadFromFirestore=loadFromFirestore;
 </script>
+
 
 </body>
 </html>
