@@ -336,7 +336,7 @@ NOTES:
   collector_loa_no:{ id:"collector_loa_no", text:"Insist that PRO is billing correctly per BOL. No updates can be made without LOA from the new debtor.", choices:[]}
 }; // end NODES
 
-/* ---------- STATE ---------- */
+// ---------- STATE ----------
 let path = [];
 let historyStack = [];
 let currentFinalRecommendation = "";
@@ -379,8 +379,9 @@ function renderNode(nodeObj, nodeKey="root") {
       const btn = document.createElement("div");
       btn.className = "choice";
       btn.textContent = choice.label;
+
       btn.onclick = () => {
-        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)), nodeKey });
+        historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) });
         path.push({ question: nodeObj.text, answer: choice.label });
 
         const nextNode = NODES[choice.next] || {};
@@ -403,6 +404,7 @@ function renderNode(nodeObj, nodeKey="root") {
     });
 
     flowArea.appendChild(list);
+
   } else if (nodeObj && nodeObj.text) {
     currentFinalRecommendation = nodeObj.text;
     document.getElementById("recommendation").innerHTML =
@@ -414,6 +416,7 @@ function renderNode(nodeObj, nodeKey="root") {
   goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
   startOverBtn.style.display = path.length ? "inline-block" : "none";
 
+  // ---------- PROGRESS BAR ----------
   const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
   progressFill.style.width = Math.min(stepNum * 18, 100) + "%";
   progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
@@ -428,8 +431,8 @@ function updateSelectedPath(){
   ).join("<br>");
 }
 
-/* ---------- SUGGESTED COMMENT / EMAIL / CORR CODE ---------- */
-function generateSuggestedCommentEmail(finalText) {
+/* ---------- SUGGESTED COMMENT / EMAIL / CORR ---------- */
+async function generateSuggestedCommentEmail(finalText) {
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
   const corrBox = document.getElementById("suggestedCorrCode");
@@ -443,33 +446,23 @@ function generateSuggestedCommentEmail(finalText) {
     return;
   }
 
-  const docId = encodeURIComponent(finalText);
-
   if (typeof window.loadFromFirestore === "function") {
-    window.loadFromFirestore(docId).then(data => {
-      const comment = data?.comment || localStorage.getItem(`comment_${finalText}`) || "";
-      const email = data?.email || localStorage.getItem(`email_${finalText}`) || "";
-      const corr = data?.corr || localStorage.getItem(`corr_${finalText}`) || "";
-      commentBox.innerHTML = comment;
-      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
-      corrBox.innerHTML = corr;
+    try {
+      const data = await window.loadFromFirestore(encodeURIComponent(finalText));
+      commentBox.innerHTML = data.comment || "";
+      emailBox.innerHTML = data.email ? data.email.replace(/\n/g,"<br>") : "";
+      corrBox.innerHTML = data.corr || "";
       suggestedPanel.style.display = "block";
-    }).catch(() => {
-      const comment = localStorage.getItem(`comment_${finalText}`) || "";
-      const email = localStorage.getItem(`email_${finalText}`) || "";
-      const corr = localStorage.getItem(`corr_${finalText}`) || "";
-      commentBox.innerHTML = comment;
-      emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
-      corrBox.innerHTML = corr;
+    } catch {
+      commentBox.innerHTML = localStorage.getItem(`comment_${finalText}`) || "";
+      emailBox.innerHTML = localStorage.getItem(`email_${finalText}`) || "";
+      corrBox.innerHTML = localStorage.getItem(`corr_${finalText}`) || "";
       suggestedPanel.style.display = "block";
-    });
+    }
   } else {
-    const comment = localStorage.getItem(`comment_${finalText}`) || "";
-    const email = localStorage.getItem(`email_${finalText}`) || "";
-    const corr = localStorage.getItem(`corr_${finalText}`) || "";
-    commentBox.innerHTML = comment;
-    emailBox.innerHTML = email ? email.replace(/\n/g,"<br>") : "";
-    corrBox.innerHTML = corr;
+    commentBox.innerHTML = localStorage.getItem(`comment_${finalText}`) || "";
+    emailBox.innerHTML = localStorage.getItem(`email_${finalText}`) || "";
+    corrBox.innerHTML = localStorage.getItem(`corr_${finalText}`) || "";
     suggestedPanel.style.display = "block";
   }
 }
@@ -487,18 +480,18 @@ function checkPassword() {
   if (document.getElementById("adminPassword").value === "admin") {
     closePasswordModal();
     openEditModal();
-  } else alert("Incorrect password!");
+  } else {
+    alert("Incorrect password!");
+  }
 }
 
 function openEditModal() {
-  const boxMap = { comment: "suggestedComment", email: "suggestedEmail", corr: "suggestedCorrCode" };
-  const currentBoxId = boxMap[currentEditType];
-  const currentBox = document.getElementById(currentBoxId);
-  const html = currentBox.innerHTML || "";
-  const text = html.replace(/<br\s*\/?>/gi,"\n").replace(/&amp;/g,"&");
+  const boxIdMap = { comment:"suggestedComment", email:"suggestedEmail", corr:"suggestedCorrCode" };
+  const currentBox = document.getElementById(boxIdMap[currentEditType]);
+  const text = currentBox.innerHTML.replace(/<br\s*\/?>/gi,"\n").replace(/&amp;/g,"&");
   document.getElementById("editTextarea").value = text;
   document.getElementById("modalTitle").textContent = `Edit ${currentEditType.toUpperCase()}`;
-  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore for this exact recommendation text.";
+  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore for this recommendation.";
   document.getElementById("editModal").style.display = "flex";
 }
 
@@ -506,31 +499,35 @@ function closeEditModal() { document.getElementById("editModal").style.display =
 
 async function saveEdit() {
   const val = document.getElementById("editTextarea").value;
-  if (!currentFinalRecommendation) return alert("No recommendation selected to save edits for!");
+  if (!currentFinalRecommendation) return alert("No recommendation selected!");
 
   const docId = encodeURIComponent(currentFinalRecommendation);
-  const boxMap = { comment: "suggestedComment", email: "suggestedEmail", corr: "suggestedCorrCode" };
-  const boxId = boxMap[currentEditType];
+  const boxIdMap = { comment:"suggestedComment", email:"suggestedEmail", corr:"suggestedCorrCode" };
+  const boxId = boxIdMap[currentEditType];
 
   try {
-    if (currentEditType === "comment" && typeof window.saveCommentToFirestore === "function") {
-      await window.saveCommentToFirestore(docId, val);
-    } else if (currentEditType === "email" && typeof window.saveEmailToFirestore === "function") {
-      await window.saveEmailToFirestore(docId, val);
-    } else if (currentEditType === "corr" && typeof window.saveCorrToFirestore === "function") {
-      await window.saveCorrToFirestore(docId, val);
+    if (currentEditType === "comment") {
+      if (typeof window.saveCommentToFirestore === "function") await window.saveCommentToFirestore(docId, val);
+      localStorage.setItem(`comment_${currentFinalRecommendation}`, val);
+    } else if (currentEditType === "email") {
+      if (typeof window.saveEmailToFirestore === "function") await window.saveEmailToFirestore(docId, val);
+      localStorage.setItem(`email_${currentFinalRecommendation}`, val);
+    } else if (currentEditType === "corr") {
+      if (typeof window.saveCorrToFirestore === "function") await window.saveCorrToFirestore(docId, val);
+      localStorage.setItem(`corr_${currentFinalRecommendation}`, val);
     }
 
-    // Fallback localStorage
-    localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
-    document.getElementById(boxId).innerHTML = currentEditType === "email" ? val.replace(/\n/g,"<br>") : val;
+    document.getElementById(boxId).innerHTML = (currentEditType === "email") ? val.replace(/\n/g,"<br>") : val;
     alert(`${currentEditType.toUpperCase()} saved successfully.`);
   } catch(err) {
     console.error(err);
     localStorage.setItem(`${currentEditType}_${currentFinalRecommendation}`, val);
-    document.getElementById(boxId).innerHTML = currentEditType === "email" ? val.replace(/\n/g,"<br>") : val;
-    alert(`Error saving ${currentEditType} — saved locally.`);
-  } finally { closeEditModal(); document.getElementById("suggestedPanel").style.display = "block"; }
+    document.getElementById(boxId).innerHTML = (currentEditType === "email") ? val.replace(/\n/g,"<br>") : val;
+    alert(`Error saving ${currentEditType}, saved locally.`);
+  } finally {
+    closeEditModal();
+    document.getElementById("suggestedPanel").style.display = "block";
+  }
 }
 
 /* ---------- EVENTS ---------- */
@@ -555,8 +552,7 @@ document.getElementById("startOverBtn").onclick = () => {
 
 document.getElementById("copyEmailBtn").onclick = () => {
   const txt = document.getElementById("suggestedEmail").innerText || "";
-  navigator.clipboard.writeText(txt).then(() => alert("Email copied!"))
-  .catch(() => alert("Unable to copy - your browser may block clipboard access."));
+  navigator.clipboard.writeText(txt).then(()=>alert("Email copied!")).catch(()=>alert("Unable to copy."));
 };
 
 /* ---------- INIT ---------- */
