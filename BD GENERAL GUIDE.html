@@ -59,7 +59,6 @@ textarea{resize:none}
 @keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media(max-width:1200px){.container{grid-template-columns:1fr}}
 
-
 /* ---------- MODAL STYLES ------------------ */
 .modal {
   display: none;
@@ -77,8 +76,8 @@ textarea{resize:none}
   background: #fff;
   padding: 25px 30px;
   border-radius: 12px;
-  min-width: 500px;      /* lapad */
-  max-width: 600px;       /* optional max width */
+  min-width: 500px;
+  max-width: 600px;
   box-shadow: 0 12px 28px rgba(0,0,0,0.2);
   text-align: center;
   position: relative;
@@ -190,14 +189,13 @@ textarea{resize:none}
         <div id="suggestedComment" class="output-box"></div>
       </div>
       
-      <!-- ✅ NEW: CORR CODE -->
-    <div class="output-card" id="corrCard">
-      <div class="output-header">
-        Possible CORR CODE
-        <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
+      <div class="output-card" id="corrCard">
+        <div class="output-header">
+          Possible CORR CODE
+          <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
+        </div>
+        <div id="suggestedCorrCode" class="output-box"></div>
       </div>
-      <div id="suggestedCorrCode" class="output-box"></div>
-    </div>
       
       <div class="output-card" id="emailCard">
         <div class="output-header">
@@ -235,7 +233,6 @@ textarea{resize:none}
   </div>
 </div>
 
-
 <footer style="display:flex;align-items:center;justify-content:space-between;">
   <p>© 2025 EBS Operations</p>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -251,7 +248,6 @@ textarea{resize:none}
 
 <script>
 /* ---------- FIREBASE (compat) INIT ---------- */
-/* Uses the bdgg-database config you provided earlier */
 const firebaseConfig = {
   apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
   authDomain: "bdgg-database.firebaseapp.com",
@@ -571,7 +567,6 @@ const TREE = {
 /* ---------- UI Logic ---------- */
 let path=[]; 
 let historyStack=[];
-const TOTAL_DECISION_NODES=15;
 let currentFinalRecommendation = "";
 let currentEditType = "";
 
@@ -601,7 +596,7 @@ function renderNode(nodeObj,nodeKey="root"){
       btn.onclick=()=>{
         historyStack.push({nodeKey,path:JSON.parse(JSON.stringify(path))});
         path.push({question:nodeObj.text,answer:choice.label});
-        const nextNode=NODES[choice.next]||(choice.action?{action:choice.action,note:choice.note}:{});        
+        const nextNode=NODES[choice.next]||(choice.action?{action:choice.action,note:choice.note}:{});
         if(nextNode.action) currentFinalRecommendation=nextNode.action;
         renderNode(nextNode,choice.next);
         updateSelectedPath();
@@ -631,139 +626,64 @@ function updateSelectedPath(){
 }
 
 function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
-document.getElementById("goBackBtn").onclick=()=>{if(historyStack.length){const last=historyStack.pop();path=last.path;renderNode(NODES[last.nodeKey],last.nodeKey);updateSelectedPath();}};
+document.getElementById("goBackBtn").onclick=()=>{if(historyStack.length){const last=historyStack.pop();path=last.path;renderNode(NODES[last.nodeKey],last.nodeKey);updateSelectedPath();}}; 
 document.getElementById("startOverBtn").onclick=()=>{path=[];historyStack=[];renderNode(TREE,"root");updateSelectedPath();};
 window.onload=()=>{renderNode(TREE,"root");};
 
-function countTotalSteps(nodeObj) {
-  if(!nodeObj.choices) return 1;
-  return 1 + Math.max(...nodeObj.choices.map(c => {
-    const nextNode = NODES[c.next] || (c.action ? {action:c.action} : {});
-    return countTotalSteps(nextNode);
-  }));
-}
-
 /* ---------- Suggested Comment, Email & CORR CODE ---------- */
-
-function docIdFromText(text) {
-  return encodeURIComponent(text);
-}
-
+function docIdFromText(text){return encodeURIComponent(text);}
 async function generateSuggestedCommentEmail(recommendation){
   const commentEl = document.getElementById("suggestedComment");
   const emailEl = document.getElementById("suggestedEmail");
   const corrEl = document.getElementById("suggestedCorrCode");
   const suggestedPanel = document.getElementById("suggestedPanel");
 
-  let commentText="", emailText="", corrText="";
-
-  if(recommendation.includes("Collect")){
-    commentText = "VS-BLER-CASE#-CHANGED TERMS TO COLLECT PER BOL";
-    corrText = "CORR-001";
-  } else if(recommendation.includes("Prepaid")){
-    commentText = "VS-BLER-CASE#-CHANGED TERMS TO PREPAID PER BOL";
-    corrText = "CORR-002";
-  } else if(recommendation.includes("rebilling the account no.") || recommendation.includes("per BOL")){
-    commentText = "VS-BLER-CASE#-CHANGED BT CODE TO ######### PER BOL";
-    corrText = "CORR-003";
-  }
-
-  emailText = `Hi,\n\nPro ######### has been reviewed and updated to bill the correct debtor per BOL. Revised Invoice will be sent accordingly.\n\nThank you,\nEBS Operations - Invoicing Solutions`;
-
-  commentEl.textContent = ""; emailEl.textContent = ""; corrEl.textContent = "";
+  commentEl.textContent = ""; 
+  emailEl.textContent = ""; 
+  corrEl.textContent = "";
   suggestedPanel.style.display = "block";
 
   const id = docIdFromText(recommendation);
 
-  try {
-    const commentDoc = await db.collection("comments").doc(id).get();
-    commentEl.textContent = commentDoc.exists && commentDoc.data().text ? commentDoc.data().text : commentText;
-  } catch (err) {
-    console.error("Error loading comment from Firestore:", err);
-    commentEl.textContent = commentText;
-  }
+  const loadField = async (col, el)=>{
+    try{
+      const doc = await db.collection(col).doc(id).get();
+      if(doc.exists && doc.data().text){
+        el.textContent = doc.data().text;
+      }
+    } catch(err){
+      console.error(`Error loading ${col}:`, err);
+    }
+  };
 
-  try {
-    const emailDoc = await db.collection("emails").doc(id).get();
-    emailEl.textContent = emailDoc.exists && emailDoc.data().text ? emailDoc.data().text : emailText;
-  } catch (err) {
-    console.error("Error loading email from Firestore:", err);
-    emailEl.textContent = emailText;
-  }
-
-  try {
-    const corrDoc = await db.collection("corr").doc(id).get();
-    corrEl.textContent = corrDoc.exists && corrDoc.data().text ? corrDoc.data().text : corrText;
-  } catch (err) {
-    console.error("Error loading CORR code from Firestore:", err);
-    corrEl.textContent = corrText;
-  }
+  await loadField("comments", commentEl);
+  await loadField("emails", emailEl);
+  await loadField("corr", corrEl);
 }
 
 /* ---------- Admin Edit Logic ---------- */
-function attemptEdit(type){
-  currentEditType = type;
-  document.getElementById("adminPassword").value="";
-  document.getElementById("passwordModal").style.display="flex";
-}
-
+function attemptEdit(type){currentEditType=type;document.getElementById("adminPassword").value="";document.getElementById("passwordModal").style.display="flex";}
 function closePasswordModal(){document.getElementById("passwordModal").style.display="none";}
-function checkPassword(){
-  if(document.getElementById("adminPassword").value==="admin"){
-    closePasswordModal();
-    openEditModal();
-  } else { alert("Incorrect password!"); }
-}
-
+function checkPassword(){if(document.getElementById("adminPassword").value==="admin"){closePasswordModal();openEditModal();}else{alert("Incorrect password!");}}
 function openEditModal(){
-  document.getElementById("editTextarea").value = currentEditType==="comment" 
-    ? document.getElementById("suggestedComment").textContent
-    : currentEditType==="email"
-      ? document.getElementById("suggestedEmail").textContent
-      : document.getElementById("suggestedCorrCode").textContent;
-  document.getElementById("modalTitle").textContent = `Edit ${currentEditType==="comment"?"Comment":currentEditType==="email"?"Email":"CORR Code"}`;
+  document.getElementById("editTextarea").value=document.getElementById(currentEditType==="comment"?"suggestedComment":currentEditType==="email"?"suggestedEmail":"suggestedCorrCode").textContent;
+  document.getElementById("modalTitle").textContent=`Edit ${currentEditType.toUpperCase()}`;
   document.getElementById("editModal").style.display="flex";
 }
-
 function closeEditModal(){document.getElementById("editModal").style.display="none";}
-
-async function saveEdit(){
-  const val = document.getElementById("editTextarea").value;
-  if(!currentFinalRecommendation){
-    alert("No recommendation selected to save edits for!");
-    return;
-  }
+function saveEdit(){
+  const newVal=document.getElementById("editTextarea").value;
+  document.getElementById(currentEditType==="comment"?"suggestedComment":currentEditType==="email"?"suggestedEmail":"suggestedCorrCode").textContent=newVal;
   const id = docIdFromText(currentFinalRecommendation);
-
-  try {
-    if (currentEditType === "comment") {
-      await db.collection("comments").doc(id).set({ text: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      document.getElementById("suggestedComment").innerText = val;
-    } else if (currentEditType === "email") {
-      await db.collection("emails").doc(id).set({ text: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      document.getElementById("suggestedEmail").innerText = val;
-    } else if (currentEditType === "corr") {
-      await db.collection("corr").doc(id).set({ text: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      document.getElementById("suggestedCorrCode").innerText = val;
-    }
-    closeEditModal();
-    alert("Saved to Firestore.");
-  } catch (err) {
-    console.error("Error saving to Firestore:", err);
-    alert("Failed to save to Firestore. Check console for details.");
-  }
+  db.collection(currentEditType+"s").doc(id).set({text:newVal});
+  closeEditModal();
 }
 
-/* ---------- Copy Email ---------- */
-document.getElementById("copyEmailBtn").onclick = ()=>{
-  const txt = document.getElementById("suggestedEmail").textContent || document.getElementById("suggestedEmail").innerText;
-  navigator.clipboard.writeText(txt).then(()=> {
-    alert("Email copied to clipboard!");
-  }).catch(err=>{
-    console.error("Clipboard error:", err);
-    alert("Unable to copy to clipboard.");
-  });
-}
+/* ---------- Copy Button ---------- */
+document.getElementById("copyEmailBtn").onclick=()=>{
+  const val=document.getElementById("suggestedEmail").textContent;
+  navigator.clipboard.writeText(val).then(()=>alert("Copied!"));
+};
 </script>
 </body>
 </html>
