@@ -558,6 +558,39 @@ document.getElementById("copyEmailBtn").onclick = () => {
 /* ---------- INIT ---------- */
 window.addEventListener('load', () => { renderNode(NODES.root, "root"); });
 </script>
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* ---------- FIREBASE CONFIG ---------- */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ---------- FIRESTORE HELPERS ---------- */
+window.saveCommentToFirestore = async (docId, val) => {
+  await db.collection("loa_recommendations").doc(docId).set({ comment: val }, { merge: true });
+};
+window.saveEmailToFirestore = async (docId, val) => {
+  await db.collection("loa_recommendations").doc(docId).set({ email: val }, { merge: true });
+};
+window.saveCorrToFirestore = async (docId, val) => {
+  await db.collection("loa_recommendations").doc(docId).set({ corr: val }, { merge: true });
+};
+window.loadFromFirestore = async (docId) => {
+  const docSnap = await db.collection("loa_recommendations").doc(docId).get();
+  return docSnap.exists ? docSnap.data() : {};
+};
+console.log("LOA Firestore helpers ready.");
+</script>
 
 </body>
 </html>
