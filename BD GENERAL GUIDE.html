@@ -671,12 +671,44 @@ function openEditModal(){
   document.getElementById("editModal").style.display="flex";
 }
 function closeEditModal(){document.getElementById("editModal").style.display="none";}
-function saveEdit(){
-  const newVal=document.getElementById("editTextarea").value;
-  document.getElementById(currentEditType==="comment"?"suggestedComment":currentEditType==="email"?"suggestedEmail":"suggestedCorrCode").textContent=newVal;
+async function saveEdit(){
+  const newVal = document.getElementById("editTextarea").value;
+
+  // Update UI immediately
+  document.getElementById(
+    currentEditType === "comment"
+      ? "suggestedComment"
+      : currentEditType === "email"
+      ? "suggestedEmail"
+      : "suggestedCorrCode"
+  ).textContent = newVal;
+
   const id = docIdFromText(currentFinalRecommendation);
-  db.collection(currentEditType+"s").doc(id).set({text:newVal});
-  closeEditModal();
+
+  const collectionMap = {
+    comment: "comments",
+    email: "emails",
+    corr: "corr"
+  };
+
+  try {
+    await db
+      .collection(collectionMap[currentEditType])
+      .doc(id)
+      .set({
+        text: newVal,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+    // ✅ CONFIRMATION
+    alert("✅ Successfully saved to Firestore.");
+
+    closeEditModal();
+
+  } catch (error) {
+    console.error("Firestore save failed:", error);
+    alert("❌ Save failed. Please try again.");
+  }
 }
 
 /* ---------- Copy Button ---------- */
