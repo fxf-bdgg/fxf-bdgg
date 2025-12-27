@@ -476,25 +476,40 @@ function openEditModal(){
   document.getElementById("editModal").style.display="flex";
 }
 
-function saveEdit(){
-  const val=document.getElementById("editTextarea").value;
-  const docId=encodeURIComponent(currentFinalRecommendation);
+async function saveEdit(){
+  const val = document.getElementById("editTextarea").value;
+  const docId = encodeURIComponent(currentFinalRecommendation);
 
-  if(currentEditType==="comment"){
-    saveCommentToFirestore(docId,val)
-      .then(()=>document.getElementById("suggestedComment").innerHTML=val);
+  try {
+    if (currentEditType === "comment") {
+      await saveCommentToFirestore(docId, val);
+      document.getElementById("suggestedComment").innerHTML = val;
+    }
+
+    if (currentEditType === "corr") {
+      await saveCorrCodeToFirestore(docId, val);
+      document.getElementById("suggestedCorrCode").innerHTML = val;
+    }
+
+    if (currentEditType === "email") {
+      await saveEmailToFirestore(docId, val);
+      document.getElementById("suggestedEmail").innerHTML =
+        val.replace(/\n/g, "<br>");
+    }
+
+    alert("✅ Successfully saved to Firestore.");
+
+  } catch (err) {
+    console.error("Firestore save failed:", err);
+    alert("❌ Save failed. Please try again.");
+
+  } finally {
+    // ✅ ALWAYS close modal and release overlay
+    document.getElementById("editModal").style.display = "none";
   }
-  if(currentEditType==="corr"){
-    saveCorrCodeToFirestore(docId,val)
-      .then(()=>document.getElementById("suggestedCorrCode").innerHTML=val);
-  }
-  if(currentEditType==="email"){
-    saveEmailToFirestore(docId,val)
-      .then(()=>document.getElementById("suggestedEmail").innerHTML=val.replace(/\n/g,"<br>"));
-  }
-  document.getElementById("editModal").style.display="none";
 }
 
+/* ---------- gobackstart again ---------- */
 document.getElementById("goBackBtn").onclick = () => {
   if (!historyStack.length) return;
 
@@ -519,7 +534,6 @@ document.getElementById("startOverBtn").onclick = () => {
   renderNode(TREE, "root");
   updateProgress();
 };
-
 
 /* ---------- INIT ---------- */
 window.addEventListener("load", () => {
