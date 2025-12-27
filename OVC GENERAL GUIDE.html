@@ -517,10 +517,10 @@ function saveEdit(){
     else if(currentEditType==="corr") document.getElementById("suggestedCorrCode").innerHTML=val;
     document.getElementById("suggestedPanel").style.display="block";
     closeEditModal();
-    alert("Saved to Firestore!");
+    alert("✅ Successfully saved to Firestore.");
   }).catch(err=>{
     console.error(err);
-    alert("Error saving to Firestore. Check console.");
+    alert("❌ Save failed. Please try again.");
   });
 }
 
