@@ -70,7 +70,6 @@ textarea{resize:none}
 @media(max-width:500px){ .modal-content { width: 90%; min-width: unset; padding:20px; } }
 </style>
 
-<!-- Firebase compat CDN (works without bundler) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
@@ -122,6 +121,15 @@ textarea{resize:none}
       </div>
       <div id="suggestedComment" class="output-box"></div>
     </div>
+    
+    <div class="output-card" id="corrCard">
+      <div class="output-header">
+        Possible CORR CODE
+        <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
+      </div>
+      <div id="suggestedCorrCode" class="output-box"></div>
+    </div>
+    
     <div class="output-card" id="emailCard">
       <div class="output-header">
         Suggested Email
@@ -159,7 +167,7 @@ textarea{resize:none}
 <div id="editModal" class="modal">
   <div class="modal-content">
     <h3 id="modalTitle">Edit</h3>
-    <div id="modalHint" class="note" style="margin-bottom:6px;">Edits will be saved to Firestore (comments & emails collections).</div>
+    <div id="modalHint" class="note" style="margin-bottom:6px;">Edits will be saved to Firestore (comments & emails & corrcodes).</div>
     <textarea id="editTextarea"></textarea>
     <div style="margin-top:18px;text-align:right;">
       <button class="save-btn" onclick="saveEdit()">Save</button>
@@ -169,8 +177,7 @@ textarea{resize:none}
 </div>
 
 <script>
-/* ---------- FIREBASE (compat) INIT ---------- */
-/* Using compat CDN so file works without bundler */
+/* ---------- FIREBASE INIT ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
   authDomain: "bdgg-database.firebaseapp.com",
@@ -179,15 +186,11 @@ const firebaseConfig = {
   messagingSenderId: "43574975434",
   appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ---------- DECISION TREE DATA (NODES) ---------- */
-/* Full Reweigh decision tree (root = 'root') */
-
+/* ---------- DECISION TREE NODES ---------- */
 const NODES = {
-
   root: {
     text: "What is the dispute of the customer?",
     choices: [
@@ -198,301 +201,56 @@ const NODES = {
       { label: "Others (not Weight Related)", next: "others_not_weight" }
     ]
   },
-
-  /* ----------------------------------------------------------
-      SECTION 1 — REMOVE REWEIGH / BILL BACK PER BOL
-  -----------------------------------------------------------*/
-
-  remove_reweigh_root: {
-    text: "Was the shipment reweighed?",
-    choices: [
-      { label: "YES", next: "remove_reweigh_delivered" },
-      { label: "NO", next: "remove_reweigh_not_reweighed" }
-    ]
-  },
-
-  remove_reweigh_not_reweighed: {
-    text: "If customer is disputing the weight but shipment was not reweighed, move the case to Billing Dispute.",
-    choices: []
-  },
-
-  remove_reweigh_delivered: {
-    text: "Was the shipment delivered?",
-    choices: [
-      { label: "YES", next: "remove_reweigh_validity_check" },
-      { label: "NO", next: "pend_not_delivered" }
-    ]
-  },
-
-  pend_not_delivered: {
-    text: 'Pend the case since shipment has not been delivered and respond to the customer: "This request has been received and will be reviewed once the shipment is delivered. Thank you for your patience during the interim."',
-    choices: []
-  },
-
-  remove_reweigh_validity_check: {
-    text: "Was the Reweigh valid and done correctly?",
-    choices: [
-      { label: "YES", next: "remove_reweigh_customer_doc" },
-      { label: "NO", next: "remove_reweigh_invalid_root" }
-    ]
-  },
-
-  remove_reweigh_customer_doc: {
-    text: "Did the customer provide a document and claim that the reweigh is inaccurate?",
-    choices: [
-      { label: "YES", next: "remove_reweigh_doc_valid" },
-      { label: "NO", next: "remove_reweigh_no_doc_revnj" }
-    ]
-  },
-
-  remove_reweigh_doc_valid: {
-    text: "Was the document valid and can be used to reverse the reweigh?",
-    choices: [
-      { label: "YES", next: "remove_reweigh_doc_outcome" },
-      { label: "NO", next: "remove_reweigh_doc_invalid_revnj" }
-    ]
-  },
-
-  remove_reweigh_doc_outcome: {
-    text: "If reweigh will be reversed, will the invoice amount increase or decrease?",
-    choices: [
-      { label: "Increase", next: "increase_warn_litro" },
-      { label: "Decrease", next: "correction_litro" }
-    ]
-  },
-
-  increase_warn_litro: {
-    text: "Advise the customer that reversing the reweigh will result in an increased invoice amount. Did the customer agree to proceed?",
-    choices: [
-      { label: "Customer Agrees", next: "correction_litro" },
-      { label: "Customer Declines", next: "case_denied" }
-    ]
-  },
-
-  correction_litro: {
-    text: "Proceed with the Correction following LITRO.",
-    choices: []
-  },
-
-  case_denied: {
-    text: "Close the case as Denied.",
-    choices: []
-  },
-
-  remove_reweigh_doc_invalid_revnj: {
-    text: "Try to upload the case in FPAD. Is the customer eligible for Courtesy Adjustment (REVNJ)?",
-    choices: [
-      { label: "YES", next: "revnj_reverse" },
-      { label: "NO", next: "request_valid_doc" }
-    ]
-  },
-
-  remove_reweigh_no_doc_revnj: {
-    text: "Per FPAD BOT, is the customer eligible for Courtesy Adjustment (REVNJ)?",
-    choices: [
-      { label: "YES", next: "revnj_reverse" },
-      { label: "NO", next: "request_valid_doc" }
-    ]
-  },
-
-  revnj_reverse: {
-    text: "Reverse the Reweigh per REVNJ Process.",
-    choices: []
-  },
-
-  request_valid_doc: {
-    text: "Advise the customer that the reweigh is valid and the document they provided is invalid. Request documentation supporting the BOL weight.",
-    choices: []
-  },
-
-  /* INVALID REWEIGH BRANCH */
-
-  remove_reweigh_invalid_root: {
-    text: "What is the Reweigh Code that makes the Reweigh invalid?",
-    choices: [
-      { label: "NDOCO - No reweigh certificate imaged", next: "ndoco_branch" },
-      { label: "BILLO - Incorrect biller weight entry", next: "billo_branch" },
-      { label: "RERRO - Service Center processed incorrectly", next: "rerro_branch" },
-      { label: "MIXDO - Freight were mixed up during reweigh", next: "mixdo_branch" }
-    ]
-  },
-
-  /* NDOCO */
-  ndoco_branch: {
-    text: "If reweigh will be reversed, will the invoice amount increase or decrease?",
-    choices: [
-      { label: "Increase", next: "increase_warn_ndoco" },
-      { label: "Decrease", next: "correction_ndoco" }
-    ]
-  },
-
-  increase_warn_ndoco: {
-    text: "Advise the customer that reversing the reweigh will increase the invoice. Did the customer agree?",
-    choices: [
-      { label: "Customer Agrees", next: "correction_ndoco" },
-      { label: "Customer Declines", next: "case_denied" }
-    ]
-  },
-
-  correction_ndoco: {
-    text: "Proceed with the Correction following NDOCO.",
-    choices: []
-  },
-
-  /* BILLO */
-  billo_branch: {
-    text: "If reweigh will be reversed, will the invoice amount increase or decrease?",
-    choices: [
-      { label: "Increase", next: "increase_warn_billo" },
-      { label: "Decrease", next: "correction_billo" }
-    ]
-  },
-
-  increase_warn_billo: {
-    text: "Advise customer about increased invoice. Did the customer agree?",
-    choices: [
-      { label: "Customer Agrees", next: "correction_billo" },
-      { label: "Customer Declines", next: "case_denied" }
-    ]
-  },
-
-  correction_billo: {
-    text: "Proceed with the Correction following BILLO.",
-    choices: []
-  },
-
-  /* RERRO */
-  rerro_branch: {
-    text: "Choose one below that matches your case:",
-    choices: [
-      { label: "Reweigh Certificate Error - weights switched", next: "rerro_cert_error" },
-      { label: "Confirmation from Service Center/Freight Analysis Manager that reweigh was done incorrectly", next: "rerro_fam" }
-    ]
-  },
-
-  rerro_cert_error: {
-    text: "If reweigh will be reversed, will invoice increase or decrease?",
-    choices: [
-      { label: "Increase", next: "increase_warn_rerro" },
-      { label: "Decrease", next: "correction_rerro" }
-    ]
-  },
-
-  increase_warn_rerro: {
-    text: "Advise customer about increased invoice. Did the customer agree?",
-    choices: [
-      { label: "Customer Agrees", next: "correction_rerro" },
-      { label: "Customer Declines", next: "case_denied" }
-    ]
-  },
-
-  correction_rerro: {
-    text: "Proceed with the Correction following RERRO.",
-    choices: []
-  },
-
-  rerro_fam: {
-    text: "Proceed with reversing the Reweigh following RERRO.",
-    choices: []
-  },
-
-  /* MIXDO */
-  mixdo_branch: {
-    text: "Freight were mixed up during reweigh; proceed with reversing the Reweigh following MIXDO.",
-    choices: []
-  },
-
-  /* ----------------------------------------------------------
-      SECTION 2 — APPLY REWEIGH
-  -----------------------------------------------------------*/
-
-  apply_reweigh_root: {
-    text: "Was the shipment reweighed?",
-    choices: [
-      { label: "YES", next: "apply_reweigh_delivered" },
-      { label: "NO", next: "apply_reweigh_not_reweighed" }
-    ]
-  },
-
-  apply_reweigh_not_reweighed: {
-    text: "Deny the request and advise that the shipment was not reweighed.",
-    choices: []
-  },
-
-  apply_reweigh_delivered: {
-    text: "Was the shipment delivered?",
-    choices: [
-      { label: "YES", next: "apply_reweigh_reason" },
-      { label: "NO", next: "pend_not_delivered" }
-    ]
-  },
-
-  apply_reweigh_reason: {
-    text: "What is the reason why Reweigh was not applied? Is there any comment stating the reweigh is invalid?",
-    choices: [
-      { label: "YES", next: "apply_reweigh_invalid_comment" },
-      { label: "NO", next: "apply_reweigh_compare_hu" }
-    ]
-  },
-
-  apply_reweigh_invalid_comment: {
-    text: "Advise customer that the reweigh was invalid and cannot be applied. Request documentation supporting the reweighed weight.",
-    choices: []
-  },
-
-  apply_reweigh_compare_hu: {
-    text: "Do the handling units on the Reweigh Cert and BOL not match?",
-    choices: [
-      { label: "YES", next: "apply_reweigh_invalid_hu" },
-      { label: "NO", next: "apply_reweigh_weight_diff" }
-    ]
-  },
-
-  apply_reweigh_invalid_hu: {
-    text: "Advise customer the reweigh was invalid (HU mismatch). Request documentation supporting the reweighed weight.",
-    choices: []
-  },
-
-  apply_reweigh_weight_diff: {
-    text: "Is there a big difference between BOL weight and reweighed weight?",
-    choices: [
-      { label: "YES (26%+)", next: "apply_reweigh_invalid_big_diff" },
-      { label: "NO (25% or less)", next: "apply_reweigh_proceed" }
-    ]
-  },
-
-  apply_reweigh_invalid_big_diff: {
-    text: "Reweigh is invalid due to large variance. Request documentation supporting the reweighed weight.",
-    choices: []
-  },
-
-  apply_reweigh_proceed: {
-    text: "Proceed and apply the Reweighed weight.",
-    choices: []
-  },
-
-  /* ----------------------------------------------------------
-      PALLET WEIGHT / REWEIGH CERTIFICATE / OTHERS
-  -----------------------------------------------------------*/
-
-  pallet_weight: {
-    text: "Explain to the customer why pallet weight was applied. Check OS for details.",
-    choices: []
-  },
-
-  reweigh_certificate: {
-    text: "Move the case to Invoice Reprint.",
-    choices: []
-  },
-
-  others_not_weight: {
-    text: "Move the case to the appropriate queue based on the dispute.",
-    choices: []
-  }
-
-}; // end NODES
-
-
+  remove_reweigh_root: { text: "Was the shipment reweighed?", choices: [{ label: "YES", next: "remove_reweigh_delivered" },{ label: "NO", next: "remove_reweigh_not_reweighed" }] },
+  remove_reweigh_not_reweighed: { text: "If customer is disputing the weight but shipment was not reweighed, move the case to Billing Dispute.", choices: [] },
+  remove_reweigh_delivered: { text: "Was the shipment delivered?", choices: [{ label: "YES", next: "remove_reweigh_validity_check" },{ label: "NO", next: "pend_not_delivered" }] },
+  pend_not_delivered: { text: 'Pend the case since shipment has not been delivered and respond to the customer: "This request has been received and will be reviewed once the shipment is delivered. Thank you for your patience during the interim."', choices: [] },
+  remove_reweigh_validity_check: { text: "Was the Reweigh valid and done correctly?", choices: [{ label: "YES", next: "remove_reweigh_customer_doc" },{ label: "NO", next: "remove_reweigh_invalid_root" }] },
+  remove_reweigh_customer_doc: { text: "Did the customer provide a document and claim that the reweigh is inaccurate?", choices: [{ label: "YES", next: "remove_reweigh_doc_valid" },{ label: "NO", next: "remove_reweigh_no_doc_revnj" }] },
+  remove_reweigh_doc_valid: { text: "Was the document valid and can be used to reverse the reweigh?", choices: [{ label: "YES", next: "remove_reweigh_doc_outcome" },{ label: "NO", next: "remove_reweigh_doc_invalid_revnj" }] },
+  remove_reweigh_doc_outcome: { text: "If reweigh will be reversed, will the invoice amount increase or decrease?", choices: [{ label: "Increase", next: "increase_warn_litro" },{ label: "Decrease", next: "correction_litro" }] },
+  increase_warn_litro: { text: "Advise the customer that reversing the reweigh will result in an increased invoice amount. Did the customer agree to proceed?", choices: [{ label: "Customer Agrees", next: "correction_litro" },{ label: "Customer Declines", next: "case_denied" }] },
+  correction_litro: { text: "Proceed with the Correction following LITRO.", choices: [] },
+  case_denied: { text: "Close the case as Denied.", choices: [] },
+  remove_reweigh_doc_invalid_revnj: { text: "Try to upload the case in FPAD. Is the customer eligible for Courtesy Adjustment (REVNJ)?", choices: [{ label: "YES", next: "revnj_reverse" },{ label: "NO", next: "request_valid_doc" }] },
+  remove_reweigh_no_doc_revnj: { text: "Per FPAD BOT, is the customer eligible for Courtesy Adjustment (REVNJ)?", choices: [{ label: "YES", next: "revnj_reverse" },{ label: "NO", next: "request_valid_doc" }] },
+  revnj_reverse: { text: "Reverse the Reweigh per REVNJ Process.", choices: [] },
+  request_valid_doc: { text: "Advise the customer that the reweigh is valid and the document they provided is invalid. Request documentation supporting the BOL weight.", choices: [] },
+  remove_reweigh_invalid_root: { text: "What is the Reweigh Code that makes the Reweigh invalid?", choices: [
+    { label: "NDOCO - No reweigh certificate imaged", next: "ndoco_branch" },
+    { label: "BILLO - Incorrect biller weight entry", next: "billo_branch" },
+    { label: "RERRO - Service Center processed incorrectly", next: "rerro_branch" },
+    { label: "MIXDO - Freight were mixed up during reweigh", next: "mixdo_branch" }
+  ] },
+  ndoco_branch: { text: "If reweigh will be reversed, will the invoice amount increase or decrease?", choices: [{ label: "Increase", next: "increase_warn_ndoco" },{ label: "Decrease", next: "correction_ndoco" }] },
+  increase_warn_ndoco: { text: "Advise the customer that reversing the reweigh will increase the invoice. Did the customer agree?", choices: [{ label: "Customer Agrees", next: "correction_ndoco" },{ label: "Customer Declines", next: "case_denied" }] },
+  correction_ndoco: { text: "Proceed with the Correction following NDOCO.", choices: [] },
+  billo_branch: { text: "If reweigh will be reversed, will the invoice amount increase or decrease?", choices: [{ label: "Increase", next: "increase_warn_billo" },{ label: "Decrease", next: "correction_billo" }] },
+  increase_warn_billo: { text: "Advise customer about increased invoice. Did the customer agree?", choices: [{ label: "Customer Agrees", next: "correction_billo" },{ label: "Customer Declines", next: "case_denied" }] },
+  correction_billo: { text: "Proceed with the Correction following BILLO.", choices: [] },
+  rerro_branch: { text: "Choose one below that matches your case:", choices: [
+    { label: "Reweigh Certificate Error - weights switched", next: "rerro_cert_error" },
+    { label: "Confirmation from Service Center/Freight Analysis Manager that reweigh was done incorrectly", next: "rerro_fam" }
+  ] },
+  rerro_cert_error: { text: "If reweigh will be reversed, will invoice increase or decrease?", choices: [{ label: "Increase", next: "increase_warn_rerro" },{ label: "Decrease", next: "correction_rerro" }] },
+  increase_warn_rerro: { text: "Advise customer about increased invoice. Did the customer agree?", choices: [{ label: "Customer Agrees", next: "correction_rerro" },{ label: "Customer Declines", next: "case_denied" }] },
+  correction_rerro: { text: "Proceed with the Correction following RERRO.", choices: [] },
+  rerro_fam: { text: "Proceed with reversing the Reweigh following RERRO.", choices: [] },
+  mixdo_branch: { text: "Freight were mixed up during reweigh; proceed with reversing the Reweigh following MIXDO.", choices: [] },
+  apply_reweigh_root: { text: "Was the shipment reweighed?", choices: [{ label: "YES", next: "apply_reweigh_delivered" },{ label: "NO", next: "apply_reweigh_not_reweighed" }] },
+  apply_reweigh_not_reweighed: { text: "Deny the request and advise that the shipment was not reweighed.", choices: [] },
+  apply_reweigh_delivered: { text: "Was the shipment delivered?", choices: [{ label: "YES", next: "apply_reweigh_reason" },{ label: "NO", next: "pend_not_delivered" }] },
+  apply_reweigh_reason: { text: "What is the reason why Reweigh was not applied? Is there any comment stating the reweigh is invalid?", choices: [{ label: "YES", next: "apply_reweigh_invalid_comment" },{ label: "NO", next: "apply_reweigh_compare_hu" }] },
+  apply_reweigh_invalid_comment: { text: "Advise customer that the reweigh was invalid and cannot be applied. Request documentation supporting the reweighed weight.", choices: [] },
+  apply_reweigh_compare_hu: { text: "Do the handling units on the Reweigh Cert and BOL not match?", choices: [{ label: "YES", next: "apply_reweigh_invalid_hu" },{ label: "NO", next: "apply_reweigh_weight_diff" }] },
+  apply_reweigh_invalid_hu: { text: "Advise customer the reweigh was invalid (HU mismatch). Request documentation supporting the reweighed weight.", choices: [] },
+  apply_reweigh_weight_diff: { text: "Is there a big difference between BOL weight and reweighed weight?", choices: [{ label: "YES (26%+)", next: "apply_reweigh_invalid_big_diff" },{ label: "NO (25% or less)", next: "apply_reweigh_proceed" }] },
+  apply_reweigh_invalid_big_diff: { text: "Reweigh is invalid due to large variance. Request documentation supporting the reweighed weight.", choices: [] },
+  apply_reweigh_proceed: { text: "Proceed and apply the Reweighed weight.", choices: [] },
+  pallet_weight: { text: "Explain to the customer why pallet weight was applied. Check OS for details.", choices: [] },
+  reweigh_certificate: { text: "Move the case to Invoice Reprint.", choices: [] },
+  others_not_weight: { text: "Move the case to the appropriate queue based on the dispute.", choices: [] }
+};
 /* ---------- STATE ---------- */
 let path = [];
 let historyStack = [];
@@ -500,12 +258,17 @@ let currentFinalRecommendation = "";
 let currentEditType = "";
 
 /* ---------- HELPERS ---------- */
-function escapeHtml(unsafe) {
-  if (unsafe === null || unsafe === undefined) return "";
-  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function escapeHtml(unsafe) { 
+  if (!unsafe) return ""; 
+  return String(unsafe).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); 
 }
 
-/* ---------- RENDER ---------- */
+function docIdFromText(text) {
+  // Normalize text to prevent duplicates
+  return text.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+/* ---------- RENDER NODE ---------- */
 function renderNode(nodeObj, nodeKey="root") {
   const flowArea = document.getElementById("flowArea");
   const goBackBtn = document.getElementById("goBackBtn");
@@ -516,20 +279,23 @@ function renderNode(nodeObj, nodeKey="root") {
 
   flowArea.innerHTML = "";
 
-  // Show recommendation if final
-  if (currentFinalRecommendation) {
-    document.getElementById("recommendation").innerHTML =
-      `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
+  if (!nodeObj || !nodeObj.text) return;
+
+  if (!nodeObj.choices || nodeObj.choices.length === 0) {
+    currentFinalRecommendation = nodeObj.text;
+    document.getElementById("recommendation").innerHTML = `<strong>${escapeHtml(currentFinalRecommendation)}</strong>`;
+    generateSuggestedCommentEmail(currentFinalRecommendation);
   } else {
+    currentFinalRecommendation = "";
     document.getElementById("recommendation").textContent = "No recommendation yet.";
     suggestedPanel.style.display = "none";
   }
 
-  if (nodeObj && nodeObj.text && nodeObj.choices && nodeObj.choices.length) {
-    const q = document.createElement("div");
-    q.innerHTML = `<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`;
-    flowArea.appendChild(q);
+  const q = document.createElement("div");
+  q.innerHTML = `<strong style="font-size:16px">${escapeHtml(nodeObj.text)}</strong>`;
+  flowArea.appendChild(q);
 
+  if (nodeObj.choices && nodeObj.choices.length) {
     const list = document.createElement("div");
     list.className = "choice-list";
 
@@ -537,66 +303,27 @@ function renderNode(nodeObj, nodeKey="root") {
       const btn = document.createElement("div");
       btn.className = "choice";
       btn.textContent = choice.label;
-
       btn.onclick = () => {
         historyStack.push({ nodeKey, path: JSON.parse(JSON.stringify(path)) });
         path.push({ question: nodeObj.text, answer: choice.label });
-
-        const nextNode = NODES[choice.next] || {};
-        if (nextNode && nextNode.text && (!nextNode.choices || nextNode.choices.length === 0)) {
-          currentFinalRecommendation = nextNode.text;
-          // show recommendation immediately
-          document.getElementById("recommendation").innerHTML =
-            `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
-          // show suggested panel (left blank unless edited)
-          generateSuggestedCommentEmail(currentFinalRecommendation);
-        } else {
-          currentFinalRecommendation = "";
-          document.getElementById("recommendation").textContent = "No recommendation yet.";
-          suggestedPanel.style.display = "none";
-        }
-
-        // render next node and pass nodeKey so renderNode can use it for notes
-        renderNode(nextNode, choice.next);
+        renderNode(NODES[choice.next] || {}, choice.next);
         updateSelectedPath();
       };
-
       list.appendChild(btn);
     });
 
     flowArea.appendChild(list);
-
-  } else if (nodeObj && nodeObj.text) {
-    // leaf node
-    currentFinalRecommendation = nodeObj.text;
-    document.getElementById("recommendation").innerHTML =
-      `<strong>${escapeHtml(currentFinalRecommendation).replace(/\n/g, "<br>")}</strong>`;
-    updateSelectedPath();
-    generateSuggestedCommentEmail(currentFinalRecommendation);
-  }
-
-  // inject notes for particular final nodes (they will show below recommendation)
-  if (nodeKey === "tpl_companya_corr" || nodeKey === "fpay_companya_corr") {
-    const recEl = document.getElementById("recommendation");
-    const notesHtml = `
-      <div class="note" style="margin-top:10px;">
-        <em>• If the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")} is already their ABT, no correction fee should be billed. (Example: Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL"} → Company A c/o ${nodeKey === "fpay_companya_corr" ? "FPAY2" : "3PL2"} where the new provider is already the ABT.)</em><br/>
-        <em>• If the requesting party is the Shipper/Consignee asking to bill a new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}, deny the request. If they insist, request an LOA from the new ${(nodeKey === "fpay_companya_corr" ? "FPAY" : "3PL")}.</em>
-      </div>
-    `;
-    recEl.insertAdjacentHTML('beforeend', notesHtml);
   }
 
   goBackBtn.style.display = historyStack.length ? "inline-block" : "none";
   startOverBtn.style.display = path.length ? "inline-block" : "none";
 
-  // ---------- PROGRESS BAR ----------
   const stepNum = Math.max(1, path.length + (currentFinalRecommendation ? 1 : 0));
   progressFill.style.width = Math.min(stepNum * 18, 100) + "%";
   progressText.textContent = `Step ${Math.min(stepNum, 99)}`;
 }
 
-/* ---------- PATH DISPLAY ---------- */
+/* ---------- PATH ---------- */
 function updateSelectedPath(){
   const el = document.getElementById("selectedPath");
   if (!path.length) { el.innerHTML = "No steps selected yet."; return; }
@@ -605,160 +332,128 @@ function updateSelectedPath(){
   ).join("<br>");
 }
 
-/* ---------- SUGGESTED COMMENT & EMAIL (FIRESTORE-backed) ---------- */
-
-/**
- * We store comments in collection "comments" and emails in collection "emails".
- * Document ID is the encoded final recommendation text (encodeURIComponent).
- */
-
-function docIdFromText(text) {
-  // keep it reversible & safe for Firestore doc id
-  return encodeURIComponent(text);
+/* ---------- FIRESTORE HANDLING ---------- */
+function getDocId(finalText, type){
+  return `${docIdFromText(finalText)}_${type}`;
 }
 
-async function generateSuggestedCommentEmail(finalText) {
+async function generateSuggestedCommentEmail(finalText){
   const commentBox = document.getElementById("suggestedComment");
   const emailBox = document.getElementById("suggestedEmail");
+  const corrBox = document.getElementById("suggestedCorrCode");
   const suggestedPanel = document.getElementById("suggestedPanel");
 
-  if (!finalText) {
+  if(!finalText){
     suggestedPanel.style.display = "none";
-    commentBox.innerHTML = "";
-    emailBox.innerHTML = "";
+    commentBox.innerText = "";
+    emailBox.innerText = "";
+    corrBox.innerText = "";
     return;
   }
 
-  const id = docIdFromText(finalText);
+  const types = ["comment","email","corr"];
+  const boxes = {comment: commentBox, email: emailBox, corr: corrBox};
 
   try {
-    // fetch comment
-    const commentDoc = await db.collection("comments").doc(id).get();
-    if (commentDoc.exists) {
-      const data = commentDoc.data();
-      commentBox.innerHTML = data.text || "";
-    } else {
-      commentBox.innerHTML = "";
-    }
+    for(const type of types){
+      const docId = getDocId(finalText, type);
+      const docRef = db.collection("rewe_templates").doc(docId);
+      const docSnap = await docRef.get();
 
-    // fetch email
-    const emailDoc = await db.collection("emails").doc(id).get();
-    if (emailDoc.exists) {
-      const data = emailDoc.data();
-      emailBox.innerHTML = data.text || "";
-    } else {
-      emailBox.innerHTML = "";
+      if(!docSnap.exists){
+        // create only once with empty content
+        await docRef.set({ docId: docId, type: type, text: "" });
+        boxes[type].innerText = "";
+      } else {
+        boxes[type].innerText = docSnap.data().text || "";
+      }
     }
 
     suggestedPanel.style.display = "block";
 
-  } catch (err) {
-    console.error("Error loading templates from Firestore:", err);
-    // fallback to empty
-    commentBox.innerHTML = "";
-    emailBox.innerHTML = "";
-    suggestedPanel.style.display = "block";
+  } catch(err){
+    console.error("Firestore fetch/save error:", err);
+    suggestedPanel.style.display = "none";
   }
 }
 
-/* ---------- ADMIN EDIT (now saving to Firestore) ---------- */
-function attemptEdit(type){
-  currentEditType = type;
-  document.getElementById("adminPassword").value = "";
-  document.getElementById("passwordModal").style.display = "flex";
+/* ---------- ADMIN EDIT ---------- */
+function attemptEdit(type){ 
+  currentEditType = type; 
+  document.getElementById("adminPassword").value=""; 
+  document.getElementById("passwordModal").style.display="flex"; 
+}
+function closePasswordModal(){ document.getElementById("passwordModal").style.display="none"; }
+function checkPassword(){ 
+  if(document.getElementById("adminPassword").value==="admin"){ 
+    closePasswordModal(); openEditModal(); 
+  } else { 
+    alert("Incorrect password!"); 
+  } 
 }
 
-function closePasswordModal() { document.getElementById("passwordModal").style.display = "none"; }
+function openEditModal(){
+  let currentBox, modalLabel;
+  if(currentEditType==="comment"){ currentBox=document.getElementById("suggestedComment"); modalLabel="Comment"; }
+  else if(currentEditType==="email"){ currentBox=document.getElementById("suggestedEmail"); modalLabel="Email"; }
+  else if(currentEditType==="corr"){ currentBox=document.getElementById("suggestedCorrCode"); modalLabel="CORR CODE"; }
 
-function checkPassword() {
-  if (document.getElementById("adminPassword").value === "admin") {
-    closePasswordModal();
-    openEditModal();
-  } else {
-    alert("Incorrect password!");
-  }
-}
-
-function openEditModal() {
-  const currentBoxId = currentEditType === "comment" ? "suggestedComment" : "suggestedEmail";
-  const currentBox = document.getElementById(currentBoxId);
-  document.getElementById("editTextarea").value = currentBox.innerText || currentBox.textContent || "";
-  document.getElementById("modalTitle").textContent = `Edit ${currentEditType === "comment" ? "Comment" : "Email"}`;
-  document.getElementById("modalHint").textContent = "Edits will be saved to Firestore (comments & emails collections).";
+  document.getElementById("editTextarea").value = currentBox.innerText;
+  document.getElementById("modalTitle").textContent = `Edit ${modalLabel}`;
   document.getElementById("editModal").style.display = "flex";
 }
+function closeEditModal(){ document.getElementById("editModal").style.display="none"; }
 
-function closeEditModal() { document.getElementById("editModal").style.display = "none"; }
+async function saveEdit(){
+  const val = document.getElementById("editTextarea").value.trim();
+  if(!currentFinalRecommendation){ alert("No recommendation selected!"); return; }
+  if(!val){ alert("Cannot save empty text!"); return; }
 
-async function saveEdit() {
-  const val = document.getElementById("editTextarea").value;
-  if (!currentFinalRecommendation) {
-    alert("No recommendation selected to save edits for!");
-    return;
-  }
-
-  const id = docIdFromText(currentFinalRecommendation);
+  const type = currentEditType;
+  const docId = getDocId(currentFinalRecommendation, type);
+  const docRef = db.collection("rewe_templates").doc(docId);
 
   try {
-    if (currentEditType === "comment") {
-      // set comment doc
-      await db.collection("comments").doc(id).set({
-        text: val,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      document.getElementById("suggestedComment").innerText = val;
-    } else {
-      // set email doc
-      await db.collection("emails").doc(id).set({
-        text: val,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      document.getElementById("suggestedEmail").innerText = val;
-    }
+    await docRef.set({ docId: docId, type: type, text: val });
+    if(type==="comment") document.getElementById("suggestedComment").innerText = val;
+    else if(type==="email") document.getElementById("suggestedEmail").innerText = val;
+    else if(type==="corr") document.getElementById("suggestedCorrCode").innerText = val;
 
-    document.getElementById("suggestedPanel").style.display = "block";
     closeEditModal();
-    alert("Saved to Firestore.");
-
-  } catch (err) {
-    console.error("Error saving to Firestore:", err);
-    alert("Failed to save to Firestore. See console for details.");
+    alert("✅ Successfully saved to Firestore.");
+  } catch(err){
+    console.error("Firestore save error:", err);
+    alert("Failed to save to Firestore.");
   }
 }
 
 /* ---------- EVENTS ---------- */
 document.getElementById("goBackBtn").onclick = () => {
-  if (historyStack.length) {
+  if(historyStack.length){
     const last = historyStack.pop();
     path = last.path || [];
-    const nodeKey = last.nodeKey || "root";
-    currentFinalRecommendation = "";
-    renderNode(NODES[nodeKey], nodeKey);
+    renderNode(NODES[last.nodeKey] || NODES.root, last.nodeKey || "root");
     updateSelectedPath();
   }
 };
-
 document.getElementById("startOverBtn").onclick = () => {
-  path = [];
-  historyStack = [];
-  currentFinalRecommendation = "";
-  document.getElementById("selectedPath").textContent = "No steps selected yet.";
-  document.getElementById("suggestedPanel").style.display = "none";
-  renderNode(NODES.root, "root");
+  path=[]; historyStack=[]; currentFinalRecommendation="";
+  document.getElementById("selectedPath").textContent="No steps selected yet";
+  document.getElementById("suggestedPanel").style.display="none";
+  renderNode(NODES.root,"root");
 };
-
 document.getElementById("copyEmailBtn").onclick = () => {
-  const txt = document.getElementById("suggestedEmail").textContent || document.getElementById("suggestedEmail").innerText;
-  navigator.clipboard.writeText(txt).then(() => {
-    alert("Email copied!");
-  }).catch(() => {
-    alert("Unable to copy - your browser may block clipboard access.");
-  });
+  navigator.clipboard.writeText(document.getElementById("suggestedEmail").innerText || "")
+    .then(()=>alert("Email copied!"))
+    .catch(()=>alert("Unable to copy clipboard."));
 };
 
 /* ---------- INIT ---------- */
-renderNode(NODES.root, "root");
+renderNode(NODES.root,"root");
 </script>
+
+
+
 
 </body>
 </html>
