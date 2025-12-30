@@ -1,9 +1,11 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
+<meta charset="utf‑8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>BD Tools — Main Menu</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
 :root{
@@ -11,11 +13,10 @@
   --card:#ffffff;
   --muted:#64748b;
   --accent:#4d148c;
-  --accent-2:#ff6600;
+  --accent-dark:#3a0f6b;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   color:#0f172a;
 }
-
 *{box-sizing:border-box}
 body{
   margin:0;
@@ -25,50 +26,55 @@ body{
   min-height:100vh;
 }
 
+/* HEADER */
 header, footer{
   background:var(--accent);
   color:white;
   padding:16px 28px;
 }
-
-header h1, footer p{
-  margin:0;
+header{display:flex;align-items:center;justify-content:space-between;}
+header h1, footer p{margin:0;font-weight:600;}
+.header-icons{display:flex;align-items:center;gap:20px;}
+#clockBtn{
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:18px;
   font-weight:600;
+  color:white;
+  position:relative;
 }
+#clockBtn:hover{transform:scale(1.1);}
+.header-icon{font-size:24px;color:white;cursor:pointer;transition:color .2s,transform .2s;}
+.header-icon:hover{transform:scale(1.3);}
+.header-icon.active{color:var(--accent-dark);}
 
-/* MAIN GRID — NOW 4 COLUMNS */
+/* CARDS */
 .shell{
   max-width:1400px;
   margin:0 auto;
   display:grid;
   grid-template-columns:1fr 1fr 1fr 1fr;
   gap:20px;
-  align-items:start;
   padding:28px 0;
   flex:1;
 }
-
 .card{
   background:var(--card);
   border-radius:12px;
   padding:20px;
   box-shadow:0 8px 28px rgba(2,6,23,0.06);
-  overflow:hidden;
   text-align:center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-h1{
-  margin:0;
-  font-size:20px;
-  color:var(--accent);
+.card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 14px 32px rgba(2,6,23,0.15);
+  border: 1px solid var(--accent);
 }
-
-.lead{
-  margin:8px 0 18px;
-  color:var(--muted);
-  font-size:13px;
-}
-
+.card h1{margin:0;font-size:20px;color:var(--accent);}
+.lead{margin:8px 0 18px;color:var(--muted);font-size:13px;}
 .btn{
   display:inline-block;
   margin-top:12px;
@@ -78,33 +84,183 @@ h1{
   color:#fff;
   text-decoration:none;
   font-weight:700;
+  transition: transform .2s, box-shadow .2s;
+}
+.btn:hover {
+  transform: translateY(-3px) scale(1.04);
+  background:var(--accent-dark);
 }
 
-.small{
-  font-size:13px;
+/* MODALS */
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  z-index:1000;
+}
+.modal-content {
+  background:white;
+  border-radius:10px;
+  padding:24px;
+  width:100%;
+  max-width:500px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+.modal-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:12px;
+}
+.modal-close {
+  font-size:22px;
+  cursor:pointer;
   color:var(--muted);
+}
+.modal-close:hover {color:var(--accent);}
+
+/* STAR RATING */
+.rating-container{display:flex;justify-content:center;gap:10px;margin-top:12px;}
+.rating-star{cursor:pointer;font-size:28px;color:#ccc;transition:color .2s,transform .2s;}
+.rating-star:hover{transform:scale(1.3);}
+.rating-star.selected{color:var(--accent-dark);}
+
+/* COMMENTS */
+.comment-list-item{padding:12px 0;border-bottom:1px solid #eee;}
+.comment-list-item .stars{color:var(--accent-dark);font-size:18px;margin-bottom:6px;}
+.comment-list-item:last-child{border:none;}
+input,textarea{width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;}
+textarea{resize:none;min-height:80px;}
+
+/* TIME CALENDAR */
+#timeCalendarPopup {
+  display:none;
+  position:absolute;
+  top:60px; right:20px;
+  background:white;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  padding:16px;
+  width:310px;
+  z-index:900;
+}
+#timeCalendarPopup h3 {
+  margin:0;text-align:center;font-size:18px;color:var(--accent-dark);
+  margin-bottom:8px;
+}
+.calendar-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#f0f0f0;
+  padding:8px;
+  border-radius:6px;
+}
+.calendar-header span{cursor:pointer;color:var(--accent-dark);font-weight:600;}
+.calendar-title{font-weight:700;}
+.calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:4px;
+  margin-top:8px;
+}
+.calendar-grid .day-name{text-align:center;font-size:12px;font-weight:700;color:var(--muted);}
+.calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
+.calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
+.calendar-grid .day:hover{background:#f0f0f0;}
+
+/* COMMENT LINK */
+.link-text{
+  color:var(--accent-dark);
+  cursor:pointer;
+  text-decoration:underline;
+  font-size:14px;
   margin-top:10px;
   display:block;
 }
 
-@media(max-width:1200px){
-  .shell{grid-template-columns:1fr 1fr;}
+/* STAR RATING COLORS */
+.rating-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
 }
 
-@media(max-width:800px){
-  .shell{grid-template-columns:1fr;}
+.rating-star {
+  cursor: pointer;
+  font-size: 28px;
+  color: #ccc; /* default grey */
+  transition: color .2s, transform .2s;
 }
+
+.rating-star:hover {
+  transform: scale(1.3);
+}
+
+.rating-star.selected {
+  color: #FF6600; /* FedEx orange */
+}
+
+/* footer alignment */
+.comment-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.link-text {
+  color: var(--accent-dark);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+
+/* COMMENT LIST STAR COLORS */
+#commentsList .stars {
+  color: #FF6600; /* FedEx orange */
+  font-size: 18px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+
+@media(max-width:1200px){ .shell{grid-template-columns:1fr 1fr;} }
+@media(max-width:800px){ .shell{grid-template-columns:1fr;} }
 </style>
 </head>
 
 <body>
 
-<header style="display:flex;align-items:center;justify-content:space-between;">
-  <div style="display:flex;align-items:center;gap:12px;">
+<header>
+  <div style="display:flex;align-items:center;gap:200px;">
     <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
-    <h1>BD Tools — Billing Dispute Guide</h1>
+    <h1></h1>
+  </div>
+  <div class="header-icons">
+    <div id="clockBtn"><i class="fa-regular fa-clock"></i><span id="clockText">--:-- PM</span></div>
+
+    <i class="header-icon fa-solid fa-comment-dots" id="commentIcon" title="Feedback"></i>
+        <i class="header-icon fa-solid fa-circle-question" id="helpIcon" title="Get Help"></i>
   </div>
 </header>
+
+<div id="timeCalendarPopup">
+  <h3 id="fullTimeDisplay">--:--:-- — --/--/----</h3>
+  <div class="calendar-header">
+    <span id="prevMonth">&lt;</span>
+    <span class="calendar-title" id="monthYear"></span>
+    <span id="nextMonth">&gt;</span>
+  </div>
+  <div class="calendar-grid" id="calendarGrid"></div>
+</div>
 
 <div class="shell">
 
@@ -131,30 +287,235 @@ h1{
 
   <div class="card">
     <h1>LOA — Rebill Guide</h1>
-    <p class="lead">Decision tree for correcting BOL debtor, 3PL, FPAY, or Collector via LOA.</p>
+    <p class="lead">
+      Decision tree for correcting BOL debtor, 3PL, FPAY, or Collector via LOA.</p>
     <a class="btn" href="Rebill per LOA General Guide.html">Open LOA Guide →</a>
     <div class="small">Used when handling rebill / LOA-related corrections.</div>
   </div>
 
-  <!-- ⭐⭐⭐ NEW REWEIGH GUIDE CARD ⭐⭐⭐ -->
   <div class="card">
     <h1>Reweigh — General Guide</h1>
     <p class="lead">Decision guide for reweigh disputes, reversals, invalid reweigh codes, and FPAD eligibility.</p>
     <a class="btn" href="Reweigh General Guide.html">Open Reweigh Guide →</a>
-    <div class="small">Use this for weight disputes, reweigh corrections, and REVNJ eligibility checks.</div>
+    <div class="small">Use this for weight disputes and reweigh corrections.</div>
   </div>
-  <!-- END NEW CARD -->
 
 </div>
 
-<footer style="display:flex;align-items:center;justify-content:space-between;">
-  <p>© 2025 EBS Operations</p>
-
-  <div style="display:flex;align-items:center;gap:10px;">
-    <span style="font-size:12px;color:white;">
-      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
-    </span>
+<!-- HELP Modal -->
+<div id="helpModal" class="modal">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      Get Help <span class="modal-close" onclick="closeHelp()">×</span>
+    </div>
+    <p>Welcome to the Fedex Queues Decision Guide! This tool is designed to help you quickly access the right guides for handling different queues and processes in FedEx.</p>
+    <ul>
+      <li><strong>Navigate the Menu:</strong> Click any card to open the corresponding guide, such as Billing Disputes, Pricing, OVC claims, Rebill, or Reweigh cases.</li>
+      <li><strong>Use the Clock & Calendar:</strong> Click the clock at the top-right to see the current time and calendar for scheduling or reference.</li>
+      <li><strong>Provide Feedback:</strong> Use the comment icon to rate the tool or leave suggestions. Your feedback helps us improve the tool.</li>
+      <li><strong>Quick Tips:</strong> Each guide includes step-by-step instructions and decision trees to make handling cases faster and more accurate.</li>
+    </ul>
+    <p>If you encounter any issues or need additional support, please reach out to your team lead or EBS Operations support.</p>
   </div>
+</div>
+
+
+<!-- COMMENT Modal -->
+<style>
+.comment-modal-footer {
+  display: flex;
+  justify-content: space-between; /* puts send left, view all right */
+  align-items: center;
+  margin-top: 12px;
+}
+.link-text {
+  color: var(--accent-dark);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 14px;
+}
+</style>
+
+<!-- COMMENT Modal -->
+<div id="commentModal" class="modal">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      How do you rate the tool? <span class="modal-close" onclick="closeComment()">×</span>
+    </div>
+
+    <div class="rating-container">
+      <i class="fa-solid fa-star rating-star" data-value="1"></i>
+      <i class="fa-solid fa-star rating-star" data-value="2"></i>
+      <i class="fa-solid fa-star rating-star" data-value="3"></i>
+      <i class="fa-solid fa-star rating-star" data-value="4"></i>
+      <i class="fa-solid fa-star rating-star" data-value="5"></i>
+    </div>
+
+    <input type="text" id="commentName" placeholder="Your Name (optional)">
+    <textarea id="commentText" placeholder="Enter your comment..."></textarea>
+
+    <!-- Footer: Send button (left) and view link (right) -->
+    <div class="comment-modal-footer">
+      <button class="btn" onclick="sendComment()">Send</button>
+      <span class="link-text" onclick="showAllComments()">View all comments & ratings</span>
+    </div>
+  </div>
+</div>
+
+<!-- ALL COMMENTS Modal -->
+<div id="allCommentsModal" class="modal">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      All Ratings & Comments <span class="modal-close" onclick="closeAllComments()">×</span>
+    </div>
+    <div id="commentsList"></div>
+  </div>
+</div>
+
+
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+// FIREBASE INIT
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.appspot.com",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Time + update fullTimeDisplay
+function updateHeaderClock(){
+  const now = new Date();
+  document.getElementById('clockText').textContent =
+    now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+  document.getElementById('fullTimeDisplay').textContent =
+    now.toLocaleString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,month:'short',day:'numeric',year:'numeric'});
+}
+setInterval(updateHeaderClock,1000);
+updateHeaderClock();
+
+// Calendar
+let currentDate=new Date(), currentMonth=currentDate.getMonth(), currentYear=currentDate.getFullYear();
+const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+function renderCalendar(y,m){
+  document.getElementById('monthYear').textContent=`${monthNames[m]} ${y}`;
+  const grid=document.getElementById('calendarGrid');
+  grid.innerHTML="";
+  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
+    const e=document.createElement('div'); e.className="day-name"; e.textContent=d; grid.appendChild(e);
+  });
+  const first=new Date(y,m,1).getDay();
+  for(let i=0;i<first;i++) grid.appendChild(document.createElement('div'));
+  const dim=new Date(y,m+1,0).getDate();
+  for(let d=1; d<=dim; d++){
+    const cell=document.createElement('div');
+    cell.className="day";
+    cell.textContent=d;
+    if(d===currentDate.getDate() && m===currentDate.getMonth() && y===currentDate.getFullYear()){
+      cell.classList.add('today');
+    }
+    grid.appendChild(cell);
+  }
+}
+document.getElementById('prevMonth').onclick=()=>{currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;}renderCalendar(currentYear,currentMonth);};
+document.getElementById('nextMonth').onclick=()=>{currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;}renderCalendar(currentYear,currentMonth);};
+
+document.getElementById('clockBtn').onclick=function(e){
+  const popup=document.getElementById('timeCalendarPopup');
+  popup.style.display = popup.style.display==='block'?'none':'block';
+  renderCalendar(currentYear, currentMonth);
+  e.stopPropagation();
+};
+
+// Close calendar when clicking outside
+document.addEventListener('click', function(event){
+  const popup = document.getElementById('timeCalendarPopup');
+  const btn = document.getElementById('clockBtn');
+  if(popup.style.display==='block' && !popup.contains(event.target) && !btn.contains(event.target)){
+    popup.style.display='none';
+  }
+});
+
+// Help modal
+document.getElementById('helpIcon').onclick=(e)=>{
+  document.getElementById('helpModal').style.display='flex';
+  e.stopPropagation();
+};
+function closeHelp(){document.getElementById('helpModal').style.display='none';}
+
+// Feedback rating
+let selectedRating=0;
+document.querySelectorAll('.rating-star').forEach(star=>{
+  star.onclick=function(ev){
+    selectedRating=parseInt(this.getAttribute('data-value'));
+    document.querySelectorAll('.rating-star').forEach(s=>
+      s.classList.toggle('selected', parseInt(s.getAttribute('data-value'))<=selectedRating)
+    );
+    ev.stopPropagation();
+  };
+});
+
+function sendComment(){
+  const name = document.getElementById('commentName').value.trim();
+  const comment = document.getElementById('commentText').value.trim();
+  if(selectedRating===0){ alert("Select a rating."); return; }
+  db.collection("feedback").add({
+    rating:selectedRating,
+    name:name||"Anonymous",
+    comment:comment,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{ alert("Saved!"); clearCommentForm(); })
+    .catch(()=>alert("Save failed."));
+}
+
+function clearCommentForm(){
+  selectedRating=0;
+  document.getElementById('commentName').value="";
+  document.getElementById('commentText').value="";
+  document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('selected'));
+}
+
+// Realtime comments list
+let unsubscribeListener=null;
+function showAllComments(){
+  const listEl=document.getElementById('commentsList');
+  listEl.innerHTML="Loading…";
+  if(unsubscribeListener) unsubscribeListener();
+  unsubscribeListener=db.collection("feedback").orderBy("createdAt","desc")
+    .onSnapshot(snap=>{
+      listEl.innerHTML="";
+      if(snap.empty){ listEl.innerHTML="<p>No feedback yet.</p>"; }
+      snap.forEach(doc=>{
+        const d=doc.data();
+        const div=document.createElement('div');
+        div.className="comment-list-item";
+        div.innerHTML=`<div class="stars">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</div>
+        <strong>${d.name}</strong><p>${d.comment}</p>`;
+        listEl.appendChild(div);
+      });
+      document.getElementById('allCommentsModal').style.display='flex';
+    });
+}
+
+document.getElementById('commentIcon').onclick=function(e){
+  clearCommentForm();
+  document.getElementById('commentModal').style.display='flex';
+  e.stopPropagation();
+};
+function closeComment(){clearCommentForm();document.getElementById('commentModal').style.display='none';}
+function closeAllComments(){document.getElementById('allCommentsModal').style.display='none';}
+</script>
+
+<footer>
+  <p>© 2025 EBS Operations</p>
 </footer>
 
 </body>
