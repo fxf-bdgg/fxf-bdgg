@@ -236,8 +236,14 @@ const NODES = {
   increase_warn_rerro: { text: "Advise customer about increased invoice. Did the customer agree?", choices: [{ label: "Customer Agrees", next: "correction_rerro" },{ label: "Customer Declines", next: "case_denied" }] },
   correction_rerro: { text: "Proceed with the Correction following RERRO.", choices: [] },
   rerro_fam: { text: "Proceed with reversing the Reweigh following RERRO.", choices: [] },
-  mixdo_branch: { text: "Freight were mixed up during reweigh; proceed with reversing the Reweigh following MIXDO.", choices: [] },
+  mixdo_branch: { text: "Aside from checking the BOL of the disputed pro and another pro where it was mixed up, you may also send an email to the Reweigh Service Center to confirm the issue. ", choices: [{ label: "Continue", next: "mixdo_branch_final" }] },
+  
+  
+   mixdo_branch_final: { text: "Proceed with the Correction following the appropriate reweigh Code baseed on the reason. ", choices: [] },
+  
   apply_reweigh_root: { text: "Was the shipment reweighed?", choices: [{ label: "YES", next: "apply_reweigh_delivered" },{ label: "NO", next: "apply_reweigh_not_reweighed" }] },
+  
+  
   apply_reweigh_not_reweighed: { text: "Deny the request and advise that the shipment was not reweighed.", choices: [] },
   apply_reweigh_delivered: { text: "Was the shipment delivered?", choices: [{ label: "YES", next: "apply_reweigh_reason" },{ label: "NO", next: "pend_not_delivered" }] },
   apply_reweigh_reason: { text: "What is the reason why Reweigh was not applied? Is there any comment stating the reweigh is invalid?", choices: [{ label: "YES", next: "apply_reweigh_invalid_comment" },{ label: "NO", next: "apply_reweigh_compare_hu" }] },
@@ -247,7 +253,7 @@ const NODES = {
   apply_reweigh_weight_diff: { text: "Is there a big difference between BOL weight and reweighed weight?", choices: [{ label: "YES (26%+)", next: "apply_reweigh_invalid_big_diff" },{ label: "NO (25% or less)", next: "apply_reweigh_proceed" }] },
   apply_reweigh_invalid_big_diff: { text: "Reweigh is invalid due to large variance. Request documentation supporting the reweighed weight.", choices: [] },
   apply_reweigh_proceed: { text: "Proceed and apply the Reweighed weight.", choices: [] },
-  pallet_weight: { text: "Explain to the customer why pallet weight was applied. Check OS for details.", choices: [] },
+  pallet_weight: { text: "Move to Billing Dispute for further assistance", choices: [] },
   reweigh_certificate: { text: "Move the case to Invoice Reprint.", choices: [] },
   others_not_weight: { text: "Move the case to the appropriate queue based on the dispute.", choices: [] }
 };
