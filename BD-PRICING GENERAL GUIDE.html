@@ -178,17 +178,33 @@ textarea{resize:none}
 <!-- ---------- MAIN DECISION TREE + UI LOGIC ---------- -->
 <script>
 /* ---------- DECISION TREE ---------- */
+/* ================= ROOT ================= */
+
 const TREE = {
   id: "root",
-  text: "Does the customer have a pricing exception?",
+  text: "What type of pricing issue is being reviewed?",
   choices: [
-    { label: "Yes", next: "has_pricing_exception" },
-    { label: "No", next: "no_pricing_exception" }
+    { label: "Pricing - Fuel", next: "fuel_root" },
+    { label: "Pricing - Surcharge", next: "surcharge_root" }
   ]
 };
 
+/* ================= NODES ================= */
+
 const NODES = {
-  /* ================= YES PATH ================= */
+
+  /* =====================================================
+     PRICING – FUEL
+  ===================================================== */
+
+  fuel_root: {
+    text: "Does the customer have a pricing exception?",
+    choices: [
+      { label: "Yes", next: "has_pricing_exception" },
+      { label: "No", next: "no_pricing_exception" }
+    ]
+  },
+
   has_pricing_exception: {
     text: "Does the customer have their own fuel exception?",
     choices: [
@@ -218,16 +234,15 @@ const NODES = {
   },
 
   fuel_incorrect: {
-    text: "Verify if ePRT is needed.",
+    text: "Verify whether eRPT is required by following the eRPT guideline.",
     choices: []
   },
 
   fxf_fuel_scale: {
-    text: "Check the national average and apply using FXF Fuel referencing FXF Rules Item 570.",
+    text: "Apply fuel using FXF Fuel scale by referencing FXF Rules Item 570.",
     choices: []
   },
 
-  /* ================= NO PATH ================= */
   no_pricing_exception: {
     text: "Which situation applies?",
     choices: [
@@ -242,7 +257,6 @@ const NODES = {
     ]
   },
 
-  /* --- Published later agreement --- */
   published_later: {
     text: "Effective date of the agreement?",
     choices: [
@@ -258,7 +272,7 @@ const NODES = {
   },
 
   published_more_180: {
-    text: "Inform the customer appropriately regarding their pricing details.",
+    text: "Inform the customer that the agreement is outside the 180-day window and pricing cannot be applied.",
     choices: []
   },
 
@@ -267,9 +281,8 @@ const NODES = {
     choices: []
   },
 
-  /* --- Before & After Surcharge --- */
   before_after_surcharge: {
-    text: "Does the customer have a surcharge exception before and after the shipment?",
+    text: "Is there a pricing gap between the surcharge exceptions?",
     choices: [
       { label: "Yes", next: "verify_pricing_gap" },
       { label: "No", next: "inform_pricing_details" }
@@ -277,27 +290,20 @@ const NODES = {
   },
 
   verify_pricing_gap: {
-    text: "Verify if the customer has a pricing gap.",
+    text: "How long is the pricing gap?",
     choices: [
-      {
-        label: "Gap is 14 days or less",
-        next: "gap_less_14"
-      },
-      {
-        label: "Gap is 15 days or more",
-        next: "gap_more_15"
-      }
+      { label: "14 days or less", next: "gap_14_or_less" },
+      { label: "15 days or more", next: "gap_15_or_more" }
     ]
   },
 
-  gap_less_14: {
-    text:
-      "If we aren’t overriding a previous agreement and are simply applying the customer’s pricing due to a gap of 2 weeks or less, go ahead and rerate without asking for approval.",
+  gap_14_or_less: {
+    text: "Rerate the invoice without requesting approval as the pricing gap is 14 days or less and no agreement is being overridden.",
     choices: []
   },
 
-  gap_more_15: {
-    text: "Who are you talking to?",
+  gap_15_or_more: {
+    text: "Who are you communicating with?",
     choices: [
       { label: "Customer", next: "gap_customer" },
       { label: "Sales Representative", next: "gap_sales_rep" }
@@ -305,22 +311,178 @@ const NODES = {
   },
 
   gap_customer: {
-    text:
-      "Send an email to the Training Team, who will forward the case to Dustin Carlton. Dustin will then reach out to the Sales Rep who will be sending a Rerate Request.",
+    text: "Send an email to the Training Team, who will forward the case to Dustin Carlton. The Sales Representative will submit a Rerate Request.",
     choices: []
   },
 
   gap_sales_rep: {
-    text:
-      "Advise the Sales Rep to fill out a Back Date Form and send a Rerate request.",
+    text: "Advise the Sales Representative to complete a Back Date Form and submit a Rerate Request.",
     choices: []
   },
 
   inform_pricing_details: {
     text: "Inform the customer appropriately regarding their pricing details.",
     choices: []
+  },
+
+  /* =====================================================
+     PRICING – SURCHARGE
+  ===================================================== */
+
+  surcharge_root: {
+    text: "Does the customer have a surcharge exception?",
+    choices: [
+      { label: "Yes", next: "surcharge_yes" },
+      { label: "No", next: "surcharge_no" }
+    ]
+  },
+
+  surcharge_yes: {
+    text: "Which situation applies?",
+    choices: [
+      {
+        label: "Yes, but does not apply on PRO after autorating",
+        next: "surcharge_not_applied_after_autorate"
+      },
+      {
+        label: "Yes, has surcharge exception effective at time of shipment",
+        next: "surcharge_effective_at_shipment"
+      }
+    ]
+  },
+
+  surcharge_not_applied_after_autorate: {
+    text: "Run a quote to verify whether the pricing is already fixed.",
+    choices: [
+      {
+        label: "Rate quote does NOT pull correct pricing",
+        next: "surcharge_quote_incorrect"
+      },
+      {
+        label: "Rate quote pulls correct pricing",
+        next: "surcharge_quote_correct"
+      }
+    ]
+  },
+
+  surcharge_quote_incorrect: {
+    text: "Verify whether eRPT is required by following the eRPT guideline.",
+    choices: []
+  },
+
+  surcharge_quote_correct: {
+    text: "Send an email to the Training Team for approval to manually rate the invoice.",
+    choices: []
+  },
+
+  surcharge_effective_at_shipment: {
+    text: "Carefully review the surcharge exception to determine if it can be applied on the PRO.",
+    choices: [
+      {
+        label: "Manually rated accessorial (e.g. Storage, Detention)",
+        next: "surcharge_manual_accessorial"
+      },
+      {
+        label: "Not a manually rated accessorial",
+        next: "surcharge_not_manual_accessorial"
+      }
+    ]
+  },
+
+  surcharge_manual_accessorial: {
+    text: "Manually apply the customer's accessorial surcharge exception on the PRO.",
+    choices: []
+  },
+
+  surcharge_not_manual_accessorial: {
+    text: "Verify whether eRPT is required by following the eRPT guideline.",
+    choices: []
+  },
+
+  surcharge_no: {
+    text: "Which situation applies?",
+    choices: [
+      {
+        label: "No previous exception, but customer later published an agreement with FedEx",
+        next: "surcharge_published_later"
+      },
+      {
+        label: "Customer has surcharge exception before and after shipment",
+        next: "surcharge_before_after"
+      }
+    ]
+  },
+
+  surcharge_published_later: {
+    text: "Effective date of the agreement?",
+    choices: [
+      {
+        label: "More than 180 days from ship date",
+        next: "surcharge_more_180"
+      },
+      {
+        label: "Within 180 days from ship date",
+        next: "surcharge_within_180"
+      }
+    ]
+  },
+
+  surcharge_more_180: {
+    text: "Inform the customer that the agreement is outside the 180-day window and pricing cannot be applied.",
+    choices: []
+  },
+
+  surcharge_within_180: {
+    text: "Apply the surcharge pricing exception.",
+    choices: []
+  },
+
+  surcharge_before_after: {
+    text: "Is there a pricing gap between the surcharge exceptions?",
+    choices: [
+      { label: "Yes", next: "surcharge_gap_yes" },
+      { label: "No", next: "surcharge_gap_no" }
+    ]
+  },
+
+  surcharge_gap_yes: {
+    text: "How long is the pricing gap?",
+    choices: [
+      { label: "14 days or less", next: "surcharge_gap_14_or_less" },
+      { label: "15 days or more", next: "surcharge_gap_15_or_more" }
+    ]
+  },
+
+  surcharge_gap_14_or_less: {
+    text: "Rerate the invoice without requesting approval as the pricing gap is 14 days or less.",
+    choices: []
+  },
+
+  surcharge_gap_15_or_more: {
+    text: "Who are you communicating with?",
+    choices: [
+      { label: "Customer", next: "surcharge_gap_customer" },
+      { label: "Sales Representative", next: "surcharge_gap_sales_rep" }
+    ]
+  },
+
+  surcharge_gap_customer: {
+    text: "Send an email to the Training Team, who will forward the case to Dustin Carlton. The Sales Representative will submit a Rerate Request.",
+    choices: []
+  },
+
+  surcharge_gap_sales_rep: {
+    text: "Advise the Sales Representative to complete a Back Date Form and submit a Rerate Request.",
+    choices: []
+  },
+
+  surcharge_gap_no: {
+    text: "Inform the customer appropriately regarding their pricing details.",
+    choices: []
   }
+
 };
+
 
 
 /* ---------- STATE ---------- */
