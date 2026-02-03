@@ -68,6 +68,54 @@ textarea{resize:none}
 .modal-content .save-btn { background-color: var(--accent); color: #fff; }
 .modal-content .cancel-btn { background-color: #e5e7eb; color: #111827; }
 @media(max-width:500px){ .modal-content { width: 90%; min-width: unset; padding:20px; } }
+
+/* ---------- LOGO ANIMATION ---------- */
+@keyframes logoFlyIn {
+  0% { opacity: 0; transform: translateX(-50px) scale(0.8); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+header img {
+  opacity: 0; /* start hidden */
+  animation: logoFlyIn 1s ease-out forwards;
+}
+
+/* ---------- CARD FADE & SLIDE UP ---------- */
+@keyframes cardFadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  opacity: 0; /* start hidden */
+  transform: translateY(20px);
+}
+
+/* ---------- OPTIONAL SWOOSH BEHIND HEADER ---------- */
+header {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+header::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
+  transform: skewX(-20deg);
+  animation: sweep 1s ease-out forwards;
+  z-index: 0;
+  opacity: 0.2;
+}
+
+@keyframes sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
 </style>
 </head>
 <body>
@@ -565,6 +613,21 @@ document.getElementById("copyEmailBtn").onclick = () => {
 
 /* ---------- INITIAL RENDER ---------- */
 renderNode(NODES.root, "root");
+
+// ---------- STAGGERED CARD FADE-IN ----------
+window.addEventListener('load', () => {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card, i) => {
+    card.style.animation = `cardFadeIn 0.6s ease-out forwards`;
+    card.style.animationDelay = `${1 + i * 0.15}s`; // starts after logo (1s)
+  });
+
+  // Make sure logo is visible after its animation
+  const logo = document.querySelector('header img');
+  logo.style.opacity = 1;
+});
+
+
 </script>
 </body>
 </html>
