@@ -235,6 +235,55 @@ textarea{resize:none;min-height:80px;}
 
 @media(max-width:1200px){ .shell{grid-template-columns:1fr 1fr;} }
 @media(max-width:800px){ .shell{grid-template-columns:1fr;} }
+
+/* ---------- LOGO ANIMATION ---------- */
+@keyframes logoFlyIn {
+  0% { opacity: 0; transform: translateX(-50px) scale(0.8); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+header img {
+  opacity: 0; /* start hidden */
+  animation: logoFlyIn 1s ease-out forwards;
+}
+
+/* ---------- CARD FADE & SLIDE UP ---------- */
+@keyframes cardFadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  opacity: 0; /* start hidden */
+  transform: translateY(20px);
+}
+
+/* ---------- OPTIONAL SWOOSH BEHIND HEADER ---------- */
+header {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+header::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
+  transform: skewX(-20deg);
+  animation: sweep 1s ease-out forwards;
+  z-index: 0;
+  opacity: 0.2;
+}
+
+@keyframes sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+
 </style>
 </head>
 
@@ -404,49 +453,113 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Time + update fullTimeDisplay
-function updateHeaderClock(){
-  const now = new Date();
-  document.getElementById('clockText').textContent =
-    now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
-  document.getElementById('fullTimeDisplay').textContent =
-    now.toLocaleString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,month:'short',day:'numeric',year:'numeric'});
+// ---------- PHILIPPINE TIME UTILITY ----------
+function getPhilippineNow() {
+  // Use Intl API to get a Date object in PHT
+  const nowStr = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
+  return new Date(nowStr);
 }
-setInterval(updateHeaderClock,1000);
+
+// ---------- HEADER CLOCK ----------
+function updateHeaderClock(){
+  const now = getPhilippineNow();
+
+  // Clock display (HH:MM AM/PM)
+  document.getElementById('clockText').textContent =
+    now.toLocaleTimeString('en-PH', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Manila'
+    });
+
+  // Full display with seconds and date
+  document.getElementById('fullTimeDisplay').textContent =
+    now.toLocaleString('en-PH', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'Asia/Manila'
+    });
+}
+setInterval(updateHeaderClock, 1000);
 updateHeaderClock();
 
-// Calendar
-let currentDate=new Date(), currentMonth=currentDate.getMonth(), currentYear=currentDate.getFullYear();
-const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
-function renderCalendar(y,m){
-  document.getElementById('monthYear').textContent=`${monthNames[m]} ${y}`;
-  const grid=document.getElementById('calendarGrid');
-  grid.innerHTML="";
+// ---------- CALENDAR ----------
+let phNow = getPhilippineNow();
+let currentMonth = phNow.getMonth();
+let currentYear = phNow.getFullYear();
+
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function renderCalendar(y, m){
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = "";
+
+  // Month/Year
+  document.getElementById('monthYear').textContent = `${monthNames[m]} ${y}`;
+
+  // Day names
   ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
-    const e=document.createElement('div'); e.className="day-name"; e.textContent=d; grid.appendChild(e);
+    const e = document.createElement('div'); 
+    e.className = "day-name"; 
+    e.textContent = d; 
+    grid.appendChild(e);
   });
-  const first=new Date(y,m,1).getDay();
-  for(let i=0;i<first;i++) grid.appendChild(document.createElement('div'));
-  const dim=new Date(y,m+1,0).getDate();
-  for(let d=1; d<=dim; d++){
-    const cell=document.createElement('div');
-    cell.className="day";
-    cell.textContent=d;
-    if(d===currentDate.getDate() && m===currentDate.getMonth() && y===currentDate.getFullYear()){
+
+  const firstDay = new Date(y, m, 1).getDay();
+  for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
+
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const todayPHT = getPhilippineNow();
+
+  for(let d=1; d<=daysInMonth; d++){
+    const cell = document.createElement('div');
+    cell.className = "day";
+    cell.textContent = d;
+
+    // Highlight today
+    if(d === todayPHT.getDate() && m === todayPHT.getMonth() && y === todayPHT.getFullYear()){
       cell.classList.add('today');
     }
+
     grid.appendChild(cell);
   }
 }
-document.getElementById('prevMonth').onclick=()=>{currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;}renderCalendar(currentYear,currentMonth);};
-document.getElementById('nextMonth').onclick=()=>{currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;}renderCalendar(currentYear,currentMonth);};
 
-document.getElementById('clockBtn').onclick=function(e){
-  const popup=document.getElementById('timeCalendarPopup');
-  popup.style.display = popup.style.display==='block'?'none':'block';
+// Month navigation
+document.getElementById('prevMonth').onclick = ()=>{
+  currentMonth--;
+  if(currentMonth < 0){ currentMonth = 11; currentYear--; }
+  renderCalendar(currentYear, currentMonth);
+};
+
+document.getElementById('nextMonth').onclick = ()=>{
+  currentMonth++;
+  if(currentMonth > 11){ currentMonth = 0; currentYear++; }
+  renderCalendar(currentYear, currentMonth);
+};
+
+// Clock button to toggle calendar
+document.getElementById('clockBtn').onclick = function(e){
+  const popup = document.getElementById('timeCalendarPopup');
+  popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
   renderCalendar(currentYear, currentMonth);
   e.stopPropagation();
 };
+
+// Close calendar if clicking outside
+document.addEventListener('click', function(event){
+  const popup = document.getElementById('timeCalendarPopup');
+  const btn = document.getElementById('clockBtn');
+  if(popup.style.display === 'block' && !popup.contains(event.target) && !btn.contains(event.target)){
+    popup.style.display = 'none';
+  }
+});
 
 // Close calendar when clicking outside
 document.addEventListener('click', function(event){
@@ -525,6 +638,21 @@ document.getElementById('commentIcon').onclick=function(e){
 };
 function closeComment(){clearCommentForm();document.getElementById('commentModal').style.display='none';}
 function closeAllComments(){document.getElementById('allCommentsModal').style.display='none';}
+
+
+// ---------- STAGGERED CARD FADE-IN ----------
+window.addEventListener('load', () => {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card, i) => {
+    card.style.animation = `cardFadeIn 0.6s ease-out forwards`;
+    card.style.animationDelay = `${1 + i * 0.15}s`; // starts after logo (1s)
+  });
+
+  // Make sure logo is visible after its animation
+  const logo = document.querySelector('header img');
+  logo.style.opacity = 1;
+});
+
 </script>
 
 <footer>
@@ -533,6 +661,5 @@ function closeAllComments(){document.getElementById('allCommentsModal').style.di
 
 </body>
 </html>
-
 
 
