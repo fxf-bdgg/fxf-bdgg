@@ -407,20 +407,8 @@ const NODES = {
     ]
   },
 
-  prepaid_consignee_billable_check: {
-    text: "Is the account no. billable (active and a BT account)?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Proceed with rebilling the account no. per BOL. Update the terms if necessary.",
-        note: "NOTE: If account no. has the same name and address of the Consignee (shipping account), update the Consignee section and change Terms to Collect."
-      },
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If none, advise the customer that the account cannot be billed."
-      }
-    ]
-  },
+ 
+ 
 
   /* ---- PREPAID | TRUE 3RD PARTY ---- */
 
@@ -692,7 +680,128 @@ const NODES = {
       { label: "US", action: "Bill it Prepaid per default billing." },
       { label: "Canada", action: "Bill it Collect per default billing." }
     ]
-  }
+  },
+  
+/* ================= THIRD PARTY ================= */
+
+third_party_root: {
+  text: "Is there an Account No. noted on the BOL?",
+  choices: [
+    { label: "Yes", next: "tp_account_yes" },
+    {
+      label: "No",
+      action: "Cannot bill Third Party. No account number noted on the BOL. Billing remains per original terms."
+    }
+  ]
+},
+
+tp_account_yes: {
+  text: "Is the account no. information (Name and Address) same as the BT information noted on the BOL?",
+  choices: [
+    { label: "Yes", next: "tp_bt_match_yes" },
+    { label: "No", next: "tp_bt_match_no" }
+  ]
+},
+
+tp_bt_match_yes: {
+  text: "Is the account no. billable (active and a BT account)?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Proceed with rebilling the account no. per BOL(Update the terms if necessary Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee)",note:"Note: If account no. has the same name and address of the Shipper(shipping account), use the account and update the Shipper Section then change the Terms to Prepaid. Follow the same rule of related to the Consignee."
+    },
+    {
+      label: "No",
+      action: "Search for a Valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",note:"NOTE: If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
+    }
+  ]
+},
+
+tp_bt_match_no: {
+  text: "Who was initially billed on the Pro?",
+  choices: [
+    { label: "Account No.", next: "tp_initial_account_no" },
+    { label: "BT Information", next: "tp_initial_bt_info" }
+  ]
+},
+
+/* ---------- ACCOUNT NO. BRANCH ---------- */
+tp_initial_account_no: {
+  text: "Who is the disputing party?",
+  choices: [
+    { label: "Account No. owner requesting to bill a different BT info noted on the BOL", next: "tp_account_owner_bt_request" },
+    { label: "Owner of the BT information requesting to bill to their account", next: "tp_bt_owner_account_request" }
+  ]
+},
+
+tp_account_owner_bt_request: {
+  text: "Is there a valid account no. available and billable that matches the BT information?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Proceed and bill it to the BT information noted on the BOL. Update the terms if necessary (Prepaid if Shipper or True 3rd party, Collect if Consignee). Check if account is ABT of the Shipper or Consignee."
+    },
+    {
+      label: "No",
+      action: "Deny the request and advise that BT information cannot be billed. Ask for LOA and a valid account no. that can be billed."
+    }
+  ]
+},
+
+tp_bt_owner_account_request: {
+  text: "Is the BT account a good account?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Proceed with rebilling it to their account per BOL."
+    },
+    {
+      label: "No",
+      action: "Search for a valid BT or ask the customer for a valid BT account."
+    }
+  ]
+},
+
+
+/* ---------- BT INFORMATION BRANCH ---------- */
+tp_initial_bt_info: {
+  text: "Who is the disputing party?",
+  choices: [
+    { label: "Disputing party is the BT information requesting to bill it to the Account no.", next: "tp_bt_request_account" },
+    { label: "Disputing party is the Account no. requesting to bill it to their account", next: "tp_account_request_account" }
+  ]
+},
+
+tp_bt_request_account: {
+  text: "Is there a clear instruction on the BOL to bill the account, or is it placed on the BT section of the BOL?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Rebill the pro to the Shipper per RVSL due to conflicting information on the BOL. Do not update without an LOA from the accepting party."
+    },
+    {
+      label: "No",
+      action: "Deny the request and advise the customer that the account no. noted cannot be billed since there is no clear instruction on the BOL. LOA is needed in order to rebill the pro."
+    }
+  ]
+},
+
+tp_account_request_account: {
+  text: "Is there a clear instruction on the BOL to bill the account, or is it placed on the BT section of the BOL?",
+  choices: [
+    {
+      label: "Yes",
+      action: "Proceed with rebilling the Account no. per BOL."
+    },
+    {
+      label: "No",
+      action: "Proceed with rebilling the Account no. per LOA with Correction Fee."
+    }
+  ]
+}
+
+
+
 
 };
 
@@ -704,7 +813,7 @@ const TREE = {
   choices: [
     { label: "Yes - Prepaid", next: "prepaid" },
     { label: "Yes - Collect", next: "collect" },
-    { label: "Yes - Third Party", next: "thirdparty" },
+    { label: "Yes - Third Party", next: "third_party_root" },
     { label: "No", next: "noterms" }
   ]
 };
