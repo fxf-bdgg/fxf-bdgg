@@ -309,272 +309,333 @@ const db = firebase.firestore();
 
 /* ---------- Decision Tree Data (full) ---------- */
 const NODES = {
- /* ---------------- Prepaid ---------------- */
-prepaid: {
-  text: "Is there an Account No. noted on BOL?",
-  choices: [
-    { label: "Yes", next: "prepaid_account_yes" },
-    { label: "No", action: "Bill the pro to the Shipper per Terms noted on BOL." }
-  ]
-},
-prepaid_account_yes: {
-  text: "Is the account no. related to the shipper?",
-  choices: [
-    { label: "Yes", action: "Bill the pro to the Shipper per Terms and Account no. noted on BOL." },
-    { label: "No - Account related to the Consignee", next: "prepaid_account_not_shipper" }
-  ]
-},
-prepaid_account_not_shipper: {
-  text: "Who was initially billed on the pro?",
-  choices: [
-    { label: "Shipper – per Terms on BOL", next: "prepaid_shipper_initial_billed" },
-    { label: "Account no. per BOL", next: "prepaid_account_owner_initial_billed" }
-  ]
-},
-prepaid_shipper_initial_billed: {
-  text: "Who is the Disputing Party?",
-  choices: [
-    { label: "Shipper and request is to bill it to account no.", next: "prepaid_shipper_rebill_check" },
-    { label: "Account no. owner and request is to bill it to their account", next: "prepaid_account_owner_rebill_check" }
-  ]
-},
-prepaid_shipper_rebill_check: {
-  text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-  choices: [
-    { label: "Yes", next: "prepaid_shipper_rebill_yes" },
-    { label: "No", action: "If an account number is listed on BOL in the center or random part of the BOL and has no relation to the shipper or consignee - Terms will trump and LOA will be needed in order to update to the random account no. listed on the BOL" }
-  ]
-},
-prepaid_shipper_rebill_yes: {
-  text: "Is the account no. billable (active and a BT account)?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Proceed with rebilling the account no. per BOL (Update the terms if necessary. Example: Update to Collect if Account is related to the Consignee. Check if account is ABT of the Consignee.)",
-      note: "NOTE: If account no. has the same name and address of the Consignee (shipping account), use the account and update the Consignee Section then change the Terms to Collect."
-    },
-    {
-      label: "No",
-      action: "Search for a valid BT account that can be billed.",
-      note: "NOTE: If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account)."
-    }
-  ]
-},
-prepaid_account_owner_rebill_check: {
-  text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-  choices: [
-    { label: "Yes", next: "prepaid_account_owner_rebill_yes" },
-    { label: "No", action: "If an account number is listed on BOL in the center or random part of the BOL and has no relation to the shipper or consignee - Terms will trump the Account no. noted on the BOL. This will be considered rebill per BOL with Correction Fee." }
-  ]
-},
-prepaid_account_owner_rebill_yes: {
-  text: "Is the account no. billable (active and a BT account)?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Proceed with rebilling the account no. per BOL.",
-      note: "NOTE: If account no. has the same name and address of the Consignee (shipping account), use the account and update the Consignee Section then change the Terms to Collect."
-    },
-    {
-      label: "No",
-      action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",
-      note: "NOTE:  If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
-    }
-  ]
-},
-prepaid_account_owner_initial_billed: {
-  text: "Who is the Disputing Party?",
-  choices: [
-    {
-      label: "Account no. owner and request is to bill it to the Shipper",
-      action: "Proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL. If Account is related to Consignee, check Section 7 if it can be performed."
-    },
-    {
-      label: "Shipper and request is to bill it to their account",
-      action: "Proceed with the correction without Correction Fee."
-    }
-  ]
-},
 
- /* ---------------- Collect ---------------- */
+  /* ================= PREPAID ================= */
+
+  prepaid: {
+    text: "Is there an Account No. noted on BOL?",
+    choices: [
+      { label: "Yes", next: "prepaid_account_yes" },
+      { label: "No", action: "Bill the pro to the Shipper per Terms noted on BOL." }
+    ]
+  },
+
+  prepaid_account_yes: {
+    text: "Is the account no. related to?",
+    choices: [
+      { label: "Shipper", next: "prepaid_shipper_account_type" },
+      { label: "Consignee", next: "prepaid_consignee_initial_billed" },
+      { label: "True 3rd Party", next: "prepaid_true3pty_initial_billed" }
+    ]
+  },
+
+  /* ---- PREPAID | SHIPPER ---- */
+
+  prepaid_shipper_account_type: {
+    text: "Is it a billing or shipping account?",
+    choices: [
+      { label: "Shipping account", next: "prepaid_shipper_shipping_addr_check" },
+      { label: "Billing account", next: "prepaid_shipper_billing_account" }
+    ]
+  },
+
+  prepaid_shipper_shipping_addr_check: {
+    text: "Is the shipping account address same as the shipper?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Update the shipper code using the account number noted on the BOL."
+      },
+      {
+        label: "No",
+        action: "Look for a shipping account of shipper that has ABT matching the address of the account number noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL."
+      }
+    ]
+  },
+
+  prepaid_shipper_billing_account: {
+    text: "Billing account handling",
+    choices: [
+      {
+        label: "Continue",
+        action: "Look for another shipping address of shipper that has ABT matching the billing account number noted on BOL.",
+        note: "NOTE: If no shipping account with ABT is found, manually add the billing account."
+      }
+    ]
+  },
+
+  /* ---- PREPAID | CONSIGNEE ---- */
+
+  prepaid_consignee_initial_billed: {
+    text: "Who was initially billed on the pro?",
+    choices: [
+      { label: "Shipper – per Terms on BOL", next: "prepaid_consignee_shipper_dispute" },
+      {
+        label: "Account no. per BOL",
+        action: "If the disputing party is the Account no. owner and the request is to bill it to the Shipper, proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL."
+      }
+    ]
+  },
+
+  prepaid_consignee_shipper_dispute: {
+    text: "Who is the disputing party?",
+    choices: [
+      { label: "Shipper", next: "prepaid_consignee_rebill_check" },
+      { label: "Account no. owner", next: "prepaid_consignee_owner_check" }
+    ]
+  },
+
+  prepaid_consignee_rebill_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", next: "prepaid_consignee_billable_check" },
+      {
+        label: "No",
+        action: "Terms will trump and LOA will be needed to update to the random account no. listed on the BOL."
+      }
+    ]
+  },
+
+  prepaid_consignee_owner_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", next: "prepaid_consignee_billable_check" },
+      {
+        label: "No",
+        action: "Since the request came from the Account no. owner, this will be considered rebill per LOA with Correction Fee."
+      }
+    ]
+  },
+
+  prepaid_consignee_billable_check: {
+    text: "Is the account no. billable (active and a BT account)?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Proceed with rebilling the account no. per BOL. Update the terms if necessary.",
+        note: "NOTE: If account no. has the same name and address of the Consignee (shipping account), update the Consignee section and change Terms to Collect."
+      },
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If none, advise the customer that the account cannot be billed."
+      }
+    ]
+  },
+
+  /* ---- PREPAID | TRUE 3RD PARTY ---- */
+
+  prepaid_true3pty_initial_billed: {
+    text: "Who was initially billed on the pro?",
+    choices: [
+      { label: "Shipper – per Terms on BOL", next: "prepaid_true3pty_shipper_dispute" },
+      {
+        label: "Account no. per BOL",
+        action: "If the disputing party is the Account no. owner and the request is to bill it to the Shipper, proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL."
+      }
+    ]
+  },
+
+  prepaid_true3pty_shipper_dispute: {
+    text: "Who is the disputing party?",
+    choices: [
+      { label: "Shipper", next: "prepaid_true3pty_rebill_check" },
+      { label: "Account no. owner", next: "prepaid_true3pty_owner_check" }
+    ]
+  },
+
+  prepaid_true3pty_rebill_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the account no. in attempt of payment." },
+      {
+        label: "No",
+        action: "Terms will trump and LOA will be needed."
+      }
+    ]
+  },
+
+  prepaid_true3pty_owner_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the account no. per BOL." },
+      {
+        label: "No",
+        action: "This will be considered rebill per LOA with Correction Fee."
+      }
+    ]
+  },
+
+  /* ================= COLLECT ================= */
+
   collect: {
     text: "Is there an Account No. noted on BOL?",
     choices: [
       { label: "Yes", next: "collect_account_yes" },
-      { label: "No", action: "Bill the pro to the Consignee per Terms noted on BOL." }
-    ]
-  },
-  collect_account_yes: {
-    text: "Is the account no. related to the Consignee?",
-    choices: [
-      { label: "Yes", action: "Bill the pro to the Consignee per Terms and Account no. noted on BOL." },
-      { label: "No - related to the Shipper", next: "collect_account_not_consignee" }
-    ]
-  },
-  collect_account_not_consignee: {
-    text: "Who was initially billed on the pro?",
-    choices: [
-      { label: "Consignee – per Terms on BOL", next: "collect_consignee_initial_billed" },
-      { label: "Account no. per BOL - not related to Shipper or Consignee", next: "collect_account_owner_initial_billed" }
-    ]
-  },
-  collect_consignee_initial_billed: {
-    text: "Who is the Disputing Party?",
-    choices: [
-      { label: "Consignee and request is to bill it to account no.", next: "collect_consignee_rebill_check" },
-      { label: "Account no. owner and request is to bill it to their account", next: "collect_account_owner_rebill_check" }
-    ]
-  },
-  collect_consignee_rebill_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      {
-        label: "Yes",
-        next: "collect_consignee_rebill_yes"
-      },
-      {
-        label: "No",
-        action: "LOA is needed to update or check if debtor update per RVSL can be followed."
-      }
-    ]
-  },
-  collect_consignee_rebill_yes: {
-    text: "Is the account no. billable (active and a BT account)?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Proceed with rebilling the account no. per BOL (Update the terms if necessary. Example: Update to Prepaid if Account is related to the Shipper. Check if account is ABT of the Shipper.)",
-        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), use the account and update the Shipper Section then change the Terms to Prepaid."
-      },
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",
-        note: "NOTE:  If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
-      }
-    ]
-  },
-  collect_account_owner_rebill_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      {
-        label: "Yes",
-        next: "collect_account_owner_rebill_yes"
-      },
-      {
-        label: "No",
-        action: "If an account number is listed on BOL in the center or random part of the BOL and has no relation to the shipper or consignee - Terms will trump the Account no. noted on the BOL. This will be considered rebill per BOL with Correction Fee."
-      }
-    ]
-  },
-  collect_account_owner_rebill_yes: {
-    text: "Is the account no. billable (active and a BT account)?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Proceed with rebilling the account no. per BOL.",
-        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), use the account and update the Shipper Section then change the Terms to Collect."
-      },
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT). ",
-        note: "NOTE: If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
-      }
-    ]
-  },
-  
-  collect_account_owner_initial_billed: {
-  text: "Who is the Disputing Party?",
-  choices: [
-    {
-      label: "Account no. owner and request is to bill it to the Consignee",
-      action: "Proceed and rebill it to the Shipper due to conflicting information on the BOL. Consider this as Debtor update per RVSL.  "
-    },
-    {
-      label: "Consignee and request is to bill it to their account",
-      action: "Proceed with the correction without Correction Fee."
-    }
-  ]
-},
-  /* ---------------- Third Party ---------------- */
-  thirdparty: {
-    text: "Is there an Account No. noted on the BOL?",
-    choices: [
-      { label: "Yes", next: "thirdparty_account_yes" },
-      { label: "No", action: "Proceed and bill it to the BT information. LOA is needed to update or check if debtor update per RVSL can be followed." }
-    ]
-  },
-  thirdparty_account_yes: {
-    text: "Is the account no. information (Name and Address) the same as the BT information noted on the BOL?",
-    choices: [
-      { label: "Yes", next: "thirdparty_account_same_info" },
-      { label: "No", next: "thirdparty_account_diff_info" }
-    ]
-  },
-  thirdparty_account_same_info: {
-    text: "Is the account no. billable (active and a BT account)?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Proceed with rebilling the account no. per BOL (Update the terms if necessary. Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee.)",
-        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), use the account and update the Shipper Section then change the Terms to Prepaid. Follow the same rule for the Consignee."
-      },
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",
-        note: "NOTE:  If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
-      }
-    ]
-  },
-  thirdparty_account_diff_info: {
-    text: "Who was initially billed on the Pro?",
-    choices: [
-      { label: "Account no.", next: "thirdparty_account_owner_options" },
-      { label: "BT information", next: "thirdparty_bt_info_options" }
-    ]
-  },
-  thirdparty_account_owner_options: {
-    text: "If the disputing party is the account no. owner and request is to bill it to the different BT information, is there a valid account no. available and billable that matches the BT information?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Proceed and bill it to the BT information noted on the BOL. Update the terms if necessary. Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee."
-      },
-      {
-        label: "No",
-        action: "Deny the request and advise that BT information cannot be billed. Ask for LOA and a valid account no. that can be billed."
-      },
-      {
-        label: "Disputing party is owner of BT information and request is to bill to their account",
-        action: "Proceed with rebilling it to their account per BOL if it is a good account. If not, search for a valid BT account or request one from the customer."
-      }
-    ]
-  },
-  thirdparty_bt_info_options: {
-    text: "If the disputing party is the BT information (name and address) and request is to bill it to the account no., is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Rebill the pro to the Shipper per RVSL due to conflicting information on the BOL. Do not update without an LOA from the accepting party."
-      },
-      {
-        label: "No",
-        action: "Deny the request and advise the customer that the account no. noted cannot be billed since there is no clear instruction on the BOL that it should be billed. LOA is needed in order to rebill the pro."
-      },
-      {
-        label: "Disputing party is the Account no. and request is to bill to their account",
-        next: "thirdparty_bt_to_account_check"
-      }
-    ]
-  },
-  thirdparty_bt_to_account_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the Account no. per BOL." },
-      { label: "No", action: "Proceed with rebilling the Account no. per LOA with Correction Fee." }
+      { label: "No", action: "Bill the Pro to the Consignee per Terms noted on BOL." }
     ]
   },
 
-  /* ---------------- No Terms ---------------- */
+  collect_account_yes: {
+    text: "Is the account no. related to?",
+    choices: [
+      { label: "Consignee", next: "collect_consignee_account_type" },
+      { label: "Shipper", next: "collect_shipper_account_path" },
+      { label: "True 3rd Party", next: "collect_true3pty_path" }
+    ]
+  },
+
+  /* ---- COLLECT | CONSIGNEE ---- */
+
+  collect_consignee_account_type: {
+    text: "Is it a billing or shipping account?",
+    choices: [
+      { label: "Shipping account", next: "collect_consignee_shipping_addr_check" },
+      { label: "Billing account", next: "collect_consignee_billing_account" }
+    ]
+  },
+
+  collect_consignee_shipping_addr_check: {
+    text: "Is the shipping account address same as the Consignee?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Update the Consignee code using the account number noted on the BOL."
+      },
+      {
+        label: "No",
+        action: "Look for a shipping account of Consignee that has ABT matching the address of the account no. noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL."
+      }
+    ]
+  },
+
+  collect_consignee_billing_account: {
+    text: "Billing account handling",
+    choices: [
+      {
+        label: "Continue",
+        action: "Look for another shipping address of Consignee that has ABT matching the billing account number noted on BOL.",
+        note: "NOTE: If no shipping account with ABT is found, manually add the billing account."
+      }
+    ]
+  },
+
+  /* ---- COLLECT | SHIPPER ---- */
+
+  collect_shipper_account_path: {
+    text: "Who was initially billed on the pro?",
+    choices: [
+      { label: "Collect – per Terms on BOL", next: "collect_shipper_initial_collect" },
+      { label: "Account no. per BOL", next: "collect_shipper_account_billed" }
+    ]
+  },
+
+  collect_shipper_initial_collect: {
+    text: "Who is the disputing party?",
+    choices: [
+      { label: "Consignee", next: "collect_shipper_rebill_check" },
+      { label: "Account no. owner", next: "collect_shipper_owner_check" }
+    ]
+  },
+
+  collect_shipper_rebill_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", next: "collect_shipper_billable_check" },
+      {
+        label: "No",
+        action: "Terms will trump and LOA will be needed."
+      }
+    ]
+  },
+
+  collect_shipper_owner_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", next: "collect_shipper_billable_check" },
+      {
+        label: "No",
+        action: "This will be considered rebill per LOA with Correction Fee."
+      }
+    ]
+  },
+
+  collect_shipper_billable_check: {
+    text: "Is the account no. billable (active and a BT account)?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Proceed with rebilling the account no. per BOL. Update the terms if necessary.",
+        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), update the Shipper section and change Terms to Prepaid."
+      },
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If none, advise the customer that the account cannot be billed."
+      }
+    ]
+  },
+
+  collect_shipper_account_billed: {
+    text: "Account no. per BOL handling",
+    choices: [
+      {
+        label: "Continue",
+        action: "If the disputing party is the Account no. owner and the request is to bill the Consignee, proceed and rebill it to Collect per Terms noted on BOL. If Collect was billed and disputed before, bill Shipper per RVSL."
+      }
+    ]
+  },
+
+  /* ---- COLLECT | TRUE 3RD PARTY ---- */
+
+  collect_true3pty_path: {
+    text: "Who was initially billed on the pro?",
+    choices: [
+      { label: "Collect – per Terms on BOL", next: "collect_true3pty_collect_billed" },
+      { label: "Account no. per BOL", next: "collect_true3pty_account_billed" }
+    ]
+  },
+
+  collect_true3pty_collect_billed: {
+    text: "Who is the disputing party?",
+    choices: [
+      { label: "Consignee", next: "collect_true3pty_rebill_check" },
+      { label: "Account no. owner", next: "collect_true3pty_owner_check" }
+    ]
+  },
+
+  collect_true3pty_rebill_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the account no. in attempt of payment." },
+      {
+        label: "No",
+        action: "Terms will trump and LOA will be needed."
+      }
+    ]
+  },
+
+  collect_true3pty_owner_check: {
+    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the account no. per BOL." },
+      {
+        label: "No",
+        action: "This will be considered rebill per LOA with Correction Fee."
+      }
+    ]
+  },
+
+  collect_true3pty_account_billed: {
+    text: "Account no. per BOL handling",
+    choices: [
+      {
+        label: "Continue",
+        action: "If the disputing party is the Account no. owner and request is to bill it to Collect, proceed and rebill it to the Consignee per Terms noted on BOL. If Collect was billed and disputed before, bill Shipper per RVSL."
+      }
+    ]
+  },
+
+  /* ================= NO TERMS ================= */
+
   noterms: {
     text: "Is there an Account No. noted on BOL?",
     choices: [
@@ -582,14 +643,49 @@ prepaid_account_owner_initial_billed: {
       { label: "No", next: "noterms_no_account" }
     ]
   },
+
   noterms_account_yes: {
-    text: "If account no. related to the Shipper, Consignee, or True 3rd party, select below:",
+    text: "Is the account no. related to?",
     choices: [
-      { label: "Related to Shipper", action: "Bill the pro to the Shipper." },
-      { label: "Related to Consignee", action: "Bill the pro to the Consignee." },
-      { label: "Related to True 3rd party", action: "Bill it to the account no. with Prepaid as Terms." }
+      { label: "Shipper", next: "prepaid_shipper_account_type" },
+      { label: "Consignee", next: "noterms_consignee_account_type" },
+      { label: "True 3rd Party", action: "Bill it to the account no. with Prepaid as Terms." }
     ]
   },
+
+  noterms_consignee_account_type: {
+    text: "Is it a billing or shipping account?",
+    choices: [
+      { label: "Shipping account", next: "noterms_consignee_shipping_addr_check" },
+      { label: "Billing account", next: "noterms_consignee_billing_account" }
+    ]
+  },
+
+  noterms_consignee_shipping_addr_check: {
+    text: "Is the shipping account address same as the Consignee?",
+    choices: [
+      {
+        label: "Yes",
+        action: "Update the Consignee code using the account number noted on the BOL."
+      },
+      {
+        label: "No",
+        action: "Look for a shipping account of Consignee that has ABT matching the address of the account no. noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL."
+      }
+    ]
+  },
+
+  noterms_consignee_billing_account: {
+    text: "Billing account handling",
+    choices: [
+      {
+        label: "Continue",
+        action: "Look for another shipping address of Consignee that has ABT matching the billing account number noted on BOL.",
+        note: "NOTE: If no shipping account with ABT is found, manually add the billing account."
+      }
+    ]
+  },
+
   noterms_no_account: {
     text: "Is the shipment originating in the US or Canada?",
     choices: [
@@ -597,7 +693,9 @@ prepaid_account_owner_initial_billed: {
       { label: "Canada", action: "Bill it Collect per default billing." }
     ]
   }
+
 };
+
 
 /* ---------- Decision Tree Root ---------- */
 const TREE = {
