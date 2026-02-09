@@ -215,6 +215,7 @@ let historyStack = [];
 let currentFinalRecommendation = "";
 let currentEditType = "";
 
+
 /* ---------- HELPERS ---------- */
 function escapeHtml(text){ return text?text.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])):""; }
 function docIdFromText(text){ return text.trim().toLowerCase().replace(/\s+/g,"_"); }
@@ -222,6 +223,18 @@ function getDocId(finalText,type){ return `${docIdFromText(finalText)}_${type}`;
 
 /* ---------- NODES ---------- */
 const NODES = {
+
+  /* ===== INTRO ===== */
+
+  fpay_intro:{
+    text:
+      "The purpose of this queue is to determine the TRUE DEBTOR.\n" +
+      "Most freight pay and audit companies require that the billing show their client in care of the freight pay and audit company.\n\n" +
+      "Example: Cass Logistics requires their customer Emerson % Cass instead of billing just Cass.",
+    choices:[
+      { label:"START REVIEW", next:"root" }
+    ]
+  },
 
   /* ===== PART 1 : PRE-CHECKS ===== */
 
@@ -289,7 +302,7 @@ const NODES = {
   /* ===== TRANSITION ===== */
 
   review_bol:{
-    text:"Review the BOL to confirm the correct debtor.",
+    text:"Review the BOL to confirm the correct debtor per BOL.",
     choices:[
       {label:"CONTINUE", next:"fpay_correct_check"}
     ]
@@ -363,7 +376,7 @@ const NODES = {
     choices:[]
   },
 
-  /* ===== ACCOUNT SEARCH PROCESS (PER DIAGRAM) ===== */
+  /* ===== ACCOUNT SEARCH PROCESS ===== */
 
   account_search_process:{
     text:"Is the FPAY related to the Shipper? (Same name, CAC, Google confirmed)",
@@ -372,8 +385,6 @@ const NODES = {
       {label:"NO", next:"fpay_consignee_check"}
     ]
   },
-
-  /* --- SHIPPER PATH --- */
 
   shipper_is_correct_debtor:{
     text:"Is the correct debtor (Shipper % FPAY) the ABT of the Shipper?",
@@ -384,7 +395,7 @@ const NODES = {
   },
 
   bill_shipper_prepaid:{
-    text:"Proceed and bill the Shipper. Change terms to PREPAID to pull its ABT.",
+    text:"Proceed and bill the Shipper. Make sure to change the terms to PREPAID to pull its ABT.",
     choices:[]
   },
 
@@ -417,7 +428,7 @@ const NODES = {
   },
 
   consignee_is_correct_debtor:{
-    text:"Is the correct debtor (Shipper % FPAY) the ABT of the Shipper?",
+    text:"Is the correct debtor (Consignee % FPAY) the ABT of the Consignee?",
     choices:[
       {label:"YES", next:"bill_shipper_prepaid"},
       {label:"NO", next:"different_shipper_abt_check"}
@@ -445,7 +456,7 @@ const NODES = {
     text:"If no Company % FPAY was found, check if the PRO is listed under FPAY companies that can be billed directly.",
     choices:[
       {label:"FPAY ON LIST", next:"rebill_fpay_direct"},
-      {label:"NOT ON LIST", next:"no_company_fpay_available"}
+      {label:"NOT ON LIST", next:"rate_quote_check"}
     ]
   },
 
@@ -454,12 +465,31 @@ const NODES = {
     choices:[]
   },
 
-  no_company_fpay_available:{
-    text:"FPAY company is not on the list. DO NOT POST THE BILL. Comment on the PRO stating 'No Company % FPAY available'.",
+  /* ===== RATE QUOTE + FINAL FALLBACK ===== */
+
+  rate_quote_check:{
+    text:"Is there a Rate Quote available on the BOL that shows the correct debtor per BOL?",
+    choices:[
+      {label:"YES", next:"bill_per_rate_quote"},
+      {label:"NO", next:"leave_bill_as_is_vrfy"}
+    ]
+  },
+
+  bill_per_rate_quote:{
+    text:"Bill the PRO to the debtor per Rate Quote. Do NOT process this as RVSL.",
+    choices:[]
+  },
+
+  leave_bill_as_is_vrfy:{
+    text:
+      "Leave the bill as is.\n\n" +
+      "Use CORR VRFY to confirm billing is correct.\n" +
+      "Comment: Billing correctly to (Company)/BT per BOL – No better code found.",
     choices:[]
   }
 
 };
+
 
 /* ---------- RENDER NODE ---------- */
 function renderNode(node, key="root") {
@@ -584,7 +614,7 @@ document.getElementById("copyEmailBtn").onclick=()=>{
 };
 
 /* ---------- INIT ---------- */
-renderNode(NODES.root,"root");
+renderNode(NODES.fpay_intro,"fpay_intro");
 
 // ---------- STAGGERED CARD FADE-IN ----------
 window.addEventListener('load', () => {
