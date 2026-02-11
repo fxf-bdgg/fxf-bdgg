@@ -30,6 +30,7 @@ p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
 .choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .choice{padding:8px 12px;border-radius:999px;background:#eef8f7;border:1px solid rgba(4,20,20,0.03);cursor:pointer;font-weight:600}
 .choice:hover{background:#e0f2fe}
+.choice.active{background:var(--accent);color:white}
 .path{margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed rgba(3,7,18,0.04);font-size:13px}
 .path strong{color:var(--accent)}
 .result{margin-top:12px;padding:12px;border-radius:10px;background:#e6fbfb;border-left:4px solid var(--accent-2);animation:fadeIn 0.4s ease-in;min-height:56px}
@@ -41,7 +42,9 @@ button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
 .output-header{font-weight:700;color:#000;display:flex;justify-content:space-between;align-items:center;}
 .output-box{padding:10px;border-left:4px solid var(--accent-2);background:#f8fafc;border-radius:8px;white-space:pre-wrap;font-size:11px}
 .copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
+.copy-btn:hover{opacity:.85}
 .edit-icon{cursor:pointer;font-size:16px;color:var(--accent);margin-left:8px}
+.edit-icon:hover{text-decoration:underline}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;z-index:1000}
 .modal-content{background:#fff;padding:25px;border-radius:12px;min-width:500px;max-width:600px;text-align:center;font-family:Inter,sans-serif;}
 textarea{resize:none;width:100%;min-height:120px;padding:10px 12px;border-radius:8px;border:1px solid #d1d5db;font-size:14px;margin-top:10px;}
@@ -50,7 +53,56 @@ button.cancel-btn{background:#e5e7eb;color:#111827;}
 @keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media(max-width:1200px){.container{grid-template-columns:1fr}}
 @media(max-width:500px){.modal-content{width:90%;min-width:unset;padding:20px}}
+
+/* ---------- LOGO ANIMATION ---------- */
+@keyframes logoFlyIn {
+  0% { opacity: 0; transform: translateX(-50px) scale(0.8); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+header img {
+  opacity: 0; /* start hidden */
+  animation: logoFlyIn 1s ease-out forwards;
+}
+
+/* ---------- CARD FADE & SLIDE UP ---------- */
+@keyframes cardFadeIn {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  opacity: 0; /* start hidden */
+  transform: translateY(20px);
+}
+
+/* ---------- OPTIONAL SWOOSH BEHIND HEADER ---------- */
+header {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+header::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
+  transform: skewX(-20deg);
+  animation: sweep 1s ease-out forwards;
+  z-index: 0;
+  opacity: 0.2;
+}
+
+@keyframes sweep {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
 </style>
+
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -58,7 +110,10 @@ button.cancel-btn{background:#e5e7eb;color:#111827;}
 <body>
 
 <header style="display:flex;align-items:center;justify-content:space-between;">
-  <h1>Correction Code Guide</h1>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <img src="fedex.png" style="height:40px;">
+    <h1>Correction Code Guide</h1>
+  </div>
   <button onclick="window.location.href='index.html'">Main Page</button>
 </header>
 
@@ -496,6 +551,18 @@ document.getElementById("copyEmailBtn").onclick=()=>{
 };
 
 renderNode(NODES.cc_intro,"cc_intro");
+
+// ---------- STAGGERED CARD FADE-IN (Same as FPAY) ----------
+window.addEventListener('load', () => {
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card, i) => {
+    card.style.animation = `cardFadeIn 0.6s ease-out forwards`;
+    card.style.animationDelay = `${1 + i * 0.15}s`; // start after logo
+  });
+
+  const logo = document.querySelector('header img');
+  if (logo) logo.style.opacity = 1;
+});
 </script>
 </body>
 </html>
