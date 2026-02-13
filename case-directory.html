@@ -140,7 +140,6 @@ footer{
 <footer>© 2025 EBS Operations</footer>
 
 <script>
-// Function to render the table
 function renderTable(CASES){
   const rowsEl = document.getElementById("rows");
   rowsEl.innerHTML = CASES.map(r => `
@@ -154,28 +153,41 @@ function renderTable(CASES){
   `).join("");
 }
 
-// Live search filter
-document.getElementById("searchBox").addEventListener("input", e => {
-  const query = e.target.value.toLowerCase().trim();
+// Load the CSV file
+Papa.parse("case-directory.csv", {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results){
+    window.CASES = results.data;
 
-  const filtered = window.CASES.filter(r => {
-    // Trim and normalize each field
-    const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
-    const concern = (r['Concern'] || "").toLowerCase().trim();
-    const action = (r['ACTION'] || "").toLowerCase().trim();
-    const email = (r['Email Address'] || "").toLowerCase().trim();
-    const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
+    // Initial render
+    renderTable(window.CASES);
 
-    return queue.includes(query) ||
-           concern.includes(query) ||
-           action.includes(query) ||
-           email.includes(query) ||
-           assignment.includes(query);
-  });
+    // Now attach search listener AFTER CSV is loaded
+    document.getElementById("searchBox").addEventListener("input", e => {
+      const query = e.target.value.toLowerCase().trim();
 
-  renderTable(filtered);
+      const filtered = window.CASES.filter(r => {
+        const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
+        const concern = (r['Concern'] || "").toLowerCase().trim();
+        const action = (r['ACTION'] || "").toLowerCase().trim();
+        const email = (r['Email Address'] || "").toLowerCase().trim();
+        const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
+
+        return queue.includes(query) ||
+               concern.includes(query) ||
+               action.includes(query) ||
+               email.includes(query) ||
+               assignment.includes(query);
+      });
+
+      renderTable(filtered);
+    });
+  }
 });
 </script>
 
 </body>
 </html>
+
