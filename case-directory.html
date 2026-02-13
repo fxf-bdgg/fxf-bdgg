@@ -43,7 +43,8 @@ header img{height:40px; margin-right:40px;}
   flex:1;
   padding:40px;
   display:flex;
-  justify-content:center;
+  flex-direction:column;
+  align-items:center;
 }
 
 .message-box{
@@ -52,14 +53,8 @@ header img{height:40px; margin-right:40px;}
   border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,0.08);
   width:100%;
-  max-width:1600px;  /* widened from 1200px */
+  max-width:1600px;  /* wider table */
 }
-
-table th:nth-child(1){ width:20%; }  /* QUEUE / Request */
-table th:nth-child(2){ width:25%; }  /* Concern */
-table th:nth-child(3){ width:20%; }  /* ACTION */
-table th:nth-child(4){ width:15%; }  /* Email Address */
-table th:nth-child(5){ width:20%; }  /* Case Assignment / Email */
 
 input{
   width:100%;
@@ -74,6 +69,7 @@ table{
   width:100%;
   border-collapse:collapse;
   font-size:14px;
+  margin-bottom:30px;
 }
 
 th, td{
@@ -87,6 +83,12 @@ th{
   top:0;
 }
 
+table th:nth-child(1){ width:20%; }
+table th:nth-child(2){ width:25%; }
+table th:nth-child(3){ width:20%; }
+table th:nth-child(4){ width:15%; }
+table th:nth-child(5){ width:20%; }
+
 pre{
   background:#f8fafc;
   padding:10px;
@@ -95,12 +97,24 @@ pre{
   margin:0;
 }
 
-footer{
-  background:var(--accent);
-  color:white;
-  padding:16px;
-  text-align:center;
+.card-container{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:15px;
+  margin-top:20px;
 }
+
+.card{
+  border:1px solid #eef2f7;
+  border-radius:10px;
+  padding:15px;
+  background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,0.05);
+}
+
+.card h3{color:#4d148c; margin-top:0;}
+.card p, .card pre{margin:5px 0;}
 </style>
 </head>
 <body>
@@ -120,7 +134,8 @@ footer{
 
     <input id="searchBox" placeholder="Search queue, concern, action, email, assignment...">
 
-    <div style="max-height:520px; overflow:auto; border:1px solid #eef2f7; border-radius:10px;">
+    <!-- Table view -->
+    <div style="max-height:400px; overflow:auto; border:1px solid #eef2f7; border-radius:10px;">
       <table>
         <thead>
           <tr>
@@ -134,26 +149,43 @@ footer{
         <tbody id="rows"></tbody>
       </table>
     </div>
+
+    <!-- Card view -->
+    <div class="card-container" id="cardView"></div>
+
   </div>
 </div>
 
 <footer>© 2025 EBS Operations</footer>
 
 <script>
-function renderCards(CASES){
+function renderTable(CASES){
   const rowsEl = document.getElementById("rows");
   rowsEl.innerHTML = CASES.map(r => `
-    <div style="border:1px solid #eef2f7; border-radius:10px; padding:15px; margin-bottom:12px; background:#fff;">
-      <h3 style="color:#4d148c;">${r['QUEUE/ Request']}</h3>
+    <tr>
+      <td>${r['QUEUE/ Request']}</td>
+      <td style="white-space:pre-line">${r['Concern']}</td>
+      <td style="white-space:pre-line">${r['ACTION']}</td>
+      <td>${r['Email Address']}</td>
+      <td><pre>${r['Case Assignment/Email']}</pre></td>
+    </tr>
+  `).join("");
+}
+
+function renderCards(CASES){
+  const cardEl = document.getElementById("cardView");
+  cardEl.innerHTML = CASES.map(r => `
+    <div class="card">
+      <h3>${r['QUEUE/ Request']}</h3>
       <p><strong>Concern:</strong><br>${r['Concern']}</p>
       <p><strong>ACTION:</strong><br>${r['ACTION']}</p>
       <p><strong>Email Address:</strong> ${r['Email Address']}</p>
-      <pre style="white-space:pre-wrap; margin-top:8px;">${r['Case Assignment/Email']}</pre>
+      <pre>${r['Case Assignment/Email']}</pre>
     </div>
   `).join("");
 }
 
-// Load the CSV file
+// Load CSV
 Papa.parse("case-directory.csv", {
   download: true,
   header: true,
@@ -163,36 +195,35 @@ Papa.parse("case-directory.csv", {
 
     // Initial render
     renderTable(window.CASES);
+    renderCards(window.CASES);
 
-    // Now attach search listener AFTER CSV is loaded
+    // Search listener
     document.getElementById("searchBox").addEventListener("input", e => {
-  const query = e.target.value.toLowerCase().trim();
+      const query = e.target.value.toLowerCase().trim();
+      const exactQueue = [];
+      const others = [];
 
-  const exactQueue = [];
-  const others = [];
+      window.CASES.forEach(r => {
+        const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
+        const concern = (r['Concern'] || "").toLowerCase().trim();
+        const action = (r['ACTION'] || "").toLowerCase().trim();
+        const email = (r['Email Address'] || "").toLowerCase().trim();
+        const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
 
-  window.CASES.forEach(r => {
-    const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
-    const concern = (r['Concern'] || "").toLowerCase().trim();
-    const action = (r['ACTION'] || "").toLowerCase().trim();
-    const email = (r['Email Address'] || "").toLowerCase().trim();
-    const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
+        if(queue === query){
+          exactQueue.push(r);
+        } else if(queue.includes(query) || concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
+          others.push(r);
+        }
+      });
 
-    if(queue === query){
-      exactQueue.push(r);
-    } else if(queue.includes(query) || concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
-      others.push(r);
-    }
-  });
-
-  renderCards([...exactQueue, ...others]);
-});
-
+      const filtered = [...exactQueue, ...others];
+      renderTable(filtered);
+      renderCards(filtered);
+    });
   }
 });
 </script>
 
 </body>
 </html>
-
-
