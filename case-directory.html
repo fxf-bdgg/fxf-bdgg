@@ -101,6 +101,23 @@ footer{
   padding:16px;
   text-align:center;
 }
+
+  /* Add spacing between rows */
+tbody tr {
+  border-bottom: 2px solid #e2e8f0; /* line to separate queues */
+}
+
+/* Optional: alternate row shading */
+tbody tr:nth-child(odd) {
+  background-color: #fcfcfc;
+}
+tbody tr:nth-child(even) {
+  background-color: #ffffff;
+}
+ td {
+  padding: 16px 12px; /* bigger vertical padding */
+}
+  
 </style>
 </head>
 <body>
@@ -190,3 +207,4 @@ Papa.parse("case-directory.csv", {
 
 </body>
 </html>
+
