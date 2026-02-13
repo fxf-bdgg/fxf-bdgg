@@ -1,17 +1,20 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BD Tools — Case Directory</title>
 
+<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- PapaParse for CSV parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 
 <style>
 :root{
   --bg:#f4f7fb;
   --accent:#4d148c;
-  --accent-dark:#3a0f6b;
   --muted:#64748b;
   font-family: Inter, ui-sans-serif, system-ui;
 }
@@ -24,129 +27,148 @@ body{
   min-height:100vh;
 }
 
-/* HEADER */
 header{
   background:var(--accent);
   color:white;
   padding:16px 28px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  position:relative;
-  overflow:hidden;
 }
+header img{height:40px; margin-right:40px;}
+.nav-tabs{display:flex; gap:30px;}
+.tab{color:white; text-decoration:none; font-weight:600;}
+.tab.active{border-bottom:3px solid #ff6600;padding-bottom:4px;}
 
-header::after{
-  content:"";
-  position:absolute;
-  top:0; left:-100%;
-  width:100%;
-  height:100%;
-  background:linear-gradient(120deg,#4d148c,#ff6600,#4d148c);
-  transform:skewX(-20deg);
-  animation:sweep 1s ease-out forwards;
-  opacity:0.2;
-}
-
-@keyframes sweep{
-  0%{left:-100%;}
-  100%{left:100%;}
-}
-
-.nav-tabs{
-  display:flex;
-  gap:30px;
-}
-
-.tab{
-  color:white;
-  text-decoration:none;
-  font-weight:600;
-  position:relative;
-}
-
-.tab.active::after{
-  content:"";
-  position:absolute;
-  left:0;
-  bottom:-6px;
-  width:100%;
-  height:3px;
-  background:#ff6600;
-  border-radius:3px;
-}
-
-/* LOGO ANIMATION */
-@keyframes logoFlyIn{
-  0%{opacity:0; transform:translateX(-40px);}
-  100%{opacity:1; transform:translateX(0);}
-}
-
-header img{
-  height:40px;
-  opacity:0;
-  animation:logoFlyIn 1s ease-out forwards;
-}
-
-/* CENTER MESSAGE */
 .main{
   flex:1;
+  padding:40px;
   display:flex;
   justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:40px;
 }
 
 .message-box{
   background:white;
-  padding:50px;
+  padding:40px;
   border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  width:100%;
+  max-width:1200px;
 }
 
-.message-box h1{
-  color:var(--accent);
-  margin-bottom:15px;
+input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  font-size:15px;
+  margin:20px 0;
 }
 
-.message-box p{
-  color:var(--muted);
-  font-size:16px;
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+}
+
+th, td{
+  padding:12px;
+  vertical-align:top;
+}
+
+th{
+  background:#f1f5f9;
+  position:sticky;
+  top:0;
+}
+
+pre{
+  background:#f8fafc;
+  padding:10px;
+  border-radius:6px;
+  white-space:pre-wrap;
+  margin:0;
 }
 
 footer{
   background:var(--accent);
   color:white;
-  padding:16px 28px;
+  padding:16px;
   text-align:center;
 }
 </style>
 </head>
-
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;gap:40px;">
-    <img src="fedex.png" alt="FedEx Logo">
-    <nav class="nav-tabs">
-      <a href="index.html" class="tab">Home</a>
-      <a href="case-directory.html" class="tab active">Case Directory</a>
-    </nav>
-  </div>
+  <img src="fedex.png" alt="FedEx Logo">
+  <nav class="nav-tabs">
+    <a href="index.html" class="tab">Home</a>
+    <a href="case-directory.html" class="tab active">Case Directory</a>
+  </nav>
 </header>
 
 <div class="main">
   <div class="message-box">
-    <h1>Case Directory</h1>
-    <p>This section is not yet available.</p>
-    <p>We are currently building this feature. Please check back soon.</p>
+    <h1 style="color:#4d148c;">Case Directory</h1>
+    <p>Search for the correct department or queue to move the case.</p>
+
+    <input id="searchBox" placeholder="Search queue, concern, action, email, assignment...">
+
+    <div style="max-height:520px; overflow:auto; border:1px solid #eef2f7; border-radius:10px;">
+      <table>
+        <thead>
+          <tr>
+            <th>QUEUE / Request</th>
+            <th>Concern</th>
+            <th>ACTION</th>
+            <th>Email Address</th>
+            <th>Case Assignment / Email</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<footer>
-  © 2025 EBS Operations
-</footer>
+<footer>© 2025 EBS Operations</footer>
+
+<script>
+// Function to render the table
+function renderTable(CASES){
+  const rowsEl = document.getElementById("rows");
+  rowsEl.innerHTML = CASES.map(r => `
+    <tr>
+      <td>${r['QUEUE/ Request']}</td>
+      <td style="white-space:pre-line">${r['Concern']}</td>
+      <td style="white-space:pre-line">${r['ACTION']}</td>
+      <td>${r['Email Address']}</td>
+      <td><pre>${r['Case Assignment/Email']}</pre></td>
+    </tr>
+  `).join("");
+}
+
+// Live search filter
+document.getElementById("searchBox").addEventListener("input", e => {
+  const query = e.target.value.toLowerCase();
+  const filtered = window.CASES.filter(r =>
+    (r['QUEUE/ Request'] + r['Concern'] + r['ACTION'] + r['Email Address'] + r['Case Assignment/Email'])
+    .toLowerCase().includes(query)
+  );
+  renderTable(filtered);
+});
+
+// Load the CSV file
+Papa.parse("case-directory.csv", {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results){
+    window.CASES = results.data;
+    renderTable(window.CASES);
+  }
+});
+</script>
 
 </body>
 </html>
