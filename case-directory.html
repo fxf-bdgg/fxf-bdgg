@@ -43,8 +43,7 @@ header img{height:40px; margin-right:40px;}
   flex:1;
   padding:40px;
   display:flex;
-  flex-direction:column;
-  align-items:center;
+  justify-content:center;
 }
 
 .message-box{
@@ -69,7 +68,6 @@ table{
   width:100%;
   border-collapse:collapse;
   font-size:14px;
-  margin-bottom:30px;
 }
 
 th, td{
@@ -97,24 +95,12 @@ pre{
   margin:0;
 }
 
-.card-container{
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  gap:15px;
-  margin-top:20px;
+footer{
+  background:var(--accent);
+  color:white;
+  padding:16px;
+  text-align:center;
 }
-
-.card{
-  border:1px solid #eef2f7;
-  border-radius:10px;
-  padding:15px;
-  background:#fff;
-  box-shadow:0 3px 8px rgba(0,0,0,0.05);
-}
-
-.card h3{color:#4d148c; margin-top:0;}
-.card p, .card pre{margin:5px 0;}
 </style>
 </head>
 <body>
@@ -134,8 +120,7 @@ pre{
 
     <input id="searchBox" placeholder="Search queue, concern, action, email, assignment...">
 
-    <!-- Table view -->
-    <div style="max-height:400px; overflow:auto; border:1px solid #eef2f7; border-radius:10px;">
+    <div style="max-height:520px; overflow:auto; border:1px solid #eef2f7; border-radius:10px;">
       <table>
         <thead>
           <tr>
@@ -149,10 +134,6 @@ pre{
         <tbody id="rows"></tbody>
       </table>
     </div>
-
-    <!-- Card view -->
-    <div class="card-container" id="cardView"></div>
-
   </div>
 </div>
 
@@ -172,19 +153,6 @@ function renderTable(CASES){
   `).join("");
 }
 
-function renderCards(CASES){
-  const cardEl = document.getElementById("cardView");
-  cardEl.innerHTML = CASES.map(r => `
-    <div class="card">
-      <h3>${r['QUEUE/ Request']}</h3>
-      <p><strong>Concern:</strong><br>${r['Concern']}</p>
-      <p><strong>ACTION:</strong><br>${r['ACTION']}</p>
-      <p><strong>Email Address:</strong> ${r['Email Address']}</p>
-      <pre>${r['Case Assignment/Email']}</pre>
-    </div>
-  `).join("");
-}
-
 // Load CSV
 Papa.parse("case-directory.csv", {
   download: true,
@@ -192,10 +160,7 @@ Papa.parse("case-directory.csv", {
   skipEmptyLines: true,
   complete: function(results){
     window.CASES = results.data;
-
-    // Initial render
     renderTable(window.CASES);
-    renderCards(window.CASES);
 
     // Search listener
     document.getElementById("searchBox").addEventListener("input", e => {
@@ -217,9 +182,7 @@ Papa.parse("case-directory.csv", {
         }
       });
 
-      const filtered = [...exactQueue, ...others];
-      renderTable(filtered);
-      renderCards(filtered);
+      renderTable([...exactQueue, ...others]);
     });
   }
 });
