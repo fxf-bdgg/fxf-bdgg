@@ -189,10 +189,16 @@ Papa.parse("case-directory.csv", {
     renderTable(window.CASES);
 
     // Search listener
- document.getElementById("searchBox").addEventListener("input", e => {
+document.getElementById("searchBox").addEventListener("input", e => {
   const query = e.target.value.toLowerCase().trim();
-  const exactQueue = [];
-  const others = [];
+  if(!query) {
+    renderTable(window.CASES);
+    return;
+  }
+
+  const startsWithQueue = [];
+  const includesQueue = [];
+  const otherMatches = [];
 
   window.CASES.forEach(r => {
     const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
@@ -201,15 +207,19 @@ Papa.parse("case-directory.csv", {
     const email = (r['Email Address'] || "").toLowerCase().trim();
     const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
 
-    if(queue === query){
-      exactQueue.push(r);
-    } else if(queue.includes(query) || concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
-      others.push(r);
+    if(queue.startsWith(query)){
+      startsWithQueue.push(r);
+    } else if(queue.includes(query)){
+      includesQueue.push(r);
+    } else if(concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
+      otherMatches.push(r);
     }
   });
 
-  renderTable([...exactQueue, ...others], query); // pass query to highlight
+  const filtered = [...startsWithQueue, ...includesQueue, ...otherMatches];
+  renderTable(filtered, query); // pass query for highlight
 });
+
 
   }
 });
@@ -217,6 +227,7 @@ Papa.parse("case-directory.csv", {
 
 </body>
 </html>
+
 
 
 
