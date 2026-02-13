@@ -140,16 +140,16 @@ footer{
 <footer>© 2025 EBS Operations</footer>
 
 <script>
-function renderTable(CASES){
+function renderCards(CASES){
   const rowsEl = document.getElementById("rows");
   rowsEl.innerHTML = CASES.map(r => `
-    <tr>
-      <td>${r['QUEUE/ Request']}</td>
-      <td style="white-space:pre-line">${r['Concern']}</td>
-      <td style="white-space:pre-line">${r['ACTION']}</td>
-      <td>${r['Email Address']}</td>
-      <td><pre>${r['Case Assignment/Email']}</pre></td>
-    </tr>
+    <div style="border:1px solid #eef2f7; border-radius:10px; padding:15px; margin-bottom:12px; background:#fff;">
+      <h3 style="color:#4d148c;">${r['QUEUE/ Request']}</h3>
+      <p><strong>Concern:</strong><br>${r['Concern']}</p>
+      <p><strong>ACTION:</strong><br>${r['ACTION']}</p>
+      <p><strong>Email Address:</strong> ${r['Email Address']}</p>
+      <pre style="white-space:pre-wrap; margin-top:8px;">${r['Case Assignment/Email']}</pre>
+    </div>
   `).join("");
 }
 
@@ -166,28 +166,33 @@ Papa.parse("case-directory.csv", {
 
     // Now attach search listener AFTER CSV is loaded
     document.getElementById("searchBox").addEventListener("input", e => {
-      const query = e.target.value.toLowerCase().trim();
+  const query = e.target.value.toLowerCase().trim();
 
-      const filtered = window.CASES.filter(r => {
-        const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
-        const concern = (r['Concern'] || "").toLowerCase().trim();
-        const action = (r['ACTION'] || "").toLowerCase().trim();
-        const email = (r['Email Address'] || "").toLowerCase().trim();
-        const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
+  const exactQueue = [];
+  const others = [];
 
-        return queue.includes(query) ||
-               concern.includes(query) ||
-               action.includes(query) ||
-               email.includes(query) ||
-               assignment.includes(query);
-      });
+  window.CASES.forEach(r => {
+    const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
+    const concern = (r['Concern'] || "").toLowerCase().trim();
+    const action = (r['ACTION'] || "").toLowerCase().trim();
+    const email = (r['Email Address'] || "").toLowerCase().trim();
+    const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
 
-      renderTable(filtered);
-    });
+    if(queue === query){
+      exactQueue.push(r);
+    } else if(queue.includes(query) || concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
+      others.push(r);
+    }
+  });
+
+  renderCards([...exactQueue, ...others]);
+});
+
   }
 });
 </script>
 
 </body>
 </html>
+
 
