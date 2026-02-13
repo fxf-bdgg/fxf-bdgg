@@ -161,18 +161,23 @@ tbody tr:nth-child(even) {
 <footer>© 2025 EBS Operations</footer>
 
 <script>
-function renderTable(CASES){
+function renderTable(CASES, highlight="") {
   const rowsEl = document.getElementById("rows");
-  rowsEl.innerHTML = CASES.map(r => `
-    <tr>
-      <td>${r['QUEUE/ Request']}</td>
-      <td style="white-space:pre-line">${r['Concern']}</td>
-      <td style="white-space:pre-line">${r['ACTION']}</td>
-      <td>${r['Email Address']}</td>
-      <td><pre>${r['Case Assignment/Email']}</pre></td>
-    </tr>
-  `).join("");
+  const regex = new RegExp(`(${highlight.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')})`, "gi");
+
+  rowsEl.innerHTML = CASES.map(r => {
+    return `
+      <tr>
+        <td>${highlight ? r['QUEUE/ Request'].replace(regex, '<mark>$1</mark>') : r['QUEUE/ Request']}</td>
+        <td style="white-space:pre-line">${highlight ? r['Concern'].replace(regex, '<mark>$1</mark>') : r['Concern']}</td>
+        <td style="white-space:pre-line">${highlight ? r['ACTION'].replace(regex, '<mark>$1</mark>') : r['ACTION']}</td>
+        <td>${highlight ? r['Email Address'].replace(regex, '<mark>$1</mark>') : r['Email Address']}</td>
+        <td><pre>${highlight ? r['Case Assignment/Email'].replace(regex, '<mark>$1</mark>') : r['Case Assignment/Email']}</pre></td>
+      </tr>
+    `;
+  }).join("");
 }
+
 
 // Load CSV
 Papa.parse("case-directory.csv", {
@@ -184,32 +189,34 @@ Papa.parse("case-directory.csv", {
     renderTable(window.CASES);
 
     // Search listener
-    document.getElementById("searchBox").addEventListener("input", e => {
-      const query = e.target.value.toLowerCase().trim();
-      const exactQueue = [];
-      const others = [];
+ document.getElementById("searchBox").addEventListener("input", e => {
+  const query = e.target.value.toLowerCase().trim();
+  const exactQueue = [];
+  const others = [];
 
-      window.CASES.forEach(r => {
-        const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
-        const concern = (r['Concern'] || "").toLowerCase().trim();
-        const action = (r['ACTION'] || "").toLowerCase().trim();
-        const email = (r['Email Address'] || "").toLowerCase().trim();
-        const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
+  window.CASES.forEach(r => {
+    const queue = (r['QUEUE/ Request'] || "").toLowerCase().trim();
+    const concern = (r['Concern'] || "").toLowerCase().trim();
+    const action = (r['ACTION'] || "").toLowerCase().trim();
+    const email = (r['Email Address'] || "").toLowerCase().trim();
+    const assignment = (r['Case Assignment/Email'] || "").toLowerCase().trim();
 
-        if(queue === query){
-          exactQueue.push(r);
-        } else if(queue.includes(query) || concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
-          others.push(r);
-        }
-      });
+    if(queue === query){
+      exactQueue.push(r);
+    } else if(queue.includes(query) || concern.includes(query) || action.includes(query) || email.includes(query) || assignment.includes(query)){
+      others.push(r);
+    }
+  });
 
-      renderTable([...exactQueue, ...others]);
-    });
+  renderTable([...exactQueue, ...others], query); // pass query to highlight
+});
+
   }
 });
 </script>
 
 </body>
 </html>
+
 
 
