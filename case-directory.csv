@@ -890,11 +890,17 @@ Sub-queue: None";
 "SPOC Customers
 
 ◾Sealed Air
+
 ◾Echo Global Logistics
+
 ◾Uline
+
 ◾Grainger/Zoro
+
 ◾UBER/Transplace
+
 ◾Berry Global
+
 ◾CH Robinson
 
 ";"This includes the following.
@@ -1313,4 +1319,5 @@ Case Origin: WRO Main Invoicing
 Sub Queue: NO SUB-QUEUE
 
 When responding, make sure to send the email to costcotrafficltl@costco.com";
+
 
