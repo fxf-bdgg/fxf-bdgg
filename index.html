@@ -57,13 +57,13 @@ header h1, footer p{margin:0;font-weight:600;}
   display:grid;
   grid-template-columns:1fr 1fr 1fr 1fr;
   gap:20px;
-  padding:100px 0;
+  padding:10px 0;
   flex:1;
 }
 .card{
   background:var(--card);
   border-radius:12px;
-  padding:20px;
+  padding:10px;
   box-shadow:0 8px 28px rgba(2,6,23,0.06);
   text-align:center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -315,7 +315,78 @@ header::after {
   border-radius: 3px;
 }
 
+/* Welcome Section Styles */
+.welcome-section {
+  /* 1. We use more purple stops and only one orange stop in the middle */
+  background: linear-gradient(-45deg, 
+    #4D148C, /* FedEx Purple */
+    #330d5e, /* Darker Purple */
+    #FF6600, /* FedEx Orange (The Accent) */
+    #4D148C, /* FedEx Purple */
+    #330d5e  /* Darker Purple */
+  );
+  
+  /* 2. Increase size to 400% to make the orange "stripe" very thin and rare */
+  background-size: 400% 400%;
+  
+  /* 3. Slow down the animation to 18 seconds for a "calmer" feel */
+  animation: fedexShimmer 20s ease infinite;
 
+  color: white;
+  padding: 20px 20px;
+  text-align: center;
+  border-radius: 0 0 40px 40px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(77, 20, 140, 0.2);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 4. The movement logic remains the same, but it will feel much more subtle */
+@keyframes fedexShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.welcome-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.welcome-content p {
+  font-size: 1.1rem;
+  max-width: 700px;
+  margin: 0 auto 25px;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Quick fix for your button colors to match the brand */
+.btn {
+  background-color: #FF6600; /* FedEx Orange */
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background-color: #e55c00;
+}
 </style>
 </head>
 
@@ -357,6 +428,14 @@ header::after {
     <span id="nextMonth">&gt;</span>
   </div>
   <div class="calendar-grid" id="calendarGrid"></div>
+</div>
+
+
+<div class="welcome-section">
+  <div class="welcome-content">
+    <h1>Welcome to the Decision Support System</h1>
+    <p>Select a guideline below to begin the step-by-step resolution process. Follow the prompts carefully to ensure billing accuracy and policy compliance.</p>
+  </div>
 </div>
 
 <div class="shell">
@@ -733,4 +812,3 @@ document.getElementById("guideSearch").focus();
 
 </body>
 </html>
-
