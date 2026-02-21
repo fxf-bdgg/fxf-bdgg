@@ -267,6 +267,22 @@ select:focus{
   font-style:italic;
 }
 
+.loading-message{
+  text-align:center;
+  color:var(--muted);
+  padding:20px;
+  font-style:italic;
+}
+
+.error-message{
+  background:#ffebee;
+  border-left:5px solid #d32f2f;
+  color:#c62828;
+  padding:15px;
+  border-radius:6px;
+  margin:20px 0;
+}
+
 footer{
   background:var(--accent);
   color:white;
@@ -336,8 +352,7 @@ textarea{
     </a>
     <nav class="nav-tabs">
       <a href="index.html" class="tab">Home</a>
-      <a href="case-directory.html" class="tab active">Case Directory</a>
-      <a href="ebs-response-template.html" class="tab active">EBS Response</a>
+      <a href="ebs-response-template.html" class="tab active">EBS Response Template</a>
     </nav>
   </div>
 
@@ -382,7 +397,10 @@ textarea{
       </div>
     </div>
 
-    <div class="control-group">
+    <div id="loadingStatus" class="loading-message">Loading response templates...</div>
+    <div id="errorStatus"></div>
+
+    <div class="control-group" id="controlGroup" style="display:none;">
       <label for="concernSelect" style="font-weight:600; color:#333;">Select Concern:</label>
       <select id="concernSelect">
         <option value="">-- Choose a Concern --</option>
@@ -518,6 +536,8 @@ function populateDropdown(data){
   const concerns = [...new Set(data.map(row => row['Concern']).filter(c => c && c.trim()))];
   concerns.sort();
   
+  console.log("Concerns found:", concerns);
+  
   concerns.forEach(concern => {
     const option = document.createElement('option');
     option.value = concern;
@@ -535,6 +555,8 @@ function displayResponses(concern){
   }
   
   const templates = window.TEMPLATES.filter(row => row['Concern'] === concern);
+  
+  console.log("Templates for concern '" + concern + "':", templates);
   
   if(templates.length === 0){
     container.innerHTML = '<div class="no-results">No templates found for this concern.</div>';
@@ -585,13 +607,39 @@ document.getElementById('concernSelect').addEventListener('change', (e) => {
 });
 
 // Load CSV
+console.log("Starting CSV load...");
 Papa.parse("ebs-response.csv", {
-  download:true,
-  header:true,
-  skipEmptyLines:true,
-  complete:function(results){
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  dynamicTyping: false,
+  complete: function(results){
+    console.log("CSV parse complete. Raw results:", results);
+    console.log("Data rows:", results.data.length);
+    
+    if(results.errors && results.errors.length > 0){
+      console.error("Parse errors:", results.errors);
+    }
+    
+    // Filter out empty rows
     window.TEMPLATES = results.data.filter(row => row['Concern'] && row['Concern'].trim());
+    console.log("Filtered templates:", window.TEMPLATES.length);
+    
+    if(window.TEMPLATES.length === 0){
+      document.getElementById('loadingStatus').innerHTML = '';
+      document.getElementById('errorStatus').innerHTML = '<div class="error-message">❌ No data found in CSV file. Please check the file format and ensure it has "Concern", "Description", and "Response Template" columns.</div>';
+      console.error("No valid templates found after filtering");
+      return;
+    }
+    
     populateDropdown(window.TEMPLATES);
+    document.getElementById('loadingStatus').style.display = 'none';
+    document.getElementById('controlGroup').style.display = 'flex';
+  },
+  error: function(error){
+    console.error("Papa Parse error:", error);
+    document.getElementById('loadingStatus').innerHTML = '';
+    document.getElementById('errorStatus').innerHTML = '<div class="error-message">❌ Error loading CSV file: ' + error.message + '</div>';
   }
 });
 </script>
