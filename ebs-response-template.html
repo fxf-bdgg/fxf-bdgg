@@ -12,7 +12,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-/* ===== YOUR ORIGINAL CSS (UNCHANGED) ===== */
 :root{
   --bg:#f4f7fb;
   --card:#ffffff;
@@ -23,30 +22,326 @@
   --warning-light:#fff3e0;
   font-family: Inter, ui-sans-serif, system-ui;
 }
+
 *{box-sizing:border-box;}
-body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
-header{background:var(--accent);color:white;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;z-index:1;}
-header img{height:40px;animation:logoFlyIn 1s ease-out forwards;opacity:0;}
-.nav-tabs{display:flex;gap:30px;}
-.tab{color:white;text-decoration:none;font-weight:600;font-size:16px;position:relative;padding:6px 0;}
+body{
+  margin:0;
+  background:linear-gradient(180deg,var(--bg),#eef6ff);
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* ---------- HEADER ---------- */
+header{
+  background:var(--accent);
+  color:white;
+  padding:16px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+  z-index:1;
+}
+header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
+.nav-tabs{display:flex; gap:30px;}
+.tab{color:white; text-decoration:none; font-weight:600; font-size:16px; position:relative; padding:6px 0; transition: opacity 0.2s;}
+.tab:hover{opacity:0.8;}
 .tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
+
 .header-icons{display:flex;align-items:center;gap:20px;}
-.main{flex:1;padding:40px;display:flex;justify-content:center;}
-.message-box{background:white;padding:40px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.08);width:100%;max-width:1800px;}
-.control-group{display:flex;gap:20px;align-items:center;margin:20px 0;}
-select{padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:15px;min-width:400px;background:white;}
-.response-container{margin-top:30px;}
-.response-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px;}
-.expandable-header{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:#fff;border-radius:6px;margin-bottom:12px;border:1px solid #e2e8f0;}
-.expandable-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 12px;}
-.expandable-content.expanded{max-height:500px;margin-bottom:12px;}
-.content-item{padding:10px;background:#ffffff;border-radius:6px;margin:8px 0;border-left:3px solid var(--accent);white-space:pre-wrap;font-size:13px;}
-.response-text{background:white;padding:16px;border-radius:6px;border-left:4px solid var(--accent);white-space:pre-wrap;font-size:13px;margin:12px 0;}
-.copy-btn{background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;margin-top:12px;}
-.copy-btn.copied{background:#28a745;}
-.loading-message{text-align:center;color:var(--muted);padding:20px;font-style:italic;}
-.error-message{background:#ffebee;border-left:5px solid #d32f2f;color:#c62828;padding:15px;border-radius:6px;margin:20px 0;}
-footer{background:var(--accent);color:white;padding:16px;text-align:center;}
+#clockBtn{cursor:pointer; display:flex; align-items:center; gap:6px; font-size:18px; font-weight:600; color:white; position:relative;}
+#clockBtn:hover{transform:scale(1.1);}
+.header-icon{font-size:24px;color:white;cursor:pointer;transition:color .2s,transform .2s;}
+.header-icon:hover{transform:scale(1.3);}
+
+@keyframes logoFlyIn {0%{opacity:0;transform:translateX(-50px) scale(0.8);}100%{opacity:1;transform:translateX(0) scale(1);}}
+header::after{
+  content:"";
+  position:absolute; top:0; left:-100%;
+  width:100%; height:100%;
+  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
+  transform:skewX(-20deg);
+  animation:sweep 1s ease-out forwards;
+  z-index:0;
+  opacity:0.2;
+}
+@keyframes sweep{0%{left:-100%;}100%{left:100%;}}
+
+/* ---------- MAIN ---------- */
+.main{
+  flex:1;
+  padding:40px;
+  display:flex;
+  justify-content:center;
+}
+.message-box{
+  background:white;
+  padding:40px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  width:100%;
+  max-width:1800px;
+}
+
+/* ---------- CAUTION/REMINDER BANNER ---------- */
+.caution-banner{
+  background:var(--warning-light);
+  border-left:5px solid var(--warning);
+  border-radius:8px;
+  padding:20px;
+  margin-bottom:30px;
+  display:flex;
+  gap:15px;
+}
+
+.caution-icon{
+  font-size:28px;
+  color:var(--warning);
+  flex-shrink:0;
+}
+
+.caution-content h3{
+  margin:0 0 10px 0;
+  color:var(--warning);
+  font-size:16px;
+}
+
+.caution-content p{
+  margin:8px 0;
+  color:#333;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.caution-content ul{
+  margin:10px 0;
+  padding-left:20px;
+  color:#333;
+  font-size:14px;
+}
+
+.caution-content li{
+  margin:6px 0;
+  line-height:1.5;
+}
+
+/* ---------- CONTROLS ---------- */
+.control-group{
+  display:flex;
+  gap:20px;
+  align-items:center;
+  margin:20px 0;
+}
+
+select{
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  font-size:15px;
+  min-width:400px;
+  cursor:pointer;
+  background-color:white;
+}
+
+select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(77,20,140,0.1);
+}
+
+.response-container{
+  margin-top:30px;
+}
+
+.response-item{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:20px;
+  opacity:0;
+  animation:itemFadeIn 0.5s ease forwards;
+}
+
+@keyframes itemFadeIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+
+/* ---------- EXPANDABLE SECTION ---------- */
+.expandable-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  user-select:none;
+  padding:12px;
+  background:#fff;
+  border-radius:6px;
+  margin-bottom:12px;
+  border:1px solid #e2e8f0;
+  transition:background 0.2s;
+}
+
+.expandable-header:hover{
+  background:#f0f0f0;
+}
+
+.expandable-icon{
+  font-size:18px;
+  color:var(--accent);
+  transition:transform 0.3s;
+}
+
+.expandable-icon.expanded{
+  transform:rotate(180deg);
+}
+
+.expandable-content{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height 0.3s ease;
+  padding:0 12px;
+}
+
+.expandable-content.expanded{
+  max-height:500px;
+  margin-bottom:12px;
+}
+
+.content-item{
+  padding:10px;
+  background:#ffffff;
+  border-radius:6px;
+  margin:8px 0;
+  border-left:3px solid var(--accent);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.content-label{
+  font-weight:700;
+  color:var(--accent);
+  font-size:12px;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.response-text{
+  background:white;
+  padding:16px;
+  border-radius:6px;
+  border-left:4px solid var(--accent);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  font-size:13px;
+  line-height:1.6;
+  color:#333;
+  margin:12px 0;
+}
+
+.copy-btn{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:8px 16px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+  margin-top:12px;
+  transition:background 0.2s;
+}
+
+.copy-btn:hover{
+  background:var(--accent-dark);
+}
+
+.copy-btn.copied{
+  background:#28a745;
+}
+
+.no-results{
+  text-align:center;
+  color:var(--muted);
+  padding:40px 20px;
+  font-style:italic;
+}
+
+.loading-message{
+  text-align:center;
+  color:var(--muted);
+  padding:20px;
+  font-style:italic;
+}
+
+.error-message{
+  background:#ffebee;
+  border-left:5px solid #d32f2f;
+  color:#c62828;
+  padding:15px;
+  border-radius:6px;
+  margin:20px 0;
+}
+
+footer{
+  background:var(--accent);
+  color:white;
+  padding:16px;
+  text-align:center;
+}
+
+/* ---------- POPUPS ---------- */
+.modal {display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; padding:20px; z-index:1000;}
+.modal-content{background:white; border-radius:10px; padding:24px; width:100%; max-width:500px; box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.modal-header{display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:700; margin-bottom:12px;}
+.modal-close{font-size:22px; cursor:pointer; color:var(--muted);}
+.modal-close:hover{color:var(--accent);}
+
+#timeCalendarPopup{display:none; position:absolute; top:60px; right:20px; background:white; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:16px; width:310px; z-index:900;}
+#timeCalendarPopup h3{margin:0;text-align:center;font-size:18px;color:var(--accent-dark); margin-bottom:8px;}
+.calendar-header{display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; padding:8px; border-radius:6px;}
+.calendar-header span{cursor:pointer;color:var(--accent-dark); font-weight:600;}
+.calendar-title{font-weight:700;}
+.calendar-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px;}
+.calendar-grid .day-name{text-align:center;font-size:12px;font-weight:700;color:var(--muted);}
+.calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
+.calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
+.calendar-grid .day:hover{background:#f0f0f0;}
+
+.rating-star{
+  font-size:28px;
+  cursor:pointer;
+  color:#ddd;
+  transition:color 0.2s;
+  margin:0 4px;
+}
+.rating-star.selected{
+  color:#ffc107;
+}
+.rating-container{
+  text-align:center;
+  margin:16px 0;
+}
+textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid #e2e8f0;
+  border-radius:6px;
+  font-size:14px;
+  font-family:inherit;
+  min-height:80px;
+}
+.comment-list-item{
+  padding:12px;
+  border-bottom:1px solid #e2e8f0;
+  margin:8px 0;
+}
+.comment-list-item .stars{
+  color:#ffc107;
+  font-size:16px;
+  margin-bottom:4px;
+}
 </style>
 </head>
 <body>
@@ -94,30 +389,31 @@ function toggleExpand(element){
 // ---------- DROPDOWN ----------
 function populateDropdown(data){
   const select = document.getElementById('concernSelect');
-  const concerns = [...new Set(data.map(r=>r['Concern']).filter(Boolean))];
+  const concerns = [...new Set(data.map(r => r['Concern']).filter(Boolean))];
   concerns.sort();
-  concerns.forEach(c=>{
-    const opt=document.createElement('option');
-    opt.value=c;
-    opt.textContent=c;
+  concerns.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
     select.appendChild(opt);
   });
 }
 
 function displayResponses(concern){
-  const container=document.getElementById('responseContainer');
-  container.innerHTML='';
+  const container = document.getElementById('responseContainer');
+  container.innerHTML = '';
   if(!concern) return;
 
-  const templates=window.TEMPLATES.filter(r=>r['Concern']===concern);
+  // Get all templates for this concern
+  const templates = window.TEMPLATES.filter(r => r['Concern'] === concern);
 
-  if(templates.length===0){
-    container.innerHTML='<div class="loading-message">No templates found.</div>';
+  if(templates.length === 0){
+    container.innerHTML = '<div class="loading-message">No templates found.</div>';
     return;
   }
 
-  templates.forEach((t,i)=>{
-    container.innerHTML+=`
+  templates.forEach((t, i) => {
+    container.innerHTML += `
       <div class="response-item">
         <div class="expandable-header" onclick="toggleExpand(this)">
           <span style="font-weight:600;color:#4d148c;">${t['Description'] || 'Response '+(i+1)}</span>
@@ -134,15 +430,18 @@ function displayResponses(concern){
 }
 
 function copyToClipboard(btn){
-  const text=btn.previousElementSibling.textContent;
-  navigator.clipboard.writeText(text).then(()=>{
-    btn.textContent='✓ Copied!';
+  const text = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
     btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='📋 Copy Template';btn.classList.remove('copied');},2000);
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Template';
+      btn.classList.remove('copied');
+    }, 2000);
   });
 }
 
-document.getElementById('concernSelect').addEventListener('change',e=>{
+document.getElementById('concernSelect').addEventListener('change', e => {
   displayResponses(e.target.value);
 });
 
@@ -150,43 +449,44 @@ document.getElementById('concernSelect').addEventListener('change',e=>{
 console.log("Loading ODS...");
 
 fetch("ebs-response.ods")
-.then(res=>res.arrayBuffer())
-.then(data=>{
-  const workbook=XLSX.read(data,{type:'array'});
+.then(res => res.arrayBuffer())
+.then(data => {
+  const workbook = XLSX.read(data, { type: 'array' });
 
-  const sheet1=workbook.Sheets["ebs-response"];
-  const sheet2=workbook.Sheets["Templates"];
+  const sheet1 = workbook.Sheets["ebs-response"];
+  const sheet2 = workbook.Sheets["Templates"];
 
   if(!sheet1) throw new Error('Sheet "ebs-response" not found.');
   if(!sheet2) throw new Error('Sheet "Templates" not found.');
 
-  const concerns=XLSX.utils.sheet_to_json(sheet1,{defval:""});
-  const templates=XLSX.utils.sheet_to_json(sheet2,{defval:""});
+  const concerns = XLSX.utils.sheet_to_json(sheet1, { defval: "" });
+  const templates = XLSX.utils.sheet_to_json(sheet2, { defval: "" });
 
-  // Merge Description into templates
-  window.TEMPLATES = templates.map(t=>{
-    const match=concerns.find(c=>c['Concern']===t['Concern']);
+  // Merge Description into templates, include all matching descriptions
+  window.TEMPLATES = templates.map(t => {
+    const matches = concerns.filter(c => c['Concern'] === t['Concern']);
+    const description = matches.length ? matches.map(m => m['Description']).join('; ') : '';
     return {
       ...t,
-      Description: match ? match['Description'] : ''
+      Description: description
     };
   });
 
-  if(window.TEMPLATES.length===0)
-    throw new Error("No valid data found.");
+  if(window.TEMPLATES.length === 0) throw new Error("No valid data found.");
 
   populateDropdown(window.TEMPLATES);
 
-  document.getElementById('loadingStatus').style.display='none';
-  document.getElementById('controlGroup').style.display='flex';
+  document.getElementById('loadingStatus').style.display = 'none';
+  document.getElementById('controlGroup').style.display = 'flex';
 })
-.catch(err=>{
+.catch(err => {
   console.error(err);
-  document.getElementById('loadingStatus').style.display='none';
-  document.getElementById('errorStatus').innerHTML=
+  document.getElementById('loadingStatus').style.display = 'none';
+  document.getElementById('errorStatus').innerHTML =
     '<div class="error-message">❌ '+err.message+'</div>';
 });
 </script>
 
 </body>
 </html>
+
