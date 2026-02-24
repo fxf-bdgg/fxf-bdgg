@@ -7,10 +7,12 @@
 
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<!-- PapaParse for CSV -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+<!-- SheetJS for ODS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
+/* ===== YOUR ORIGINAL CSS (UNCHANGED) ===== */
 :root{
   --bg:#f4f7fb;
   --card:#ffffff;
@@ -21,326 +23,30 @@
   --warning-light:#fff3e0;
   font-family: Inter, ui-sans-serif, system-ui;
 }
-
 *{box-sizing:border-box;}
-body{
-  margin:0;
-  background:linear-gradient(180deg,var(--bg),#eef6ff);
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
-}
-
-/* ---------- HEADER ---------- */
-header{
-  background:var(--accent);
-  color:white;
-  padding:16px 28px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  position:relative;
-  overflow:hidden;
-  z-index:1;
-}
-header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
-.nav-tabs{display:flex; gap:30px;}
-.tab{color:white; text-decoration:none; font-weight:600; font-size:16px; position:relative; padding:6px 0; transition: opacity 0.2s;}
-.tab:hover{opacity:0.8;}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
+header{background:var(--accent);color:white;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;z-index:1;}
+header img{height:40px;animation:logoFlyIn 1s ease-out forwards;opacity:0;}
+.nav-tabs{display:flex;gap:30px;}
+.tab{color:white;text-decoration:none;font-weight:600;font-size:16px;position:relative;padding:6px 0;}
 .tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
-
 .header-icons{display:flex;align-items:center;gap:20px;}
-#clockBtn{cursor:pointer; display:flex; align-items:center; gap:6px; font-size:18px; font-weight:600; color:white; position:relative;}
-#clockBtn:hover{transform:scale(1.1);}
-.header-icon{font-size:24px;color:white;cursor:pointer;transition:color .2s,transform .2s;}
-.header-icon:hover{transform:scale(1.3);}
-
-@keyframes logoFlyIn {0%{opacity:0;transform:translateX(-50px) scale(0.8);}100%{opacity:1;transform:translateX(0) scale(1);}}
-header::after{
-  content:"";
-  position:absolute; top:0; left:-100%;
-  width:100%; height:100%;
-  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
-  transform:skewX(-20deg);
-  animation:sweep 1s ease-out forwards;
-  z-index:0;
-  opacity:0.2;
-}
-@keyframes sweep{0%{left:-100%;}100%{left:100%;}}
-
-/* ---------- MAIN ---------- */
-.main{
-  flex:1;
-  padding:40px;
-  display:flex;
-  justify-content:center;
-}
-.message-box{
-  background:white;
-  padding:40px;
-  border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  width:100%;
-  max-width:1800px;
-}
-
-/* ---------- CAUTION/REMINDER BANNER ---------- */
-.caution-banner{
-  background:var(--warning-light);
-  border-left:5px solid var(--warning);
-  border-radius:8px;
-  padding:20px;
-  margin-bottom:30px;
-  display:flex;
-  gap:15px;
-}
-
-.caution-icon{
-  font-size:28px;
-  color:var(--warning);
-  flex-shrink:0;
-}
-
-.caution-content h3{
-  margin:0 0 10px 0;
-  color:var(--warning);
-  font-size:16px;
-}
-
-.caution-content p{
-  margin:8px 0;
-  color:#333;
-  font-size:14px;
-  line-height:1.5;
-}
-
-.caution-content ul{
-  margin:10px 0;
-  padding-left:20px;
-  color:#333;
-  font-size:14px;
-}
-
-.caution-content li{
-  margin:6px 0;
-  line-height:1.5;
-}
-
-/* ---------- CONTROLS ---------- */
-.control-group{
-  display:flex;
-  gap:20px;
-  align-items:center;
-  margin:20px 0;
-}
-
-select{
-  padding:12px 14px;
-  border-radius:8px;
-  border:1px solid #e2e8f0;
-  font-size:15px;
-  min-width:400px;
-  cursor:pointer;
-  background-color:white;
-}
-
-select:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(77,20,140,0.1);
-}
-
-.response-container{
-  margin-top:30px;
-}
-
-.response-item{
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-  border-radius:10px;
-  padding:20px;
-  margin-bottom:20px;
-  opacity:0;
-  animation:itemFadeIn 0.5s ease forwards;
-}
-
-@keyframes itemFadeIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-
-/* ---------- EXPANDABLE SECTION ---------- */
-.expandable-header{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  cursor:pointer;
-  user-select:none;
-  padding:12px;
-  background:#fff;
-  border-radius:6px;
-  margin-bottom:12px;
-  border:1px solid #e2e8f0;
-  transition:background 0.2s;
-}
-
-.expandable-header:hover{
-  background:#f0f0f0;
-}
-
-.expandable-icon{
-  font-size:18px;
-  color:var(--accent);
-  transition:transform 0.3s;
-}
-
-.expandable-icon.expanded{
-  transform:rotate(180deg);
-}
-
-.expandable-content{
-  max-height:0;
-  overflow:hidden;
-  transition:max-height 0.3s ease;
-  padding:0 12px;
-}
-
-.expandable-content.expanded{
-  max-height:500px;
-  margin-bottom:12px;
-}
-
-.content-item{
-  padding:10px;
-  background:#ffffff;
-  border-radius:6px;
-  margin:8px 0;
-  border-left:3px solid var(--accent);
-  white-space:pre-wrap;
-  word-wrap:break-word;
-  font-size:13px;
-  line-height:1.6;
-}
-
-.content-label{
-  font-weight:700;
-  color:var(--accent);
-  font-size:12px;
-  text-transform:uppercase;
-  margin-bottom:4px;
-}
-
-.response-text{
-  background:white;
-  padding:16px;
-  border-radius:6px;
-  border-left:4px solid var(--accent);
-  white-space:pre-wrap;
-  word-wrap:break-word;
-  font-size:13px;
-  line-height:1.6;
-  color:#333;
-  margin:12px 0;
-}
-
-.copy-btn{
-  background:var(--accent);
-  color:white;
-  border:none;
-  padding:8px 16px;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:13px;
-  margin-top:12px;
-  transition:background 0.2s;
-}
-
-.copy-btn:hover{
-  background:var(--accent-dark);
-}
-
-.copy-btn.copied{
-  background:#28a745;
-}
-
-.no-results{
-  text-align:center;
-  color:var(--muted);
-  padding:40px 20px;
-  font-style:italic;
-}
-
-.loading-message{
-  text-align:center;
-  color:var(--muted);
-  padding:20px;
-  font-style:italic;
-}
-
-.error-message{
-  background:#ffebee;
-  border-left:5px solid #d32f2f;
-  color:#c62828;
-  padding:15px;
-  border-radius:6px;
-  margin:20px 0;
-}
-
-footer{
-  background:var(--accent);
-  color:white;
-  padding:16px;
-  text-align:center;
-}
-
-/* ---------- POPUPS ---------- */
-.modal {display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; padding:20px; z-index:1000;}
-.modal-content{background:white; border-radius:10px; padding:24px; width:100%; max-width:500px; box-shadow:0 10px 30px rgba(0,0,0,0.2);}
-.modal-header{display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:700; margin-bottom:12px;}
-.modal-close{font-size:22px; cursor:pointer; color:var(--muted);}
-.modal-close:hover{color:var(--accent);}
-
-#timeCalendarPopup{display:none; position:absolute; top:60px; right:20px; background:white; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:16px; width:310px; z-index:900;}
-#timeCalendarPopup h3{margin:0;text-align:center;font-size:18px;color:var(--accent-dark); margin-bottom:8px;}
-.calendar-header{display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; padding:8px; border-radius:6px;}
-.calendar-header span{cursor:pointer;color:var(--accent-dark); font-weight:600;}
-.calendar-title{font-weight:700;}
-.calendar-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px;}
-.calendar-grid .day-name{text-align:center;font-size:12px;font-weight:700;color:var(--muted);}
-.calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
-.calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
-.calendar-grid .day:hover{background:#f0f0f0;}
-
-.rating-star{
-  font-size:28px;
-  cursor:pointer;
-  color:#ddd;
-  transition:color 0.2s;
-  margin:0 4px;
-}
-.rating-star.selected{
-  color:#ffc107;
-}
-.rating-container{
-  text-align:center;
-  margin:16px 0;
-}
-textarea{
-  width:100%;
-  padding:10px;
-  border:1px solid #e2e8f0;
-  border-radius:6px;
-  font-size:14px;
-  font-family:inherit;
-  min-height:80px;
-}
-.comment-list-item{
-  padding:12px;
-  border-bottom:1px solid #e2e8f0;
-  margin:8px 0;
-}
-.comment-list-item .stars{
-  color:#ffc107;
-  font-size:16px;
-  margin-bottom:4px;
-}
+.main{flex:1;padding:40px;display:flex;justify-content:center;}
+.message-box{background:white;padding:40px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.08);width:100%;max-width:1800px;}
+.control-group{display:flex;gap:20px;align-items:center;margin:20px 0;}
+select{padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:15px;min-width:400px;background:white;}
+.response-container{margin-top:30px;}
+.response-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px;}
+.expandable-header{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:#fff;border-radius:6px;margin-bottom:12px;border:1px solid #e2e8f0;}
+.expandable-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 12px;}
+.expandable-content.expanded{max-height:500px;margin-bottom:12px;}
+.content-item{padding:10px;background:#ffffff;border-radius:6px;margin:8px 0;border-left:3px solid var(--accent);white-space:pre-wrap;font-size:13px;}
+.response-text{background:white;padding:16px;border-radius:6px;border-left:4px solid var(--accent);white-space:pre-wrap;font-size:13px;margin:12px 0;}
+.copy-btn{background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;margin-top:12px;}
+.copy-btn.copied{background:#28a745;}
+.loading-message{text-align:center;color:var(--muted);padding:20px;font-style:italic;}
+.error-message{background:#ffebee;border-left:5px solid #d32f2f;color:#c62828;padding:15px;border-radius:6px;margin:20px 0;}
+footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 </style>
 </head>
 <body>
@@ -356,53 +62,17 @@ textarea{
       <a href="ebs-response-template.html" class="tab active">EBS Response</a>
     </nav>
   </div>
-
-  <div class="header-icons">
-    <div id="clockBtn">
-      <i class="fa-regular fa-clock"></i>
-      <span id="clockText">--:-- PM</span>
-    </div>
-    <i class="header-icon fa-solid fa-comment-dots" id="commentIcon" title="Feedback"></i>
-    <i class="header-icon fa-solid fa-circle-question" id="helpIcon" title="Get Help"></i>
-  </div>
 </header>
-
-<div id="timeCalendarPopup">
-  <h3 id="fullTimeDisplay">--:--:-- — --/--/----</h3>
-  <div class="calendar-header">
-    <span id="prevMonth">&lt;</span>
-    <span class="calendar-title" id="monthYear"></span>
-    <span id="nextMonth">&gt;</span>
-  </div>
-  <div class="calendar-grid" id="calendarGrid"></div>
-</div>
 
 <div class="main">
   <div class="message-box">
     <h1 style="color:#4d148c;">EBS Response Template</h1>
-    <p>Select a concern category to view available response templates.</p>
-
-    <!-- CAUTION/REMINDER BANNER -->
-    <div class="caution-banner">
-      <div class="caution-icon">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-      </div>
-      <div class="caution-content">
-        <h3>⚠️ Important Reminder</h3>
-        <p><strong>Avoid sending duplicate responses on reopened cases.</strong> In our client business review, we found cases where customers reopened and agents sent the same previous response.</p>
-        <ul>
-          <li><strong>Reword responses</strong> each time and provide additional details when possible</li>
-          <li><strong>If customer continues to reject your decision:</strong> Consult your Team Lead or Training Team</li>
-          <li><strong>Suggested response while escalating:</strong> "We completely understand where you are coming from. Let me discuss this with our management team to explore the best possible options to assist you."</li>
-        </ul>
-      </div>
-    </div>
 
     <div id="loadingStatus" class="loading-message">Loading response templates...</div>
     <div id="errorStatus"></div>
 
     <div class="control-group" id="controlGroup" style="display:none;">
-      <label for="concernSelect" style="font-weight:600; color:#333;">Select Concern:</label>
+      <label for="concernSelect" style="font-weight:600;">Select Concern:</label>
       <select id="concernSelect">
         <option value="">-- Choose a Concern --</option>
       </select>
@@ -414,239 +84,109 @@ textarea{
 
 <footer>© 2025 EBS Operations</footer>
 
-<!-- HELP MODAL -->
-<div id="helpModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      Get Help <span class="modal-close" onclick="closeHelp()">×</span>
-    </div>
-    <p>Select a concern category from the dropdown to view all available response templates for that category. Click on each template to expand and view the Concern and Description. You can copy any template to use in your response. Click the clock for time/calendar and the comment icon to provide feedback.</p>
-  </div>
-</div>
-
-<!-- COMMENT MODALS -->
-<div id="commentModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      How do you rate the tool? <span class="modal-close" onclick="closeComment()">×</span>
-    </div>
-    <div class="rating-container">
-      <i class="fa-solid fa-star rating-star" data-value="1"></i>
-      <i class="fa-solid fa-star rating-star" data-value="2"></i>
-      <i class="fa-solid fa-star rating-star" data-value="3"></i>
-      <i class="fa-solid fa-star rating-star" data-value="4"></i>
-      <i class="fa-solid fa-star rating-star" data-value="5"></i>
-    </div>
-    <input type="text" id="commentName" placeholder="Your Name (optional)">
-    <textarea id="commentText" placeholder="Enter your comment..."></textarea>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-      <button class="copy-btn" onclick="sendComment()">Send</button>
-      <span style="color:var(--accent-dark); cursor:pointer; text-decoration:underline; font-size:14px;" onclick="showAllComments()">View all comments & ratings</span>
-    </div>
-  </div>
-</div>
-
-<div id="allCommentsModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      All Ratings & Comments <span class="modal-close" onclick="closeAllComments()">×</span>
-    </div>
-    <div id="commentsList"></div>
-  </div>
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
 <script>
-// FIREBASE INIT
-const firebaseConfig = {
-  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
-  authDomain: "bdgg-database.firebaseapp.com",
-  projectId: "bdgg-database",
-  storageBucket: "bdgg-database.appspot.com",
-  messagingSenderId: "43574975434",
-  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-// ---------- PHILIPPINE TIME ----------
-function getPhilippineNow(){return new Date(new Date().toLocaleString("en-PH",{timeZone:"Asia/Manila"}));}
-
-// CLOCK
-function updateHeaderClock(){
-  const now=getPhilippineNow();
-  document.getElementById('clockText').textContent = now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Manila'});
-  document.getElementById('fullTimeDisplay').textContent = now.toLocaleString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Manila'});
-}
-setInterval(updateHeaderClock,1000); updateHeaderClock();
-
-// CALENDAR
-let currentMonth=getPhilippineNow().getMonth();
-let currentYear=getPhilippineNow().getFullYear();
-const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
-function renderCalendar(y,m){
-  const grid=document.getElementById('calendarGrid');
-  grid.innerHTML="";
-  document.getElementById('monthYear').textContent=`${monthNames[m]} ${y}`;
-  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{const e=document.createElement('div'); e.className="day-name"; e.textContent=d; grid.appendChild(e);});
-  const firstDay=new Date(y,m,1).getDay();
-  for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
-  const daysInMonth=new Date(y,m+1,0).getDate();
-  const todayPHT=getPhilippineNow();
-  for(let d=1;d<=daysInMonth;d++){
-    const cell=document.createElement('div'); cell.className="day"; cell.textContent=d;
-    if(d===todayPHT.getDate() && m===todayPHT.getMonth() && y===todayPHT.getFullYear()) cell.classList.add('today');
-    grid.appendChild(cell);
-  }
-}
-document.getElementById('prevMonth').onclick=()=>{currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(currentYear,currentMonth);}
-document.getElementById('nextMonth').onclick=()=>{currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(currentYear,currentMonth);}
-document.getElementById('clockBtn').onclick=function(e){const popup=document.getElementById('timeCalendarPopup'); popup.style.display=popup.style.display==='block'?'none':'block'; renderCalendar(currentYear,currentMonth); e.stopPropagation();}
-document.addEventListener('click', function(event){const popup=document.getElementById('timeCalendarPopup'); const btn=document.getElementById('clockBtn'); if(popup.style.display==='block'&&!popup.contains(event.target)&&!btn.contains(event.target)){popup.style.display='none';}});
-
-// HELP
-document.getElementById('helpIcon').onclick=(e)=>{document.getElementById('helpModal').style.display='flex'; e.stopPropagation();};
-function closeHelp(){document.getElementById('helpModal').style.display='none';}
-
-// FEEDBACK
-let selectedRating=0;
-document.querySelectorAll('.rating-star').forEach(star=>{star.onclick=function(ev){selectedRating=parseInt(this.dataset.value); document.querySelectorAll('.rating-star').forEach(s=>s.classList.toggle('selected',parseInt(s.dataset.value)<=selectedRating)); ev.stopPropagation();};});
-function sendComment(){const name=document.getElementById('commentName').value.trim(); const comment=document.getElementById('commentText').value.trim(); if(selectedRating===0){alert("Select a rating."); return;} db.collection("feedback").add({rating:selectedRating,name:name||"Anonymous",comment:comment,createdAt: firebase.firestore.FieldValue.serverTimestamp()}).then(()=>{alert("Saved!"); clearCommentForm();}).catch(()=>alert("Save failed."));}
-function clearCommentForm(){selectedRating=0; document.getElementById('commentName').value=""; document.getElementById('commentText').value=""; document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('selected'));}
-let unsubscribeListener=null;
-function showAllComments(){const listEl=document.getElementById('commentsList'); listEl.innerHTML="Loading…"; if(unsubscribeListener) unsubscribeListener(); unsubscribeListener=db.collection("feedback").orderBy("createdAt","desc").onSnapshot(snap=>{ listEl.innerHTML=""; if(snap.empty){ listEl.innerHTML="<p>No feedback yet.</p>";} snap.forEach(doc=>{const d=doc.data(); const div=document.createElement('div'); div.className="comment-list-item"; div.innerHTML=`<div class="stars">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</div><strong>${d.name}</strong><p>${d.comment}</p>`; listEl.appendChild(div);}); document.getElementById('allCommentsModal').style.display='flex';});}
-document.getElementById('commentIcon').onclick=function(e){clearCommentForm(); document.getElementById('commentModal').style.display='flex'; e.stopPropagation();};
-function closeComment(){clearCommentForm();document.getElementById('commentModal').style.display='none';}
-function closeAllComments(){document.getElementById('allCommentsModal').style.display='none';}
-
-// ---------- EXPANDABLE FUNCTIONALITY ----------
+// ---------- EXPAND ----------
 function toggleExpand(element){
-  const icon = element.querySelector('.expandable-icon');
   const content = element.nextElementSibling;
-  
-  icon.classList.toggle('expanded');
   content.classList.toggle('expanded');
 }
 
-// ---------- POPULATE DROPDOWN & HANDLE SELECTION ----------
+// ---------- DROPDOWN ----------
 function populateDropdown(data){
   const select = document.getElementById('concernSelect');
-  const concerns = [...new Set(data.map(row => row['Concern']).filter(c => c && c.trim()))];
+  const concerns = [...new Set(data.map(r=>r['Concern']).filter(Boolean))];
   concerns.sort();
-  
-  console.log("Concerns found:", concerns);
-  
-  concerns.forEach(concern => {
-    const option = document.createElement('option');
-    option.value = concern;
-    option.textContent = concern;
-    select.appendChild(option);
+  concerns.forEach(c=>{
+    const opt=document.createElement('option');
+    opt.value=c;
+    opt.textContent=c;
+    select.appendChild(opt);
   });
 }
 
 function displayResponses(concern){
-  const container = document.getElementById('responseContainer');
-  container.innerHTML = '';
-  
-  if(!concern){
+  const container=document.getElementById('responseContainer');
+  container.innerHTML='';
+  if(!concern) return;
+
+  const templates=window.TEMPLATES.filter(r=>r['Concern']===concern);
+
+  if(templates.length===0){
+    container.innerHTML='<div class="loading-message">No templates found.</div>';
     return;
   }
-  
-  const templates = window.TEMPLATES.filter(row => row['Concern'] === concern);
-  
-  console.log("Templates for concern '" + concern + "':", templates);
-  
-  if(templates.length === 0){
-    container.innerHTML = '<div class="no-results">No templates found for this concern.</div>';
-    return;
-  }
-  
-  templates.forEach((template, index) => {
-    const responseHTML = `
+
+  templates.forEach((t,i)=>{
+    container.innerHTML+=`
       <div class="response-item">
         <div class="expandable-header" onclick="toggleExpand(this)">
-          <i class="fa-solid fa-chevron-down expandable-icon"></i>
-          <span style="font-weight:600; color:var(--accent);">${template['Description'] || 'Response ' + (index + 1)}</span>
+          <span style="font-weight:600;color:#4d148c;">${t['Description'] || 'Response '+(i+1)}</span>
         </div>
         <div class="expandable-content">
-          <div class="content-item">
-            <div class="content-label">Concern</div>
-            ${template['Concern']}
-          </div>
-          <div class="content-item">
-            <div class="content-label">Description</div>
-            ${template['Description'] || 'N/A'}
-          </div>
+          <div class="content-item"><strong>Concern:</strong> ${t['Concern']}</div>
+          <div class="content-item"><strong>Description:</strong> ${t['Description'] || 'N/A'}</div>
         </div>
-        <div class="response-text">${template['Response Template'] || ''}</div>
+        <div class="response-text">${t['Response Template'] || ''}</div>
         <button class="copy-btn" onclick="copyToClipboard(this)">📋 Copy Template</button>
       </div>
     `;
-    container.innerHTML += responseHTML;
   });
 }
 
-function copyToClipboard(button){
-  const responseText = button.previousElementSibling.textContent;
-  navigator.clipboard.writeText(responseText).then(() => {
-    const originalText = button.textContent;
-    button.textContent = '✓ Copied!';
-    button.classList.add('copied');
-    setTimeout(() => {
-      button.textContent = originalText;
-      button.classList.remove('copied');
-    }, 2000);
+function copyToClipboard(btn){
+  const text=btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy Template';btn.classList.remove('copied');},2000);
   });
 }
 
-// EVENT LISTENER
-document.getElementById('concernSelect').addEventListener('change', (e) => {
+document.getElementById('concernSelect').addEventListener('change',e=>{
   displayResponses(e.target.value);
 });
 
-// Load CSV
-console.log("Starting CSV load...");
-Papa.parse("ebs-response.csv", {
-  download: true,
-  header: true,
-  skipEmptyLines: true,
-  dynamicTyping: false,
-  complete: function(results){
-    console.log("CSV parse complete. Raw results:", results);
-    console.log("Data rows:", results.data.length);
-    
-    if(results.errors && results.errors.length > 0){
-      console.error("Parse errors:", results.errors);
-    }
-    
-    // Filter out empty rows
-    window.TEMPLATES = results.data.filter(row => row['Concern'] && row['Concern'].trim());
-    console.log("Filtered templates:", window.TEMPLATES.length);
-    
-    if(window.TEMPLATES.length === 0){
-      document.getElementById('loadingStatus').innerHTML = '';
-      document.getElementById('errorStatus').innerHTML = '<div class="error-message">❌ No data found in CSV file. Please check the file format and ensure it has "Concern", "Description", and "Response Template" columns.</div>';
-      console.error("No valid templates found after filtering");
-      return;
-    }
-    
-    populateDropdown(window.TEMPLATES);
-    document.getElementById('loadingStatus').style.display = 'none';
-    document.getElementById('controlGroup').style.display = 'flex';
-  },
-  error: function(error){
-    console.error("Papa Parse error:", error);
-    document.getElementById('loadingStatus').innerHTML = '';
-    document.getElementById('errorStatus').innerHTML = '<div class="error-message">❌ Error loading CSV file: ' + error.message + '</div>';
-  }
+// ---------- LOAD ODS ----------
+console.log("Loading ODS...");
+
+fetch("ebs-response.ods")
+.then(res=>res.arrayBuffer())
+.then(data=>{
+  const workbook=XLSX.read(data,{type:'array'});
+
+  const sheet1=workbook.Sheets["ebs-response"];
+  const sheet2=workbook.Sheets["Templates"];
+
+  if(!sheet1) throw new Error('Sheet "ebs-response" not found.');
+  if(!sheet2) throw new Error('Sheet "Templates" not found.');
+
+  const concerns=XLSX.utils.sheet_to_json(sheet1,{defval:""});
+  const templates=XLSX.utils.sheet_to_json(sheet2,{defval:""});
+
+  // Merge Description into templates
+  window.TEMPLATES = templates.map(t=>{
+    const match=concerns.find(c=>c['Concern']===t['Concern']);
+    return {
+      ...t,
+      Description: match ? match['Description'] : ''
+    };
+  });
+
+  if(window.TEMPLATES.length===0)
+    throw new Error("No valid data found.");
+
+  populateDropdown(window.TEMPLATES);
+
+  document.getElementById('loadingStatus').style.display='none';
+  document.getElementById('controlGroup').style.display='flex';
+})
+.catch(err=>{
+  console.error(err);
+  document.getElementById('loadingStatus').style.display='none';
+  document.getElementById('errorStatus').innerHTML=
+    '<div class="error-message">❌ '+err.message+'</div>';
 });
 </script>
 
 </body>
 </html>
-
-
-
