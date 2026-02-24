@@ -445,7 +445,7 @@ document.getElementById('concernSelect').addEventListener('change', e => {
   displayResponses(e.target.value);
 });
 
-// ---------- LOAD ODS ----------
+
 console.log("Loading ODS...");
 
 fetch("ebs-response.ods")
@@ -453,26 +453,35 @@ fetch("ebs-response.ods")
 .then(data => {
   const workbook = XLSX.read(data, { type: 'array' });
 
-  const sheet1 = workbook.Sheets["ebs-response"];
-  const sheet2 = workbook.Sheets["Templates"];
+  // If you only have 1 sheet, use the first sheet automatically
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
 
-  if(!sheet1) throw new Error('Sheet "ebs-response" not found.');
-  if(!sheet2) throw new Error('Sheet "Templates" not found.');
+  if (!sheet) throw new Error('No sheet found in ODS.');
 
-  const concerns = XLSX.utils.sheet_to_json(sheet1, { defval: "" });
-  const templates = XLSX.utils.sheet_to_json(sheet2, { defval: "" });
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-  // Merge Description into templates, include all matching descriptions
-  window.TEMPLATES = templates.map(t => {
-    const matches = concerns.filter(c => c['Concern'] === t['Concern']);
-    const description = matches.length ? matches.map(m => m['Description']).join('; ') : '';
-    return {
-      ...t,
-      Description: description
-    };
+  // 🔥 FLATTEN horizontal templates into vertical template list
+  const templates = [];
+
+  rows.forEach(row => {
+    const concern = row['Concern'];
+    if (!concern) return;
+
+    Object.keys(row).forEach(col => {
+      if (col !== 'Concern' && row[col]) {
+        templates.push({
+          Concern: concern,
+          Description: col,              // column header = label (Single Pros, Multiple Pros, etc)
+          'Response Template': row[col]  // cell value = actual template
+        });
+      }
+    });
   });
 
-  if(window.TEMPLATES.length === 0) throw new Error("No valid data found.");
+  if (!templates.length) throw new Error("No valid templates found.");
+
+  window.TEMPLATES = templates;
 
   populateDropdown(window.TEMPLATES);
 
@@ -483,10 +492,9 @@ fetch("ebs-response.ods")
   console.error(err);
   document.getElementById('loadingStatus').style.display = 'none';
   document.getElementById('errorStatus').innerHTML =
-    '<div class="error-message">❌ '+err.message+'</div>';
+    '<div class="error-message">❌ ' + err.message + '</div>';
 });
 </script>
 
 </body>
 </html>
-
