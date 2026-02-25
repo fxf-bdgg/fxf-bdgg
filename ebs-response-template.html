@@ -14,167 +14,35 @@
 <style>
 :root{
   --bg:#f4f7fb;
-  --card:#ffffff;
-  --muted:#64748b;
   --accent:#4d148c;
   --accent-dark:#3a0f6b;
-  --warning:#ff9800;
-  --warning-light:#fff3e0;
+  --muted:#64748b;
   font-family: Inter, ui-sans-serif, system-ui;
 }
-
-*{box-sizing:border-box;}
-body{
-  margin:0;
-  background:linear-gradient(180deg,var(--bg),#eef6ff);
-  display:flex;
-  flex-direction:column;
-  min-height:100vh;
-}
-
-header{
-  background:var(--accent);
-  color:white;
-  padding:16px 28px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  position:relative;
-  overflow:hidden;
-  z-index:1;
-}
-header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
+header{background:var(--accent);color:white;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;}
 .nav-tabs{display:flex; gap:30px;}
-.tab{color:white; text-decoration:none; font-weight:600; font-size:16px; position:relative; padding:6px 0; transition: opacity 0.2s;}
+.tab{color:white;text-decoration:none;font-weight:600;font-size:16px;position:relative;padding:6px 0;transition:opacity 0.2s;}
 .tab:hover{opacity:0.8;}
 .tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
-
-.main{
-  flex:1;
-  padding:40px;
-  display:flex;
-  justify-content:center;
-}
-.message-box{
-  background:white;
-  padding:40px;
-  border-radius:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.08);
-  width:100%;
-  max-width:1800px;
-}
-
-.control-group{
-  display:flex;
-  gap:20px;
-  align-items:center;
-  margin:20px 0;
-}
-
-select{
-  padding:12px 14px;
-  border-radius:8px;
-  border:1px solid #e2e8f0;
-  font-size:15px;
-  min-width:200px;
-  cursor:pointer;
-  background-color:white;
-}
-
-select:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(77,20,140,0.1);
-}
-
-.response-container{
-  margin-top:30px;
-}
-
-.response-item{
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-  border-radius:10px;
-  padding:20px;
-  margin-bottom:20px;
-  opacity:0;
-  animation:itemFadeIn 0.5s ease forwards;
-}
-
-@keyframes itemFadeIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
-
-.expandable-header{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  cursor:pointer;
-  user-select:none;
-  padding:12px;
-  background:#fff;
-  border-radius:6px;
-  margin-bottom:12px;
-  border:1px solid #e2e8f0;
-  transition:background 0.2s;
-}
+.main{flex:1;padding:40px;display:flex;justify-content:center;}
+.message-box{background:white;padding:40px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.08);width:100%;max-width:1200px;}
+.control-group{display:flex;gap:20px;align-items:center;margin:20px 0;}
+select{padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:15px;min-width:200px;cursor:pointer;background-color:white;}
+select:disabled{background:#f0f0f0;cursor:not-allowed;}
+.response-container{margin-top:30px;}
+.response-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px;}
+.expandable-header{display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;padding:12px;background:#fff;border-radius:6px;margin-bottom:12px;border:1px solid #e2e8f0;transition:background 0.2s;}
 .expandable-header:hover{background:#f0f0f0;}
-.expandable-content{
-  max-height:0;
-  overflow:hidden;
-  transition:max-height 0.3s ease;
-  padding:0 12px;
-}
+.expandable-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 12px;}
 .expandable-content.expanded{max-height:500px;margin-bottom:12px;}
-.content-item{
-  padding:10px;
-  background:#ffffff;
-  border-radius:6px;
-  margin:8px 0;
-  border-left:3px solid var(--accent);
-  white-space:pre-wrap;
-  word-wrap:break-word;
-  font-size:13px;
-  line-height:1.6;
-}
-.response-text{
-  background:white;
-  padding:16px;
-  border-radius:6px;
-  border-left:4px solid var(--accent);
-  white-space:pre-wrap;
-  word-wrap:break-word;
-  font-size:13px;
-  line-height:1.6;
-  color:#333;
-  margin:12px 0;
-}
-.copy-btn{
-  background:var(--accent);
-  color:white;
-  border:none;
-  padding:8px 16px;
-  border-radius:6px;
-  cursor:pointer;
-  font-size:13px;
-  margin-top:12px;
-  transition:background 0.2s;
-}
+.content-item{padding:10px;background:#ffffff;border-radius:6px;margin:8px 0;border-left:3px solid var(--accent);white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.6;}
+.response-text{background:white;padding:16px;border-radius:6px;border-left:4px solid var(--accent);white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.6;color:#333;margin:12px 0;}
+.copy-btn{background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;margin-top:12px;transition:background 0.2s;}
 .copy-btn:hover{background:var(--accent-dark);}
 .copy-btn.copied{background:#28a745;}
-.loading-message{
-  text-align:center;
-  color:var(--muted);
-  padding:20px;
-  font-style:italic;
-}
-.error-message{
-  background:#ffebee;
-  border-left:5px solid #d32f2f;
-  color:#c62828;
-  padding:15px;
-  border-radius:6px;
-  margin:20px 0;
-}
-footer{background:var(--accent); color:white; padding:16px; text-align:center;}
+.loading-message{text-align:center;color:var(--muted);padding:20px;font-style:italic;}
+footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 </style>
 </head>
 <body>
@@ -218,11 +86,29 @@ footer{background:var(--accent); color:white; padding:16px; text-align:center;}
 <footer>© 2025 EBS Operations</footer>
 
 <script>
-// Populate Concern dropdown
-function populateDropdown(data){
+// ---------- EXPAND ----------
+function toggleExpand(element){
+  const content = element.nextElementSibling;
+  content.classList.toggle('expanded');
+}
+
+// ---------- COPY ----------
+function copyToClipboard(btn){
+  const text = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Template';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ---------- DROPDOWNS ----------
+function populateConcernDropdown(data){
   const select = document.getElementById('concernSelect');
-  const concerns = [...new Set(data.map(r => r.Concern).filter(Boolean))];
-  concerns.sort();
+  const concerns = [...new Set(data.map(r => r.Concern).filter(Boolean))].sort();
   concerns.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c;
@@ -231,11 +117,9 @@ function populateDropdown(data){
   });
 }
 
-// Populate Type dropdown dynamically based on Concern
 function populateTypeDropdown(concern){
   const typeSelect = document.getElementById('typeSelect');
   typeSelect.innerHTML = '<option value="">-- All Types --</option>';
-  // get all types for this concern
   const types = [...new Set(window.TEMPLATES.filter(t => t.Concern === concern && t.Type).map(t => t.Type))];
   types.forEach(t => {
     const opt = document.createElement('option');
@@ -246,15 +130,12 @@ function populateTypeDropdown(concern){
   typeSelect.disabled = types.length === 0;
 }
 
-// Display templates based on Concern and optionally Type
 function displayResponses(concern, type=""){
   const container = document.getElementById('responseContainer');
   container.innerHTML = '';
   if(!concern) return;
 
-  // Filter templates by Concern
   let templates = window.TEMPLATES.filter(t => t.Concern === concern);
-  // Further filter by Type if selected
   if(type) templates = templates.filter(t => t.Type === type);
 
   if(templates.length === 0){
@@ -262,7 +143,7 @@ function displayResponses(concern, type=""){
     return;
   }
 
-  templates.forEach((t, i) => {
+  templates.forEach((t) => {
     container.innerHTML += `
       <div class="response-item">
         <div class="expandable-header" onclick="toggleExpand(this)">
@@ -279,11 +160,11 @@ function displayResponses(concern, type=""){
   });
 }
 
-// Event listeners
+// ---------- EVENT LISTENERS ----------
 document.getElementById('concernSelect').addEventListener('change', e => {
   const concern = e.target.value;
   populateTypeDropdown(concern);
-  displayResponses(concern); // show all types initially
+  displayResponses(concern);
 });
 
 document.getElementById('typeSelect').addEventListener('change', e => {
@@ -291,8 +172,30 @@ document.getElementById('typeSelect').addEventListener('change', e => {
   const type = e.target.value;
   displayResponses(concern, type);
 });
+
+// ---------- LOAD ODS ----------
+fetch("ebs-response.ods")
+.then(res => res.arrayBuffer())
+.then(data => {
+  const workbook = XLSX.read(data, { type: 'array' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  if(!sheet) throw new Error("No sheet found in ODS.");
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+  if(!rows.length) throw new Error("No data found in ODS.");
+
+  window.TEMPLATES = rows; // rows should have Concern | Type | Response Template
+
+  populateConcernDropdown(window.TEMPLATES);
+
+  document.getElementById('loadingStatus').style.display = 'none';
+  document.getElementById('controlGroup').style.display = 'flex';
+})
+.catch(err => {
+  console.error(err);
+  document.getElementById('loadingStatus').style.display = 'none';
+  document.getElementById('errorStatus').innerHTML = '<div class="loading-message">❌ '+err.message+'</div>';
+});
 </script>
 
 </body>
 </html>
-
