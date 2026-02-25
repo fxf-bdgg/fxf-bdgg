@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EBS Response Template</title>
+<title>BD Tools — EBS Response Template</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 body{font-family:sans-serif;background:#f4f7fb;margin:0;padding:0;}
@@ -27,16 +27,41 @@ select{padding:8px;margin-right:10px;}
 </div>
 
 <script>
-// toggle expand not needed now, simpler view
+// ------------------- COPY BUTTON -------------------
 function copyToClipboard(btn){
   const text = btn.previousElementSibling.textContent;
   navigator.clipboard.writeText(text).then(()=>{btn.textContent='✓ Copied';setTimeout(()=>{btn.textContent='Copy Template';},1500);});
 }
 
-// populate Concern dropdown
+// ------------------- DISPLAY TEMPLATES -------------------
+function displayTemplates(concern,type){
+  const container=document.getElementById('responseContainer');
+  container.innerHTML='';
+  if(!concern) return;
+
+  let templates = window.TEMPLATES.filter(t => t.Concern === concern);
+  if(type) templates = templates.filter(t => t.Type === type);
+
+  if(templates.length===0){
+    container.textContent='No templates found.';
+    return;
+  }
+
+  templates.forEach(t=>{
+    const div=document.createElement('div');
+    div.className='response-item';
+    div.innerHTML=`<strong>Concern:</strong> ${t.Concern}<br>
+                   <strong>Type:</strong> ${t.Type || 'N/A'}<br>
+                   <div>${t['Response Template']}</div>
+                   <button class="copy-btn" onclick="copyToClipboard(this)">Copy Template</button>`;
+    container.appendChild(div);
+  });
+}
+
+// ------------------- POPULATE CONCERN -------------------
 function populateConcerns(){
   const select = document.getElementById('concernSelect');
-  const concerns = [...new Set(window.TEMPLATES.map(r=>r.Concern).filter(Boolean))].sort();
+  const concerns = [...new Set(window.TEMPLATES.map(t => t.Concern).filter(Boolean))].sort();
   concerns.forEach(c=>{
     const opt=document.createElement('option');
     opt.value=c; opt.textContent=c;
@@ -44,12 +69,12 @@ function populateConcerns(){
   });
 }
 
-// populate Type dropdown based on selected Concern
+// ------------------- POPULATE TYPE BASED ON CONCERN -------------------
 function populateTypes(concern){
   const typeSelect = document.getElementById('typeSelect');
   typeSelect.innerHTML='<option value="">-- All Types --</option>';
   if(!concern){typeSelect.disabled=true; return;}
-  const types=[...new Set(window.TEMPLATES.filter(t=>t.Concern===concern).map(t=>t.Type).filter(Boolean))];
+  const types = [...new Set(window.TEMPLATES.filter(t => t.Concern === concern).map(t=>t.Type).filter(Boolean))].sort();
   types.forEach(t=>{
     const opt=document.createElement('option');
     opt.value=t; opt.textContent=t;
@@ -58,41 +83,29 @@ function populateTypes(concern){
   typeSelect.disabled = types.length===0;
 }
 
-// display filtered templates
-function displayTemplates(concern,type){
-  const container=document.getElementById('responseContainer');
-  container.innerHTML='';
-  if(!concern) return;
-  let templates = window.TEMPLATES.filter(t=>t.Concern===concern);
-  if(type) templates=templates.filter(t=>t.Type===type);
-  if(templates.length===0){container.innerHTML='No templates found.';return;}
-  templates.forEach(t=>{
-    const div=document.createElement('div');
-    div.className='response-item';
-    div.innerHTML=`<strong>Concern:</strong> ${t.Concern}<br><strong>Type:</strong> ${t.Type}<br><div>${t['Response Template']}</div><button class="copy-btn" onclick="copyToClipboard(this)">Copy Template</button>`;
-    container.appendChild(div);
-  });
-}
-
-// events
-document.getElementById('concernSelect').addEventListener('change', e=>{
-  const concern=e.target.value;
+// ------------------- EVENT LISTENERS -------------------
+document.getElementById('concernSelect').addEventListener('change', e => {
+  const concern = e.target.value;
   populateTypes(concern);
   displayTemplates(concern,'');
 });
-document.getElementById('typeSelect').addEventListener('change', e=>{
-  const concern=document.getElementById('concernSelect').value;
-  const type=e.target.value;
+
+document.getElementById('typeSelect').addEventListener('change', e => {
+  const concern = document.getElementById('concernSelect').value;
+  const type = e.target.value;
   displayTemplates(concern,type);
 });
 
-// load ODS
-fetch("ebs-response.ods").then(r=>r.arrayBuffer()).then(data=>{
-  const wb=XLSX.read(data,{type:'array'});
-  const sheet=wb.Sheets[wb.SheetNames[0]];
-  window.TEMPLATES=XLSX.utils.sheet_to_json(sheet,{defval:""});
+// ------------------- LOAD ODS -------------------
+fetch("ebs-response.ods")
+.then(res => res.arrayBuffer())
+.then(data => {
+  const wb = XLSX.read(data,{type:'array'});
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  window.TEMPLATES = XLSX.utils.sheet_to_json(sheet,{defval:""});
   populateConcerns();
-}).catch(err=>{
+})
+.catch(err=>{
   document.getElementById('responseContainer').textContent='Error loading ODS: '+err.message;
 });
 </script>
