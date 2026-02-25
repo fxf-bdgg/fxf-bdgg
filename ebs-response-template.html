@@ -14,59 +14,42 @@
   --card:#ffffff;
   --muted:#64748b;
   --accent:#4d148c;
-  --accent-dark:#3a0f6b;
-  --warning:#ff9800;
-  --warning-light:#fff3e0;
-  font-family: Inter, ui-sans-serif, system-ui;
+  font-family: Inter, system-ui, sans-serif;
 }
-*{box-sizing:border-box;}
-body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
-header{background:var(--accent);color:white;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;}
-header img{height:40px;}
-.nav-tabs{display:flex;gap:30px;}
-.tab{color:white;text-decoration:none;font-weight:600;font-size:16px;position:relative;padding:6px 0;}
-.tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
-.main{flex:1;padding:40px;display:flex;justify-content:center;}
-.message-box{background:white;padding:40px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.08);width:100%;max-width:1800px;}
-.control-group{display:flex;gap:20px;align-items:center;margin:20px 0;}
-select{padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;font-size:15px;min-width:400px;}
-.response-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px;}
-.expandable-header{display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px;background:#fff;border-radius:6px;border:1px solid #e2e8f0;}
-.expandable-content{max-height:0;overflow:hidden;transition:max-height .3s ease;padding:0 12px;}
-.expandable-content.expanded{max-height:500px;margin-bottom:12px;}
-.response-text{background:white;padding:16px;border-radius:6px;border-left:4px solid var(--accent);white-space:pre-wrap;word-wrap:break-word;font-size:13px;line-height:1.6;}
-.copy-btn{background:var(--accent);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px;margin-top:12px;}
-.copy-btn.copied{background:#28a745;}
-.loading-message{text-align:center;color:var(--muted);padding:20px;font-style:italic;}
-.error-message{background:#ffebee;border-left:5px solid #d32f2f;color:#c62828;padding:15px;border-radius:6px;margin:20px 0;}
-footer{background:var(--accent);color:white;padding:16px;text-align:center;}
+body{margin:0;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
+header{background:var(--accent);color:#fff;padding:16px 28px;}
+.main{flex:1;padding:30px;display:flex;justify-content:center;}
+.message-box{background:#fff;padding:30px;border-radius:12px;width:100%;max-width:1600px;}
+.control-group{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+select{padding:10px 14px;border-radius:6px;border:1px solid #ccc;min-width:260px;}
+.response-item{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;background:#f9fafb;}
+.response-text{white-space:pre-wrap;line-height:1.6;background:#fff;padding:12px;border-left:4px solid var(--accent);border-radius:6px;}
+.copy-btn{margin-top:10px;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;}
+.loading-message{color:#64748b;font-style:italic;}
+.error-message{background:#fee2e2;color:#991b1b;padding:10px;border-radius:6px;margin-bottom:10px;}
 </style>
 </head>
 
 <body>
 
 <header>
-  <div style="display:flex;align-items:center;gap:40px;">
-    <a href="index.html"><img src="fedex.png"></a>
-    <nav class="nav-tabs">
-      <a href="index.html" class="tab">Home</a>
-      <a href="case-directory.html" class="tab">Case Directory</a>
-      <a href="ebs-response-template.html" class="tab active">EBS Response</a>
-    </nav>
-  </div>
+  <strong>EBS Response Template</strong>
 </header>
 
 <div class="main">
   <div class="message-box">
-    <h1 style="color:#4d148c;">EBS Response Template</h1>
-
     <div id="loadingStatus" class="loading-message">Loading response templates...</div>
     <div id="errorStatus"></div>
 
     <div class="control-group" id="controlGroup" style="display:none;">
-      <label style="font-weight:600;">Select Concern:</label>
+      <label><strong>Concern:</strong></label>
       <select id="concernSelect">
-        <option value="">-- Choose a Concern --</option>
+        <option value="">-- Select Concern --</option>
+      </select>
+
+      <label><strong>Type:</strong></label>
+      <select id="typeSelect" disabled>
+        <option value="">-- Select Type --</option>
       </select>
     </div>
 
@@ -74,24 +57,10 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
   </div>
 </div>
 
-<footer>© 2025 EBS Operations</footer>
-
 <script>
-function toggleExpand(el){
-  const content = el.nextElementSibling;
-  content.classList.toggle('expanded');
-}
+let ALL_TEMPLATES = [];
 
-function normalizeCell(text){
-  if (!text) return "";
-  return String(text)
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .replace(/\u2028|\u2029/g, "\n")
-    .trim();
-}
-
-function populateDropdown(data){
+function populateConcerns(data){
   const select = document.getElementById('concernSelect');
   const concerns = [...new Set(data.map(r => r.Concern).filter(Boolean))].sort();
   concerns.forEach(c => {
@@ -102,48 +71,70 @@ function populateDropdown(data){
   });
 }
 
-function displayResponses(concern){
-  const container = document.getElementById('responseContainer');
-  container.innerHTML = '';
+function populateTypes(concern){
+  const typeSelect = document.getElementById('typeSelect');
+  typeSelect.innerHTML = '<option value="">-- Select Type --</option>';
+  typeSelect.disabled = true;
+
   if(!concern) return;
 
-  const templates = window.TEMPLATES.filter(r => r.Concern === concern);
-  if(!templates.length){
-    container.innerHTML = '<div class="loading-message">No templates found.</div>';
+  const types = [...new Set(
+    ALL_TEMPLATES
+      .filter(t => t.Concern === concern)
+      .map(t => t.Type)
+      .filter(Boolean)
+  )].sort();
+
+  types.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  });
+
+  typeSelect.disabled = false;
+}
+
+function displayResponse(concern, type){
+  const container = document.getElementById('responseContainer');
+  container.innerHTML = '';
+
+  if(!concern || !type) return;
+
+  const match = ALL_TEMPLATES.find(t => t.Concern === concern && t.Type === type);
+
+  if(!match){
+    container.innerHTML = '<div class="loading-message">No template found.</div>';
     return;
   }
 
-  templates.forEach((t,i) => {
-    container.innerHTML += `
-      <div class="response-item">
-        <div class="expandable-header" onclick="toggleExpand(this)">
-          <strong style="color:#4d148c;">${t.Description || 'Response '+(i+1)}</strong>
-        </div>
-        <div class="expandable-content">
-          <div><strong>Concern:</strong> ${t.Concern}</div>
-          <div><strong>Description:</strong> ${t.Description || 'N/A'}</div>
-        </div>
-        <div class="response-text">${t['Response Template']}</div>
-        <button class="copy-btn" onclick="copyToClipboard(this)">📋 Copy Template</button>
-      </div>
-    `;
-  });
+  container.innerHTML = `
+    <div class="response-item">
+      <div><strong>${match.Type}</strong></div>
+      <div class="response-text">${match['Response Template']}</div>
+      <button class="copy-btn" onclick="copyToClipboard(this)">Copy Template</button>
+    </div>
+  `;
 }
 
 function copyToClipboard(btn){
   const text = btn.previousElementSibling.textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✓ Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '📋 Copy Template';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
+  navigator.clipboard.writeText(text);
+  btn.textContent = "Copied!";
+  setTimeout(() => btn.textContent = "Copy Template", 1500);
 }
 
 document.getElementById('concernSelect').addEventListener('change', e => {
-  displayResponses(e.target.value);
+  const concern = e.target.value;
+  populateTypes(concern);
+  document.getElementById('responseContainer').innerHTML = '';
+});
+
+document.getElementById('typeSelect').addEventListener('change', e => {
+  displayResponse(
+    document.getElementById('concernSelect').value,
+    e.target.value
+  );
 });
 
 fetch("ebs-response.ods")
@@ -151,33 +142,24 @@ fetch("ebs-response.ods")
 .then(data => {
   const workbook = XLSX.read(data, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet, { defval:"", raw:false, cellText:true });
+  const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-  const templates = [];
-  rows.forEach(row => {
-    const concern = row['Concern'];
-    if (!concern) return;
-    Object.keys(row).forEach(col => {
-      if (col !== 'Concern' && row[col]) {
-        templates.push({
-          Concern: concern,
-          Description: col,
-          'Response Template': normalizeCell(row[col])
-        });
-      }
-    });
-  });
+  ALL_TEMPLATES = rows
+    .map(r => ({
+      Concern: r['Concern'],
+      Type: r['Type'],
+      'Response Template': r['Response Template']
+    }))
+    .filter(r => r.Concern && r.Type && r['Response Template']);
 
-  if(!templates.length) throw new Error("No valid templates found.");
-  window.TEMPLATES = templates;
+  populateConcerns(ALL_TEMPLATES);
 
-  populateDropdown(templates);
   document.getElementById('loadingStatus').style.display = 'none';
   document.getElementById('controlGroup').style.display = 'flex';
 })
 .catch(err => {
   document.getElementById('loadingStatus').style.display = 'none';
-  document.getElementById('errorStatus').innerHTML =
+  document.getElementById('errorStatus'].innerHTML =
     '<div class="error-message">❌ ' + err.message + '</div>';
 });
 </script>
