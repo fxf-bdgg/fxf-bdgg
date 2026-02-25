@@ -218,11 +218,7 @@ footer{background:var(--accent); color:white; padding:16px; text-align:center;}
 <footer>© 2025 EBS Operations</footer>
 
 <script>
-function toggleExpand(element){
-  const content = element.nextElementSibling;
-  content.classList.toggle('expanded');
-}
-
+// Populate Concern dropdown
 function populateDropdown(data){
   const select = document.getElementById('concernSelect');
   const concerns = [...new Set(data.map(r => r.Concern).filter(Boolean))];
@@ -235,10 +231,12 @@ function populateDropdown(data){
   });
 }
 
+// Populate Type dropdown dynamically based on Concern
 function populateTypeDropdown(concern){
   const typeSelect = document.getElementById('typeSelect');
   typeSelect.innerHTML = '<option value="">-- All Types --</option>';
-  const types = [...new Set(window.TEMPLATES.filter(t => t.Concern === concern).map(t => t.Type).filter(Boolean))];
+  // get all types for this concern
+  const types = [...new Set(window.TEMPLATES.filter(t => t.Concern === concern && t.Type).map(t => t.Type))];
   types.forEach(t => {
     const opt = document.createElement('option');
     opt.value = t;
@@ -248,12 +246,15 @@ function populateTypeDropdown(concern){
   typeSelect.disabled = types.length === 0;
 }
 
+// Display templates based on Concern and optionally Type
 function displayResponses(concern, type=""){
   const container = document.getElementById('responseContainer');
   container.innerHTML = '';
   if(!concern) return;
 
+  // Filter templates by Concern
   let templates = window.TEMPLATES.filter(t => t.Concern === concern);
+  // Further filter by Type if selected
   if(type) templates = templates.filter(t => t.Type === type);
 
   if(templates.length === 0){
@@ -278,23 +279,11 @@ function displayResponses(concern, type=""){
   });
 }
 
-function copyToClipboard(btn){
-  const text = btn.previousElementSibling.textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    btn.textContent = '✓ Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '📋 Copy Template';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
-}
-
 // Event listeners
 document.getElementById('concernSelect').addEventListener('change', e => {
   const concern = e.target.value;
   populateTypeDropdown(concern);
-  displayResponses(concern);
+  displayResponses(concern); // show all types initially
 });
 
 document.getElementById('typeSelect').addEventListener('change', e => {
@@ -302,31 +291,8 @@ document.getElementById('typeSelect').addEventListener('change', e => {
   const type = e.target.value;
   displayResponses(concern, type);
 });
-
-// Load ODS
-fetch("ebs-response.ods")
-.then(res => res.arrayBuffer())
-.then(data => {
-  const workbook = XLSX.read(data, { type: 'array' });
-
-  const sheet = workbook.Sheets["Templates"];
-  if(!sheet) throw new Error('Sheet "Templates" not found.');
-
-  window.TEMPLATES = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-
-  if(!window.TEMPLATES.length) throw new Error("No valid data found.");
-
-  populateDropdown(window.TEMPLATES);
-  document.getElementById('loadingStatus').style.display = 'none';
-  document.getElementById('controlGroup').style.display = 'flex';
-})
-.catch(err => {
-  console.error(err);
-  document.getElementById('loadingStatus').style.display = 'none';
-  document.getElementById('errorStatus').innerHTML =
-    '<div class="error-message">❌ '+err.message+'</div>';
-});
 </script>
 
 </body>
 </html>
+
