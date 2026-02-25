@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BD Tools — EBS Response Template</title>
 
+<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- SheetJS for ODS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -14,55 +17,381 @@
   --card:#ffffff;
   --muted:#64748b;
   --accent:#4d148c;
-  font-family: Inter, system-ui, sans-serif;
+  --accent-dark:#3a0f6b;
+  --warning:#ff9800;
+  --warning-light:#fff3e0;
+  font-family: Inter, ui-sans-serif, system-ui;
 }
-body{margin:0;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;}
-header{background:var(--accent);color:#fff;padding:16px 28px;}
-.main{flex:1;padding:30px;display:flex;justify-content:center;}
-.message-box{background:#fff;padding:30px;border-radius:12px;width:100%;max-width:1600px;}
-.control-group{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
-select{padding:10px 14px;border-radius:6px;border:1px solid #ccc;min-width:260px;}
-.response-item{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;background:#f9fafb;}
-.response-text{white-space:pre-wrap;line-height:1.6;background:#fff;padding:12px;border-left:4px solid var(--accent);border-radius:6px;}
-.copy-btn{margin-top:10px;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;}
-.loading-message{color:#64748b;font-style:italic;}
-.error-message{background:#fee2e2;color:#991b1b;padding:10px;border-radius:6px;margin-bottom:10px;}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:linear-gradient(180deg,var(--bg),#eef6ff);
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+/* ---------- HEADER ---------- */
+header{
+  background:var(--accent);
+  color:white;
+  padding:16px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+  z-index:1;
+}
+header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
+.nav-tabs{display:flex; gap:30px;}
+.tab{color:white; text-decoration:none; font-weight:600; font-size:16px; position:relative; padding:6px 0; transition: opacity 0.2s;}
+.tab:hover{opacity:0.8;}
+.tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
+
+.header-icons{display:flex;align-items:center;gap:20px;}
+#clockBtn{cursor:pointer; display:flex; align-items:center; gap:6px; font-size:18px; font-weight:600; color:white; position:relative;}
+#clockBtn:hover{transform:scale(1.1);}
+.header-icon{font-size:24px;color:white;cursor:pointer;transition:color .2s,transform .2s;}
+.header-icon:hover{transform:scale(1.3);}
+
+@keyframes logoFlyIn {0%{opacity:0;transform:translateX(-50px) scale(0.8);}100%{opacity:1;transform:translateX(0) scale(1);}}
+header::after{
+  content:"";
+  position:absolute; top:0; left:-100%;
+  width:100%; height:100%;
+  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
+  transform:skewX(-20deg);
+  animation:sweep 1s ease-out forwards;
+  z-index:0;
+  opacity:0.2;
+}
+@keyframes sweep{0%{left:-100%;}100%{left:100%;}}
+
+/* ---------- MAIN ---------- */
+.main{
+  flex:1;
+  padding:40px;
+  display:flex;
+  justify-content:center;
+}
+.message-box{
+  background:white;
+  padding:40px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  width:100%;
+  max-width:1800px;
+}
+
+/* ---------- CAUTION/REMINDER BANNER ---------- */
+.caution-banner{
+  background:var(--warning-light);
+  border-left:5px solid var(--warning);
+  border-radius:8px;
+  padding:20px;
+  margin-bottom:30px;
+  display:flex;
+  gap:15px;
+}
+
+.caution-icon{
+  font-size:28px;
+  color:var(--warning);
+  flex-shrink:0;
+}
+
+.caution-content h3{
+  margin:0 0 10px 0;
+  color:var(--warning);
+  font-size:16px;
+}
+
+.caution-content p{
+  margin:8px 0;
+  color:#333;
+  font-size:14px;
+  line-height:1.5;
+}
+
+.caution-content ul{
+  margin:10px 0;
+  padding-left:20px;
+  color:#333;
+  font-size:14px;
+}
+
+.caution-content li{
+  margin:6px 0;
+  line-height:1.5;
+}
+
+/* ---------- CONTROLS ---------- */
+.control-group{
+  display:flex;
+  gap:20px;
+  align-items:center;
+  margin:20px 0;
+}
+
+select{
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  font-size:15px;
+  min-width:400px;
+  cursor:pointer;
+  background-color:white;
+}
+
+select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(77,20,140,0.1);
+}
+
+.response-container{
+  margin-top:30px;
+}
+
+.response-item{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:20px;
+  opacity:0;
+  animation:itemFadeIn 0.5s ease forwards;
+}
+
+@keyframes itemFadeIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+
+/* ---------- EXPANDABLE SECTION ---------- */
+.expandable-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  user-select:none;
+  padding:12px;
+  background:#fff;
+  border-radius:6px;
+  margin-bottom:12px;
+  border:1px solid #e2e8f0;
+  transition:background 0.2s;
+}
+
+.expandable-header:hover{
+  background:#f0f0f0;
+}
+
+.expandable-icon{
+  font-size:18px;
+  color:var(--accent);
+  transition:transform 0.3s;
+}
+
+.expandable-icon.expanded{
+  transform:rotate(180deg);
+}
+
+.expandable-content{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height 0.3s ease;
+  padding:0 12px;
+}
+
+.expandable-content.expanded{
+  max-height:500px;
+  margin-bottom:12px;
+}
+
+.content-item{
+  padding:10px;
+  background:#ffffff;
+  border-radius:6px;
+  margin:8px 0;
+  border-left:3px solid var(--accent);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  font-size:13px;
+  line-height:1.6;
+}
+
+.content-label{
+  font-weight:700;
+  color:var(--accent);
+  font-size:12px;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+
+.response-text{
+  background:white;
+  padding:16px;
+  border-radius:6px;
+  border-left:4px solid var(--accent);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  font-size:13px;
+  line-height:1.6;
+  color:#333;
+  margin:12px 0;
+}
+
+.copy-btn{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:8px 16px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+  margin-top:12px;
+  transition:background 0.2s;
+}
+
+.copy-btn:hover{
+  background:var(--accent-dark);
+}
+
+.copy-btn.copied{
+  background:#28a745;
+}
+
+.no-results{
+  text-align:center;
+  color:var(--muted);
+  padding:40px 20px;
+  font-style:italic;
+}
+
+.loading-message{
+  text-align:center;
+  color:var(--muted);
+  padding:20px;
+  font-style:italic;
+}
+
+.error-message{
+  background:#ffebee;
+  border-left:5px solid #d32f2f;
+  color:#c62828;
+  padding:15px;
+  border-radius:6px;
+  margin:20px 0;
+}
+
+footer{
+  background:var(--accent);
+  color:white;
+  padding:16px;
+  text-align:center;
+}
+
+/* ---------- POPUPS ---------- */
+.modal {display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; padding:20px; z-index:1000;}
+.modal-content{background:white; border-radius:10px; padding:24px; width:100%; max-width:500px; box-shadow:0 10px 30px rgba(0,0,0,0.2);}
+.modal-header{display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:700; margin-bottom:12px;}
+.modal-close{font-size:22px; cursor:pointer; color:var(--muted);}
+.modal-close:hover{color:var(--accent);}
+
+#timeCalendarPopup{display:none; position:absolute; top:60px; right:20px; background:white; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:16px; width:310px; z-index:900;}
+#timeCalendarPopup h3{margin:0;text-align:center;font-size:18px;color:var(--accent-dark); margin-bottom:8px;}
+.calendar-header{display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; padding:8px; border-radius:6px;}
+.calendar-header span{cursor:pointer;color:var(--accent-dark); font-weight:600;}
+.calendar-title{font-weight:700;}
+.calendar-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:8px;}
+.calendar-grid .day-name{text-align:center;font-size:12px;font-weight:700;color:var(--muted);}
+.calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
+.calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
+.calendar-grid .day:hover{background:#f0f0f0;}
+
+.rating-star{
+  font-size:28px;
+  cursor:pointer;
+  color:#ddd;
+  transition:color 0.2s;
+  margin:0 4px;
+}
+.rating-star.selected{
+  color:#ffc107;
+}
+.rating-container{
+  text-align:center;
+  margin:16px 0;
+}
+textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid #e2e8f0;
+  border-radius:6px;
+  font-size:14px;
+  font-family:inherit;
+  min-height:80px;
+}
+.comment-list-item{
+  padding:12px;
+  border-bottom:1px solid #e2e8f0;
+  margin:8px 0;
+}
+.comment-list-item .stars{
+  color:#ffc107;
+  font-size:16px;
+  margin-bottom:4px;
+}
 </style>
 </head>
-
 <body>
 
 <header>
-  <strong>EBS Response Template</strong>
+  <div style="display:flex;align-items:center;gap:40px;">
+    <a href="index.html">
+      <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
+    </a>
+    <nav class="nav-tabs">
+      <a href="index.html" class="tab">Home</a>
+      <a href="case-directory.html" class="tab">Case Directory</a>
+      <a href="ebs-response-template.html" class="tab active">EBS Response</a>
+    </nav>
+  </div>
 </header>
 
 <div class="main">
   <div class="message-box">
+    <h1 style="color:#4d148c;">EBS Response Template</h1>
+
     <div id="loadingStatus" class="loading-message">Loading response templates...</div>
     <div id="errorStatus"></div>
 
     <div class="control-group" id="controlGroup" style="display:none;">
-      <label><strong>Concern:</strong></label>
+      <label for="concernSelect" style="font-weight:600;">Select Concern:</label>
       <select id="concernSelect">
-        <option value="">-- Select Concern --</option>
-      </select>
-
-      <label><strong>Type:</strong></label>
-      <select id="typeSelect" disabled>
-        <option value="">-- Select Type --</option>
+        <option value="">-- Choose a Concern --</option>
       </select>
     </div>
 
-    <div id="responseContainer"></div>
+    <div class="response-container" id="responseContainer"></div>
   </div>
 </div>
 
-<script>
-let ALL_TEMPLATES = [];
+<footer>© 2025 EBS Operations</footer>
 
-function populateConcerns(data){
+<script>
+// ---------- EXPAND ----------
+function toggleExpand(element){
+  const content = element.nextElementSibling;
+  content.classList.toggle('expanded');
+}
+
+// ---------- DROPDOWN ----------
+function populateDropdown(data){
   const select = document.getElementById('concernSelect');
-  const concerns = [...new Set(data.map(r => r.Concern).filter(Boolean))].sort();
+  select.innerHTML = '<option value="">-- Choose a Concern --</option>';
+  const concerns = [...new Set(data.map(r => r['Concern']).filter(Boolean))];
+  concerns.sort();
   concerns.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c;
@@ -71,96 +400,84 @@ function populateConcerns(data){
   });
 }
 
-function populateTypes(concern){
-  const typeSelect = document.getElementById('typeSelect');
-  typeSelect.innerHTML = '<option value="">-- Select Type --</option>';
-  typeSelect.disabled = true;
-
-  if(!concern) return;
-
-  const types = [...new Set(
-    ALL_TEMPLATES
-      .filter(t => t.Concern === concern)
-      .map(t => t.Type)
-      .filter(Boolean)
-  )].sort();
-
-  types.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t;
-    typeSelect.appendChild(opt);
-  });
-
-  typeSelect.disabled = false;
-}
-
-function displayResponse(concern, type){
+function displayResponses(concern){
   const container = document.getElementById('responseContainer');
   container.innerHTML = '';
+  if(!concern) return;
 
-  if(!concern || !type) return;
+  const templates = window.TEMPLATES.filter(r => r['Concern'] === concern);
 
-  const match = ALL_TEMPLATES.find(t => t.Concern === concern && t.Type === type);
-
-  if(!match){
-    container.innerHTML = '<div class="loading-message">No template found.</div>';
+  if(templates.length === 0){
+    container.innerHTML = '<div class="loading-message">No templates found.</div>';
     return;
   }
 
-  container.innerHTML = `
-    <div class="response-item">
-      <div><strong>${match.Type}</strong></div>
-      <div class="response-text">${match['Response Template']}</div>
-      <button class="copy-btn" onclick="copyToClipboard(this)">Copy Template</button>
-    </div>
-  `;
+  templates.forEach((t, i) => {
+    container.innerHTML += `
+      <div class="response-item">
+        <div class="expandable-header" onclick="toggleExpand(this)">
+          <span style="font-weight:600;color:#4d148c;">${t['Type'] || 'Response '+(i+1)}</span>
+        </div>
+        <div class="expandable-content expanded">
+          <div class="content-item"><strong>Concern:</strong> ${t['Concern']}</div>
+          <div class="content-item"><strong>Type:</strong> ${t['Type'] || 'N/A'}</div>
+        </div>
+        <div class="response-text">${t['Response Template'] || ''}</div>
+        <button class="copy-btn" onclick="copyToClipboard(this)">📋 Copy Template</button>
+      </div>
+    `;
+  });
 }
 
 function copyToClipboard(btn){
   const text = btn.previousElementSibling.textContent;
-  navigator.clipboard.writeText(text);
-  btn.textContent = "Copied!";
-  setTimeout(() => btn.textContent = "Copy Template", 1500);
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Template';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
 }
 
 document.getElementById('concernSelect').addEventListener('change', e => {
-  const concern = e.target.value;
-  populateTypes(concern);
-  document.getElementById('responseContainer').innerHTML = '';
+  displayResponses(e.target.value);
 });
 
-document.getElementById('typeSelect').addEventListener('change', e => {
-  displayResponse(
-    document.getElementById('concernSelect').value,
-    e.target.value
-  );
-});
-
+// ---------- LOAD ODS (NEW FORMAT) ----------
 fetch("ebs-response.ods")
 .then(res => res.arrayBuffer())
 .then(data => {
   const workbook = XLSX.read(data, { type: 'array' });
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  // 👉 Use the Templates sheet ONLY
+  const sheet = workbook.Sheets["Templates"];
+  if(!sheet) throw new Error('Sheet "Templates" not found. Check the sheet name.');
+
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-  ALL_TEMPLATES = rows
+  // 👉 This matches: Concern | Type | Response Template
+  window.TEMPLATES = rows
     .map(r => ({
       Concern: r['Concern'],
       Type: r['Type'],
       'Response Template': r['Response Template']
     }))
-    .filter(r => r.Concern && r.Type && r['Response Template']);
+    .filter(r => r.Concern && r['Response Template']);
 
-  populateConcerns(ALL_TEMPLATES);
+  if(window.TEMPLATES.length === 0) throw new Error("No valid templates found.");
+
+  populateDropdown(window.TEMPLATES);
 
   document.getElementById('loadingStatus').style.display = 'none';
   document.getElementById('controlGroup').style.display = 'flex';
 })
 .catch(err => {
+  console.error(err);
   document.getElementById('loadingStatus').style.display = 'none';
-  document.getElementById('errorStatus'].innerHTML =
-    '<div class="error-message">❌ ' + err.message + '</div>';
+  document.getElementById('errorStatus').innerHTML =
+    '<div class="error-message">❌ '+err.message+'</div>';
 });
 </script>
 
