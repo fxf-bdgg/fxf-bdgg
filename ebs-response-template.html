@@ -5,140 +5,327 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BD Tools — EBS Response Template</title>
 
+<!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- SheetJS for ODS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 :root{
-  --bg:#f4f7fb; --accent:#4d148c; --accent-dark:#3a0f6b; --muted:#64748b; font-family: Inter, ui-sans-serif, system-ui;
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#64748b;
+  --accent:#4d148c;
+  --accent-dark:#3a0f6b;
+  --warning:#ff9800;
+  --warning-light:#fff3e0;
+  font-family: Inter, ui-sans-serif, system-ui;
 }
-body{margin:0; background:var(--bg); display:flex; flex-direction:column; min-height:100vh;}
-header{background:var(--accent); color:white; padding:16px 28px; display:flex; align-items:center;}
-header img{height:40px;}
-.nav-tabs{display:flex; gap:30px; margin-left:20px;}
-.tab{color:white; text-decoration:none; font-weight:600; font-size:16px;}
-.tab.active{border-bottom:3px solid #ff6600;}
-.main{flex:1; padding:40px; display:flex; justify-content:center;}
-.message-box{background:white; padding:40px; border-radius:14px; width:100%; max-width:1200px;}
-.control-group{display:flex; gap:20px; flex-wrap:wrap; margin:20px 0;}
-select{padding:10px; border-radius:6px; border:1px solid #ccc; min-width:200px; cursor:pointer;}
-.response-container{margin-top:30px;}
-.response-item{background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:20px; margin-bottom:20px;}
-.expandable-header{cursor:pointer; font-weight:600; color:var(--accent);}
-.expandable-content{display:none; padding:10px 0;}
-.response-text{background:white; padding:16px; border-left:4px solid var(--accent); white-space:pre-wrap;}
-.copy-btn{background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; margin-top:12px;}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:linear-gradient(180deg,var(--bg),#eef6ff);
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+}
+
+header{
+  background:var(--accent);
+  color:white;
+  padding:16px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+  z-index:1;
+}
+header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
+.nav-tabs{display:flex; gap:30px;}
+.tab{color:white; text-decoration:none; font-weight:600; font-size:16px; position:relative; padding:6px 0; transition: opacity 0.2s;}
+.tab:hover{opacity:0.8;}
+.tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
+
+.main{
+  flex:1;
+  padding:40px;
+  display:flex;
+  justify-content:center;
+}
+.message-box{
+  background:white;
+  padding:40px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  width:100%;
+  max-width:1800px;
+}
+
+.control-group{
+  display:flex;
+  gap:20px;
+  align-items:center;
+  margin:20px 0;
+}
+
+select{
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  font-size:15px;
+  min-width:200px;
+  cursor:pointer;
+  background-color:white;
+}
+
+select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(77,20,140,0.1);
+}
+
+.response-container{
+  margin-top:30px;
+}
+
+.response-item{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:20px;
+  opacity:0;
+  animation:itemFadeIn 0.5s ease forwards;
+}
+
+@keyframes itemFadeIn{0%{opacity:0;transform:translateY(10px);}100%{opacity:1;transform:translateY(0);}}
+
+.expandable-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  user-select:none;
+  padding:12px;
+  background:#fff;
+  border-radius:6px;
+  margin-bottom:12px;
+  border:1px solid #e2e8f0;
+  transition:background 0.2s;
+}
+.expandable-header:hover{background:#f0f0f0;}
+.expandable-content{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height 0.3s ease;
+  padding:0 12px;
+}
+.expandable-content.expanded{max-height:500px;margin-bottom:12px;}
+.content-item{
+  padding:10px;
+  background:#ffffff;
+  border-radius:6px;
+  margin:8px 0;
+  border-left:3px solid var(--accent);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  font-size:13px;
+  line-height:1.6;
+}
+.response-text{
+  background:white;
+  padding:16px;
+  border-radius:6px;
+  border-left:4px solid var(--accent);
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  font-size:13px;
+  line-height:1.6;
+  color:#333;
+  margin:12px 0;
+}
+.copy-btn{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:8px 16px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+  margin-top:12px;
+  transition:background 0.2s;
+}
 .copy-btn:hover{background:var(--accent-dark);}
+.copy-btn.copied{background:#28a745;}
+.loading-message{
+  text-align:center;
+  color:var(--muted);
+  padding:20px;
+  font-style:italic;
+}
+.error-message{
+  background:#ffebee;
+  border-left:5px solid #d32f2f;
+  color:#c62828;
+  padding:15px;
+  border-radius:6px;
+  margin:20px 0;
+}
+footer{background:var(--accent); color:white; padding:16px; text-align:center;}
 </style>
 </head>
 <body>
 
 <header>
-  <a href="#"><img src="fedex.png" alt="FedEx Logo"></a>
-  <nav class="nav-tabs">
-    <a href="#" class="tab">Home</a>
-    <a href="#" class="tab">Case Directory</a>
-    <a href="#" class="tab active">EBS Response</a>
-  </nav>
+  <div style="display:flex;align-items:center;gap:40px;">
+    <a href="index.html">
+      <img src="fedex.png" alt="FedEx Logo" style="height:40px;">
+    </a>
+    <nav class="nav-tabs">
+      <a href="index.html" class="tab">Home</a>
+      <a href="case-directory.html" class="tab">Case Directory</a>
+      <a href="ebs-response-template.html" class="tab active">EBS Response</a>
+    </nav>
+  </div>
 </header>
 
 <div class="main">
   <div class="message-box">
     <h1 style="color:#4d148c;">EBS Response Template</h1>
 
-    <div class="control-group">
-      <label for="concernSelect">Concern:</label>
-      <select id="concernSelect"><option value="">-- Select Concern --</option></select>
+    <div id="loadingStatus" class="loading-message">Loading response templates...</div>
+    <div id="errorStatus"></div>
 
-      <label for="typeSelect">Type:</label>
-      <select id="typeSelect" disabled><option value="">-- Select Type --</option></select>
+    <div class="control-group" id="controlGroup" style="display:none;">
+      <label for="concernSelect" style="font-weight:600;">Select Concern:</label>
+      <select id="concernSelect">
+        <option value="">-- Choose a Concern --</option>
+      </select>
+
+      <label for="typeSelect" style="font-weight:600;">Select Type:</label>
+      <select id="typeSelect" disabled>
+        <option value="">-- All Types --</option>
+      </select>
     </div>
 
     <div class="response-container" id="responseContainer"></div>
   </div>
 </div>
 
-<footer style="background:var(--accent); color:white; text-align:center; padding:16px;">© 2025 EBS Operations</footer>
+<footer>© 2025 EBS Operations</footer>
 
 <script>
-function copyToClipboard(btn){
-  const text = btn.previousElementSibling.textContent;
-  navigator.clipboard.writeText(text);
-  btn.textContent = "✓ Copied!";
-  setTimeout(()=>{btn.textContent="📋 Copy Template";},2000);
+function toggleExpand(element){
+  const content = element.nextElementSibling;
+  content.classList.toggle('expanded');
 }
 
-// Expand/collapse
-function toggleExpand(el){
-  const content = el.nextElementSibling;
-  content.style.display = content.style.display==='block'?'none':'block';
-}
-
-// Populate dropdowns
-function populateConcernDropdown(){
-  const concerns = [...new Set(window.TEMPLATES.map(t=>t.Concern).filter(Boolean))].sort();
-  const concernSelect = document.getElementById('concernSelect');
-  concerns.forEach(c=>{
-    const opt = document.createElement('option'); opt.value=c; opt.textContent=c;
-    concernSelect.appendChild(opt);
+function populateDropdown(data){
+  const select = document.getElementById('concernSelect');
+  const concerns = [...new Set(data.map(r => r.Concern).filter(Boolean))];
+  concerns.sort();
+  concerns.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
   });
 }
 
 function populateTypeDropdown(concern){
   const typeSelect = document.getElementById('typeSelect');
   typeSelect.innerHTML = '<option value="">-- All Types --</option>';
-  const types = [...new Set(window.TEMPLATES.filter(t=>t.Concern===concern).map(t=>t.Type).filter(Boolean))];
-  types.forEach(t=>{
-    const opt = document.createElement('option'); opt.value=t; opt.textContent=t;
+  const types = [...new Set(window.TEMPLATES.filter(t => t.Concern === concern).map(t => t.Type).filter(Boolean))];
+  types.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t;
     typeSelect.appendChild(opt);
   });
-  typeSelect.disabled = types.length===0;
+  typeSelect.disabled = types.length === 0;
 }
 
-// Display templates
-function displayTemplates(concern, type=""){
+function displayResponses(concern, type=""){
   const container = document.getElementById('responseContainer');
-  container.innerHTML = "";
-  let templates = window.TEMPLATES.filter(t=>t.Concern===concern);
-  if(type) templates = templates.filter(t=>t.Type===type);
-  if(templates.length===0){ container.innerHTML="<p>No templates found.</p>"; return; }
-  templates.forEach(t=>{
-    const div = document.createElement('div'); div.className='response-item';
-    div.innerHTML = `
-      <div class="expandable-header" onclick="toggleExpand(this)">${t.Type}</div>
-      <div class="expandable-content">
-        <div><strong>Concern:</strong> ${t.Concern}</div>
-        <div><strong>Type:</strong> ${t.Type}</div>
+  container.innerHTML = '';
+  if(!concern) return;
+
+  let templates = window.TEMPLATES.filter(t => t.Concern === concern);
+  if(type) templates = templates.filter(t => t.Type === type);
+
+  if(templates.length === 0){
+    container.innerHTML = '<div class="loading-message">No templates found.</div>';
+    return;
+  }
+
+  templates.forEach((t, i) => {
+    container.innerHTML += `
+      <div class="response-item">
+        <div class="expandable-header" onclick="toggleExpand(this)">
+          <span style="font-weight:600;color:#4d148c;">${t.Type}</span>
+        </div>
+        <div class="expandable-content">
+          <div class="content-item"><strong>Concern:</strong> ${t.Concern}</div>
+          <div class="content-item"><strong>Type:</strong> ${t.Type}</div>
+        </div>
+        <div class="response-text">${t['Response Template']}</div>
+        <button class="copy-btn" onclick="copyToClipboard(this)">📋 Copy Template</button>
       </div>
-      <div class="response-text">${t['Response Template']}</div>
-      <button class="copy-btn" onclick="copyToClipboard(this)">📋 Copy Template</button>
     `;
-    container.appendChild(div);
+  });
+}
+
+function copyToClipboard(btn){
+  const text = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Template';
+      btn.classList.remove('copied');
+    }, 2000);
   });
 }
 
 // Event listeners
-document.getElementById('concernSelect').addEventListener('change', e=>{
+document.getElementById('concernSelect').addEventListener('change', e => {
   const concern = e.target.value;
   populateTypeDropdown(concern);
-  displayTemplates(concern);
+  displayResponses(concern);
 });
 
-document.getElementById('typeSelect').addEventListener('change', e=>{
+document.getElementById('typeSelect').addEventListener('change', e => {
   const concern = document.getElementById('concernSelect').value;
-  displayTemplates(concern, e.target.value);
+  const type = e.target.value;
+  displayResponses(concern, type);
 });
 
-// Load ODS/CSV
+// Load ODS
 fetch("ebs-response.ods")
-.then(res=>res.arrayBuffer())
-.then(data=>{
-  const wb = XLSX.read(data,{type:'array'});
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  window.TEMPLATES = XLSX.utils.sheet_to_json(sheet,{defval:""});
-  populateConcernDropdown();
+.then(res => res.arrayBuffer())
+.then(data => {
+  const workbook = XLSX.read(data, { type: 'array' });
+
+  const sheet = workbook.Sheets["Templates"];
+  if(!sheet) throw new Error('Sheet "Templates" not found.');
+
+  window.TEMPLATES = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+  if(!window.TEMPLATES.length) throw new Error("No valid data found.");
+
+  populateDropdown(window.TEMPLATES);
+  document.getElementById('loadingStatus').style.display = 'none';
+  document.getElementById('controlGroup').style.display = 'flex';
 })
-.catch(err=>console.error(err));
+.catch(err => {
+  console.error(err);
+  document.getElementById('loadingStatus').style.display = 'none';
+  document.getElementById('errorStatus').innerHTML =
+    '<div class="error-message">❌ '+err.message+'</div>';
+});
 </script>
 
 </body>
