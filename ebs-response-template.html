@@ -446,27 +446,29 @@ document.getElementById('concernSelect').addEventListener('change', e => {
 });
 
 // ---------- LOAD ODS (NEW FORMAT) ----------
+// ---------- LOAD ODS (HANDLE BLANK CONCERNS) ----------
 fetch("ebs-response.ods")
 .then(res => res.arrayBuffer())
 .then(data => {
   const workbook = XLSX.read(data, { type: 'array' });
 
-  // 👉 Use the Templates sheet ONLY
   const sheet = workbook.Sheets["Templates"];
   if(!sheet) throw new Error('Sheet "Templates" not found. Check the sheet name.');
 
   const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-  // 👉 This matches: Concern | Type | Response Template
-  window.TEMPLATES = rows
-    .map(r => ({
-      Concern: r['Concern'],
+  let lastConcern = "";
+
+  window.TEMPLATES = rows.map(r => {
+    // 👇 Carry forward the Concern if blank
+    if (r['Concern']) lastConcern = r['Concern'];
+
+    return {
+      Concern: r['Concern'] || lastConcern,
       Type: r['Type'],
       'Response Template': r['Response Template']
-    }))
-    .filter(r => r.Concern && r['Response Template']);
-
-  if(window.TEMPLATES.length === 0) throw new Error("No valid templates found.");
+    };
+  }).filter(r => r.Concern && r['Response Template']);
 
   populateDropdown(window.TEMPLATES);
 
@@ -483,3 +485,4 @@ fetch("ebs-response.ods")
 
 </body>
 </html>
+
