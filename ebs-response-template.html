@@ -171,6 +171,79 @@ header::after{
   line-height: 1.5;
 }
 
+/* ---------- CAUTION/REMINDER BANNER ---------- */
+.caution-banner{
+background:var(--warning-light);
+border-left:5px solid var(--warning);
+border-radius:8px;
+padding:20px;
+margin-bottom:30px;
+display:flex;
+gap:15px;
+}
+
+.caution-icon{
+font-size:28px;
+color:var(--warning);
+flex-shrink:0;
+}
+
+.caution-content h3{
+margin:0 0 10px 0;
+color:var(--warning);
+font-size:16px;
+}
+
+.caution-content p{
+margin:8px 0;
+color:#333;
+font-size:14px;
+line-height:1.5;
+}
+
+.caution-content ul{
+margin:10px 0;
+padding-left:20px;
+color:#333;
+font-size:14px;
+}
+
+.caution-content li{
+margin:6px 0;
+line-height:1.5;
+}
+
+/* ---------- CAUTION/REMINDER BANNER ---------- */
+.caution-banner{
+  background: #FFE5CC; /* Light FedEx orange */
+  border-left:5px solid #FF6600; /* FedEx orange */
+  border-radius:8px;
+  padding:20px;
+  margin-bottom:30px;
+  display:flex;
+  gap:15px;
+}
+
+.caution-icon{
+  font-size:28px;
+  color:#FF6600; /* FedEx orange icon */
+  flex-shrink:0;
+}
+
+.caution-content h3{
+  margin:0 0 10px 0;
+  color:#FF6600; /* FedEx orange title */
+  font-size:16px;
+}
+
+.caution-content p,
+.caution-content ul,
+.caution-content li{
+  color:#333; /* dark text for readability */
+  font-size:14px;
+  line-height:1.5;
+}
+
 </style>
 </head>
 <body>
@@ -206,6 +279,23 @@ header::after{
     <p>Select the concern and type to generate the correct response template.</p>
   </div>
 </div>
+
+<!-- CAUTION/REMINDER BANNER -->
+<div class="caution-banner">
+<div class="caution-icon">
+<i class="fa-solid fa-triangle-exclamation"></i>
+</div>
+<div class="caution-content">
+<h3>⚠️ Important Reminder</h3>
+<p><strong>Avoid sending duplicate responses on reopened cases.</strong> In our client business review, we found cases where customers reopened and agents sent the same previous response.</p>
+<ul>
+<li><strong>Reword responses</strong> each time and provide additional details when possible</li>
+<li><strong>If customer continues to reject your decision:</strong> Consult your Team Lead or Training Team</li>
+<li><strong>Suggested response while escalating:</strong> "We completely understand where you are coming from. Let me discuss this with our management team to explore the best possible options to assist you."</li>
+</ul>
+</div>
+</div>
+
 
     <div class="select-row">
       <select id="concernSelect">
