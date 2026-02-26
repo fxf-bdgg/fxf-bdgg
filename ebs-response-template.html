@@ -104,6 +104,11 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
         <option value="">Select Type</option>
       </select>
     </div>
+    
+    <div style="margin-bottom:12px;">
+  <strong>Description</strong>
+  <div id="descBox" style="margin-top:6px; padding:10px; background:#f8fafc; border-left:4px solid #4d148c; border-radius:6px; color:#334155;"></div>
+</div>
 
     <label><strong>Response Template</strong></label>
     <textarea id="responseBox" readonly></textarea>
@@ -121,16 +126,41 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 <script>
 let DATA = [];
 
+function fillMergedColumns(rows) {
+  let lastConcern = "";
+  let lastDesc = "";
+
+  return rows.map(r => {
+    if (r["Concern"] && r["Concern"].trim() !== "") {
+      lastConcern = r["Concern"].trim();
+    } else {
+      r["Concern"] = lastConcern;
+    }
+
+    if (r["Description"] && r["Description"].trim() !== "") {
+      lastDesc = r["Description"].trim();
+    } else {
+      r["Description"] = lastDesc;
+    }
+
+    return r;
+  });
+}
+
 fetch("ebs-response.ods")
   .then(res => res.arrayBuffer())
   .then(data => {
-    const workbook = XLSX.read(data, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    DATA = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    const wb = XLSX.read(data, { type: "array" });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+
+    let raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    DATA = fillMergedColumns(raw);
 
     const concerns = [...new Set(DATA.map(r => r["Concern"]).filter(Boolean))].sort();
     const concernSelect = document.getElementById("concernSelect");
 
+    concernSelect.innerHTML = `<option value="">Select Concern</option>`;
     concerns.forEach(c => {
       const opt = document.createElement("option");
       opt.value = c;
@@ -139,8 +169,8 @@ fetch("ebs-response.ods")
     });
   })
   .catch(err => {
-    alert("Failed to load ebs-response.ods");
     console.error(err);
+    alert("Failed to load ebs-response.ods");
   });
 
 document.getElementById("concernSelect").addEventListener("change", function () {
@@ -148,22 +178,27 @@ document.getElementById("concernSelect").addEventListener("change", function () 
   const typeSelect = document.getElementById("typeSelect");
   const responseBox = document.getElementById("responseBox");
   const noteBox = document.getElementById("noteBox");
+  const descBox = document.getElementById("descBox");
 
   typeSelect.innerHTML = `<option value="">Select Type</option>`;
   responseBox.value = "";
   noteBox.style.display = "none";
+  descBox.textContent = "";
 
   if (!concern) {
     typeSelect.disabled = true;
     return;
   }
 
-  const types = DATA
-    .filter(r => r["Concern"] === concern)
-    .map(r => r["Type"])
-    .filter(Boolean);
+  const rows = DATA.filter(r => r["Concern"] === concern);
 
-  [...new Set(types)].sort().forEach(t => {
+  if (rows.length) {
+    descBox.textContent = rows[0]["Description"] || "";
+  }
+
+  const types = [...new Set(rows.map(r => r["Type"]).filter(Boolean))].sort();
+
+  types.forEach(t => {
     const opt = document.createElement("option");
     opt.value = t;
     opt.textContent = t;
@@ -179,28 +214,23 @@ document.getElementById("typeSelect").addEventListener("change", function () {
 
   const match = DATA.find(r => r["Concern"] === concern && r["Type"] === type);
 
-  if (!match) {
-    document.getElementById("responseBox").value = "";
-    document.getElementById("noteBox").style.display = "none";
-    return;
-  }
+  if (!match) return;
 
   document.getElementById("responseBox").value = match["Response Template"] || "";
 
+  const noteBox = document.getElementById("noteBox");
   if (match["Note"]) {
-    document.getElementById("noteBox").style.display = "block";
-    document.getElementById("noteBox").textContent = "Note: " + match["Note"];
+    noteBox.style.display = "block";
+    noteBox.textContent = "Note: " + match["Note"];
   } else {
-    document.getElementById("noteBox").style.display = "none";
+    noteBox.style.display = "none";
   }
 });
 
 function copyResponse() {
   const text = document.getElementById("responseBox").value;
   if (!text) return alert("No response to copy.");
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Response copied!");
-  });
+  navigator.clipboard.writeText(text).then(() => alert("Copied!"));
 }
 </script>
 
