@@ -240,10 +240,8 @@ document.getElementById("typeSelect").addEventListener("change", function () {
   const match = DATA.find(r => r.Concern === concern && r.Type === type);
   if (!match) return;
 
-  const template = stripWrappingQuotes(match["Response Template"] || "");
-  const formatted = formatEmailSpacing(template);
-
-  document.getElementById("responseBox").value = formatted;
+const template = stripWrappingQuotes(match["Response Template"] || "");
+document.getElementById("responseBox").value = template;
 
   const noteBox = document.getElementById("noteBox");
   if (match.Note) {
