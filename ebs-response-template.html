@@ -113,31 +113,9 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
     <label><strong>Response Template</strong></label>
     <textarea id="responseBox" readonly></textarea>
 
-    <div style="display:flex; gap:10px; margin-top:10px;">
-  <button class="btn" onclick="copyResponse()">
-    ✨ Copy Response
-  </button>
-  <button class="btn" onclick="copyEmailFormat()">
-    📋 Copy as Email
-  </button>
-</div>
-
-<div id="toast" style="
-  position:fixed;
-  bottom:30px;
-  right:30px;
-  background:#16a34a;
-  color:white;
-  padding:12px 18px;
-  border-radius:8px;
-  box-shadow:0 10px 20px rgba(0,0,0,0.2);
-  opacity:0;
-  transform:translateY(10px);
-  transition:.3s ease;
-  pointer-events:none;
-  font-weight:600;
-">
-  Copied!
+  <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+  <button class="btn" onclick="copyResponse()">✨ Copy Response</button>
+  <a id="outlookLink" class="btn" target="_blank">✉️ Open in Outlook</a>
 </div>
 
     <div id="noteBox" class="note-box" style="display:none;"></div>
@@ -169,6 +147,14 @@ function stripWrappingQuotes(text) {
     return text.slice(1, -1);
   }
   return text;
+}
+
+function formatEmailSpacing(text) {
+  if (!text) return "";
+  let t = text.replace(/\r\n/g, "\n");
+  t = t.replace(/\n{2,}/g, "\n\n");
+  t = t.replace(/([^\n])\n([^\n])/g, "$1\n\n$2");
+  return t;
 }
 
 function normalizeRows(rows) {
@@ -236,15 +222,14 @@ document.getElementById("concernSelect").addEventListener("change", function () 
 
   if (!concern) {
     typeSelect.disabled = true;
+    updateEmailLinks();
     return;
   }
 
   const rows = DATA.filter(r => r.Concern === concern);
-
   descBox.textContent = rows[0]?.Description || "";
 
   const types = [...new Set(rows.map(r => r.Type).filter(Boolean))].sort();
-
   types.forEach(t => {
     const opt = document.createElement("option");
     opt.value = t;
@@ -253,6 +238,7 @@ document.getElementById("concernSelect").addEventListener("change", function () 
   });
 
   typeSelect.disabled = false;
+  updateEmailLinks();
 });
 
 document.getElementById("typeSelect").addEventListener("change", function () {
@@ -263,7 +249,9 @@ document.getElementById("typeSelect").addEventListener("change", function () {
   if (!match) return;
 
   const template = stripWrappingQuotes(match["Response Template"] || "");
-  document.getElementById("responseBox").value = template;
+  const formatted = formatEmailSpacing(template);
+
+  document.getElementById("responseBox").value = formatted;
 
   const noteBox = document.getElementById("noteBox");
   if (match.Note) {
@@ -272,6 +260,8 @@ document.getElementById("typeSelect").addEventListener("change", function () {
   } else {
     noteBox.style.display = "none";
   }
+
+  updateEmailLinks();
 });
 
 function copyResponse() {
@@ -280,23 +270,33 @@ function copyResponse() {
   navigator.clipboard.writeText(text).then(() => showToast("Response copied!"));
 }
 
-function copyEmailFormat() {
+function updateEmailLinks() {
   const concern = document.getElementById("concernSelect").value || "EBS Response";
   const type = document.getElementById("typeSelect").value || "";
-  const body = document.getElementById("responseBox").value;
+  const body = document.getElementById("responseBox").value || "";
 
-  if (!body) return;
+  const subject = encodeURIComponent(`${concern}${type ? " — " + type : ""}`);
+  const encodedBody = encodeURIComponent(body);
 
-  const emailText =
-`Subject: ${concern}${type ? " — " + type : ""}
+  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodedBody}`;
+  const outlook = `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${encodedBody}`;
 
-${body}
+  document.getElementById("gmailLink").href = gmail;
+  document.getElementById("outlookLink").href = outlook;
+}
+</script>
+<script>
+function formatEmailSpacing(text) {
+  if (!text) return "";
+  // Normalize line endings
+  let t = text.replace(/\r\n/g, "\n");
 
---
-EBS Operations - Invoicing Solutions
-`;
+  // If there are single line breaks between paragraphs, expand them to double breaks
+  // This makes emails look like your ODS formatting (spaced paragraphs)
+  t = t.replace(/\n{2,}/g, "\n\n");      // collapse crazy spacing to 2
+  t = t.replace(/([^\n])\n([^\n])/g, "$1\n\n$2"); // ensure blank line between paragraphs
 
-  navigator.clipboard.writeText(emailText).then(() => showToast("Email-ready copy!"));
+  return t;
 }
 </script>
 </body>
