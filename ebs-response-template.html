@@ -126,22 +126,22 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 <script>
 let DATA = [];
 
-function fillMergedColumns(rows) {
+function normalizeRows(rows) {
   let lastConcern = "";
   let lastDesc = "";
 
   return rows.map(r => {
-    if (r["Concern"] && r["Concern"].trim() !== "") {
-      lastConcern = r["Concern"].trim();
-    } else {
-      r["Concern"] = lastConcern;
-    }
+    r.Concern = (r.Concern || "").trim();
+    r.Description = (r.Description || "").trim();
+    r.Type = (r.Type || "").trim();
+    r["Response Template"] = (r["Response Template"] || "").trim();
+    r.Note = (r.Note || "").trim();
 
-    if (r["Description"] && r["Description"].trim() !== "") {
-      lastDesc = r["Description"].trim();
-    } else {
-      r["Description"] = lastDesc;
-    }
+    if (r.Concern) lastConcern = r.Concern;
+    else r.Concern = lastConcern;
+
+    if (r.Description) lastDesc = r.Description;
+    else r.Description = lastDesc;
 
     return r;
   });
@@ -149,15 +149,20 @@ function fillMergedColumns(rows) {
 
 fetch("ebs-response.ods")
   .then(res => res.arrayBuffer())
-  .then(data => {
-    const wb = XLSX.read(data, { type: "array" });
+  .then(buf => {
+    const wb = XLSX.read(buf, { type: "array" });
     const sheet = wb.Sheets[wb.SheetNames[0]];
 
-    let raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    // FORCE column order mapping (fixes broken headers from merged cells)
+    const raw = XLSX.utils.sheet_to_json(sheet, {
+      defval: "",
+      header: ["Concern", "Description", "Type", "Response Template", "Note"],
+      range: 1
+    });
 
-    DATA = fillMergedColumns(raw);
+    DATA = normalizeRows(raw);
 
-    const concerns = [...new Set(DATA.map(r => r["Concern"]).filter(Boolean))].sort();
+    const concerns = [...new Set(DATA.map(r => r.Concern).filter(Boolean))].sort();
     const concernSelect = document.getElementById("concernSelect");
 
     concernSelect.innerHTML = `<option value="">Select Concern</option>`;
@@ -167,6 +172,8 @@ fetch("ebs-response.ods")
       opt.textContent = c;
       concernSelect.appendChild(opt);
     });
+
+    console.log("Loaded rows:", DATA); // debug
   })
   .catch(err => {
     console.error(err);
@@ -190,13 +197,16 @@ document.getElementById("concernSelect").addEventListener("change", function () 
     return;
   }
 
-  const rows = DATA.filter(r => r["Concern"] === concern);
+  const rows = DATA.filter(r => r.Concern === concern);
 
-  if (rows.length) {
-    descBox.textContent = rows[0]["Description"] || "";
+  if (!rows.length) {
+    alert("No rows matched this concern. Check spacing in ODS.");
+    return;
   }
 
-  const types = [...new Set(rows.map(r => r["Type"]).filter(Boolean))].sort();
+  descBox.textContent = rows[0].Description || "";
+
+  const types = [...new Set(rows.map(r => r.Type).filter(Boolean))].sort();
 
   types.forEach(t => {
     const opt = document.createElement("option");
@@ -212,16 +222,19 @@ document.getElementById("typeSelect").addEventListener("change", function () {
   const concern = document.getElementById("concernSelect").value;
   const type = this.value;
 
-  const match = DATA.find(r => r["Concern"] === concern && r["Type"] === type);
+  const match = DATA.find(r => r.Concern === concern && r.Type === type);
 
-  if (!match) return;
+  if (!match) {
+    alert("Template not found. This usually means spacing mismatch in ODS.");
+    return;
+  }
 
   document.getElementById("responseBox").value = match["Response Template"] || "";
 
   const noteBox = document.getElementById("noteBox");
-  if (match["Note"]) {
+  if (match.Note) {
     noteBox.style.display = "block";
-    noteBox.textContent = "Note: " + match["Note"];
+    noteBox.textContent = "Note: " + match.Note;
   } else {
     noteBox.style.display = "none";
   }
@@ -233,6 +246,5 @@ function copyResponse() {
   navigator.clipboard.writeText(text).then(() => alert("Copied!"));
 }
 </script>
-
 </body>
 </html>
