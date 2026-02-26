@@ -113,9 +113,32 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
     <label><strong>Response Template</strong></label>
     <textarea id="responseBox" readonly></textarea>
 
-    <button class="btn" onclick="copyResponse()">
-      <i class="fa-regular fa-copy"></i> Copy Response
-    </button>
+    <div style="display:flex; gap:10px; margin-top:10px;">
+  <button class="btn" onclick="copyResponse()">
+    ✨ Copy Response
+  </button>
+  <button class="btn" onclick="copyEmailFormat()">
+    📋 Copy as Email
+  </button>
+</div>
+
+<div id="toast" style="
+  position:fixed;
+  bottom:30px;
+  right:30px;
+  background:#16a34a;
+  color:white;
+  padding:12px 18px;
+  border-radius:8px;
+  box-shadow:0 10px 20px rgba(0,0,0,0.2);
+  opacity:0;
+  transform:translateY(10px);
+  transition:.3s ease;
+  pointer-events:none;
+  font-weight:600;
+">
+  Copied!
+</div>
 
     <div id="noteBox" class="note-box" style="display:none;"></div>
   </div>
@@ -126,6 +149,28 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 <script>
 let DATA = [];
 
+function showToast(msg="Copied!") {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.style.opacity = "1";
+  toast.style.transform = "translateY(0)";
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(10px)";
+  }, 1400);
+}
+
+function stripWrappingQuotes(text) {
+  if (!text) return "";
+  if (
+    (text.startsWith('"') && text.endsWith('"')) ||
+    (text.startsWith("“") && text.endsWith("”"))
+  ) {
+    return text.slice(1, -1);
+  }
+  return text;
+}
+
 function normalizeRows(rows) {
   let lastConcern = "";
   let lastDesc = "";
@@ -134,7 +179,7 @@ function normalizeRows(rows) {
     r.Concern = (r.Concern || "").trim();
     r.Description = (r.Description || "").trim();
     r.Type = (r.Type || "").trim();
-    r["Response Template"] = (r["Response Template"] || "").trim();
+    r["Response Template"] = r["Response Template"] || "";
     r.Note = (r.Note || "").trim();
 
     if (r.Concern) lastConcern = r.Concern;
@@ -153,7 +198,6 @@ fetch("ebs-response.ods")
     const wb = XLSX.read(buf, { type: "array" });
     const sheet = wb.Sheets[wb.SheetNames[0]];
 
-    // FORCE column order mapping (fixes broken headers from merged cells)
     const raw = XLSX.utils.sheet_to_json(sheet, {
       defval: "",
       header: ["Concern", "Description", "Type", "Response Template", "Note"],
@@ -172,8 +216,6 @@ fetch("ebs-response.ods")
       opt.textContent = c;
       concernSelect.appendChild(opt);
     });
-
-    console.log("Loaded rows:", DATA); // debug
   })
   .catch(err => {
     console.error(err);
@@ -199,12 +241,7 @@ document.getElementById("concernSelect").addEventListener("change", function () 
 
   const rows = DATA.filter(r => r.Concern === concern);
 
-  if (!rows.length) {
-    alert("No rows matched this concern. Check spacing in ODS.");
-    return;
-  }
-
-  descBox.textContent = rows[0].Description || "";
+  descBox.textContent = rows[0]?.Description || "";
 
   const types = [...new Set(rows.map(r => r.Type).filter(Boolean))].sort();
 
@@ -223,13 +260,10 @@ document.getElementById("typeSelect").addEventListener("change", function () {
   const type = this.value;
 
   const match = DATA.find(r => r.Concern === concern && r.Type === type);
+  if (!match) return;
 
-  if (!match) {
-    alert("Template not found. This usually means spacing mismatch in ODS.");
-    return;
-  }
-
-  document.getElementById("responseBox").value = match["Response Template"] || "";
+  const template = stripWrappingQuotes(match["Response Template"] || "");
+  document.getElementById("responseBox").value = template;
 
   const noteBox = document.getElementById("noteBox");
   if (match.Note) {
@@ -242,8 +276,27 @@ document.getElementById("typeSelect").addEventListener("change", function () {
 
 function copyResponse() {
   const text = document.getElementById("responseBox").value;
-  if (!text) return alert("No response to copy.");
-  navigator.clipboard.writeText(text).then(() => alert("Copied!"));
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => showToast("Response copied!"));
+}
+
+function copyEmailFormat() {
+  const concern = document.getElementById("concernSelect").value || "EBS Response";
+  const type = document.getElementById("typeSelect").value || "";
+  const body = document.getElementById("responseBox").value;
+
+  if (!body) return;
+
+  const emailText =
+`Subject: ${concern}${type ? " — " + type : ""}
+
+${body}
+
+--
+EBS Operations - Invoicing Solutions
+`;
+
+  navigator.clipboard.writeText(emailText).then(() => showToast("Email-ready copy!"));
 }
 </script>
 </body>
