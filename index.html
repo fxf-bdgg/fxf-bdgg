@@ -254,8 +254,7 @@ header img {
 }
 
 .card {
-  opacity: 0; /* start hidden */
-  transform: translateY(20px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* ---------- OPTIONAL SWOOSH BEHIND HEADER ---------- */
@@ -387,6 +386,69 @@ header::after {
 .btn:hover {
   background-color: #e55c00;
 }
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: #efefef;
+  border-radius: 4px;
+  overflow: hidden;
+  width: 70%;
+  max-width: 600px;
+  margin: 0 auto 28px auto;
+  height: 56px;
+}
+
+.search-left-accent {
+  width: 4px;
+  height: 100%;
+  background: #6b21a8; /* purple accent */
+}
+
+.search-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 0 20px; /* slightly more padding now */
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+  color: #1d4ed8; /* blue icon */
+  margin-right: 12px;
+}
+
+#guideSearch {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+  width: 100%;
+  color: #444;
+}
+
+.search-btn {
+  background: #ff6a00;
+  border: none;
+  width: 64px;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-btn svg {
+  width: 22px;
+  height: 22px;
+}
+#guideSearch::placeholder {
+  color: #9ca3af;   /* soft gray */
+  font-weight: 500;
+}
+
 </style>
 </head>
 
@@ -439,7 +501,32 @@ header::after {
   </div>
 </div>
 
-<div class="shell">
+
+<div class="search-bar">
+  <div class="search-left-accent"></div>
+
+  <div class="search-content">
+    <input 
+      type="text" 
+      id="guideSearch" 
+      placeholder="Find Guide..."
+      onkeyup="filterGuides()"
+    />
+  </div>
+
+  <button class="search-btn" onclick="filterGuides()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white">
+      <circle cx="11" cy="11" r="7"></circle>
+      <line x1="16.65" y1="16.65" x2="21" y2="21"></line>
+    </svg>
+  </button>
+</div>
+
+<p id="noResults" style="text-align:center; display:none; font-weight:600; color:#6b7280;">
+  No guides found.
+</p>
+
+<div class="shell" id="guideContainer">
 
   <div class="card">
     <h1>BD— General Guide</h1>
@@ -815,6 +902,59 @@ window.addEventListener('load', () => {
 
 document.getElementById("guideSearch").focus();
 
+//search
+const container = document.getElementById("guideContainer");
+const cards = Array.from(container.querySelectorAll(".card"));
+const originalOrder = [...cards];
+
+
+function filterGuides() {
+  const input = document.getElementById("guideSearch");
+  const filter = input.value.toLowerCase().trim();
+
+  if (filter === "") {
+    resetCards();
+    return;
+  }
+
+  let matches = [];
+  let nonMatches = [];
+
+  cards.forEach(card => {
+    const text = card.innerText.toLowerCase();
+    if (text.includes(filter)) {
+      matches.push(card);
+    } else {
+      nonMatches.push(card);
+    }
+  });
+  
+  document.getElementById("noResults").style.display =
+  matches.length === 0 ? "block" : "none";
+
+  container.innerHTML = "";
+
+  // Add matching cards FIRST (left side)
+  matches.forEach(card => {
+    card.style.display = "";
+    container.appendChild(card);
+  });
+
+  // Hide non-matching
+  nonMatches.forEach(card => {
+    card.style.display = "none";
+    container.appendChild(card);
+  });
+}
+
+function resetCards() {
+  container.innerHTML = "";
+
+  originalOrder.forEach(card => {
+    card.style.display = "";
+    container.appendChild(card);
+  });
+}
 
 </script>
 
@@ -824,6 +964,5 @@ document.getElementById("guideSearch").focus();
 
 </body>
 </html>
-
 
 
