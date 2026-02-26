@@ -144,6 +144,41 @@ footer{
 .calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
 .calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
 .calendar-grid .day:hover{background:#f0f0f0;}
+
+/* ---------- FED-EX ORANGE & PURPLE BANNER ---------- */
+.welcome-section {
+  background: linear-gradient(90deg, #4D148C 0%, #330d5e 50%, #FF6600 100%);
+  background-size: 200% 200%;
+  animation: fedexShimmer 15s ease infinite; /* slow shimmer */
+  color: white;
+  padding: 15px 30px;   /* compact height */
+  text-align: left;     /* left-aligned text */
+  margin-bottom: 20px;
+  box-shadow: 0 5px 15px rgba(77, 20, 140, 0.15); /* subtle shadow */
+  border-radius: 0;     /* straight edges */
+}
+
+/* Shimmer animation */
+@keyframes fedexShimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.welcome-content h1 {
+  font-size: 2rem;  /* compact heading */
+  margin-bottom: 6px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.welcome-content p {
+  font-size: 1rem;  /* smaller subtitle */
+  max-width: 600px;
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.5;
+}
 </style>
 </head>
 <body>
@@ -180,10 +215,16 @@ footer{
   <div class="calendar-grid" id="calendarGrid"></div>
 </div>
 
+
 <div class="main">
   <div class="message-box">
-    <h1 style="color:#4d148c;">Case Directory</h1>
+    <div class="welcome-section">
+  <div class="welcome-content">
+    <h1>Case Directory</h1>
     <p>Search for the correct department or queue to move the case.</p>
+  </div>
+</div>
+
 
     <input id="searchBox" placeholder="Search queue, concern, action, email, assignment...">
 
@@ -381,6 +422,5 @@ fetch("case-directory.xlsx")
 
 </body>
 </html>
-
 
 
