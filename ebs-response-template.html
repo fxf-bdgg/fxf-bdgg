@@ -54,7 +54,7 @@ header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
 .header-icon.active{color:var(--accent-dark);}
 
 /* ---------- HEADER ANIMATIONS ---------- */
-@keyframes logoFlyIn {0%{opacity:0;transform:translateX(-50px) scale(0.8);}100%{opacity:1;transform:translateX(0) scale(1);}}
+@keyframes logoFlyIn {0%{opacity:0;transform:translateX(-50px) scale(0.8);}100%{opacity:1;transform:translateX(0) scale(1);} }
 header::after{
   content:"";
   position:absolute; top:0; left:-100%;
@@ -80,7 +80,7 @@ header::after{
   border-radius:14px;
   box-shadow:0 10px 30px rgba(0,0,0,0.08);
   width:100%;
-  max-width:1800px;
+  max-width:1200px;
 }
 
 .select-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
@@ -197,7 +197,6 @@ textarea{min-height:180px;resize:vertical;}
       <select id="concernSelect">
         <option value="">Select Concern</option>
       </select>
-
       <select id="typeSelect" disabled>
         <option value="">Select Type</option>
       </select>
@@ -214,6 +213,7 @@ textarea{min-height:180px;resize:vertical;}
     <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
       <button class="btn" onclick="copyResponse()">✨ Copy Response</button>
       <a id="outlookLink" class="btn" target="_blank">✉️ Open in Outlook</a>
+      <a id="gmailLink" class="btn" target="_blank">✉️ Open in Gmail</a>
     </div>
 
     <div id="noteBox" class="note-box" style="display:none;"></div>
@@ -266,236 +266,166 @@ textarea{min-height:180px;resize:vertical;}
 <div id="toast"></div>
 
 <script>
-//this one is for the header
-// FIREBASE INIT
-const firebaseConfig = {
-  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
-  authDomain: "bdgg-database.firebaseapp.com",
-  projectId: "bdgg-database",
-  storageBucket: "bdgg-database.appspot.com",
-  messagingSenderId: "43574975434",
-  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+document.addEventListener("DOMContentLoaded", () => {
 
-// ---------- PHILIPPINE TIME ----------
-function getPhilippineNow(){return new Date(new Date().toLocaleString("en-PH",{timeZone:"Asia/Manila"}));}
+  // ---------- FIREBASE INIT ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+    authDomain: "bdgg-database.firebaseapp.com",
+    projectId: "bdgg-database",
+    storageBucket: "bdgg-database.appspot.com",
+    messagingSenderId: "43574975434",
+    appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-// CLOCK
-function updateHeaderClock(){
-  const now=getPhilippineNow();
-  document.getElementById('clockText').textContent = now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Manila'});
-  document.getElementById('fullTimeDisplay').textContent = now.toLocaleString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Manila'});
-}
-setInterval(updateHeaderClock,1000); updateHeaderClock();
-
-// CALENDAR
-let currentMonth=getPhilippineNow().getMonth();
-let currentYear=getPhilippineNow().getFullYear();
-const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
-function renderCalendar(y,m){
-  const grid=document.getElementById('calendarGrid');
-  grid.innerHTML="";
-  document.getElementById('monthYear').textContent=`${monthNames[m]} ${y}`;
-  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{const e=document.createElement('div'); e.className="day-name"; e.textContent=d; grid.appendChild(e);});
-  const firstDay=new Date(y,m,1).getDay();
-  for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
-  const daysInMonth=new Date(y,m+1,0).getDate();
-  const todayPHT=getPhilippineNow();
-  for(let d=1;d<=daysInMonth;d++){
-    const cell=document.createElement('div'); cell.className="day"; cell.textContent=d;
-    if(d===todayPHT.getDate() && m===todayPHT.getMonth() && y===todayPHT.getFullYear()) cell.classList.add('today');
-    grid.appendChild(cell);
+  // ---------- CLOCK ----------
+  function getPhilippineNow(){return new Date(new Date().toLocaleString("en-PH",{timeZone:"Asia/Manila"}));}
+  function updateHeaderClock(){
+    const now=getPhilippineNow();
+    document.getElementById('clockText').textContent = now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'Asia/Manila'});
+    document.getElementById('fullTimeDisplay').textContent = now.toLocaleString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true,month:'short',day:'numeric',year:'numeric',timeZone:'Asia/Manila'});
   }
-}
-document.getElementById('prevMonth').onclick=()=>{currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(currentYear,currentMonth);}
-document.getElementById('nextMonth').onclick=()=>{currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(currentYear,currentMonth);}
-document.getElementById('clockBtn').onclick=function(e){const popup=document.getElementById('timeCalendarPopup'); popup.style.display=popup.style.display==='block'?'none':'block'; renderCalendar(currentYear,currentMonth); e.stopPropagation();}
-document.addEventListener('click', function(event){const popup=document.getElementById('timeCalendarPopup'); const btn=document.getElementById('clockBtn'); if(popup.style.display==='block'&&!popup.contains(event.target)&&!btn.contains(event.target)){popup.style.display='none';}});
+  updateHeaderClock();
+  setInterval(updateHeaderClock, 1000);
 
-// HELP
-document.getElementById('helpIcon').onclick=(e)=>{document.getElementById('helpModal').style.display='flex'; e.stopPropagation();};
-function closeHelp(){document.getElementById('helpModal').style.display='none';}
-
-// FEEDBACK
-let selectedRating=0;
-document.querySelectorAll('.rating-star').forEach(star=>{star.onclick=function(ev){selectedRating=parseInt(this.dataset.value); document.querySelectorAll('.rating-star').forEach(s=>s.classList.toggle('selected',parseInt(s.dataset.value)<=selectedRating)); ev.stopPropagation();};});
-function sendComment(){const name=document.getElementById('commentName').value.trim(); const comment=document.getElementById('commentText').value.trim(); if(selectedRating===0){alert("Select a rating."); return;} db.collection("feedback").add({rating:selectedRating,name:name||"Anonymous",comment:comment,createdAt: firebase.firestore.FieldValue.serverTimestamp()}).then(()=>{alert("Saved!"); clearCommentForm();}).catch(()=>alert("Save failed."));}
-function clearCommentForm(){selectedRating=0; document.getElementById('commentName').value=""; document.getElementById('commentText').value=""; document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('selected'));}
-let unsubscribeListener=null;
-function showAllComments(){const listEl=document.getElementById('commentsList'); listEl.innerHTML="Loading…"; if(unsubscribeListener) unsubscribeListener(); unsubscribeListener=db.collection("feedback").orderBy("createdAt","desc").onSnapshot(snap=>{ listEl.innerHTML=""; if(snap.empty){ listEl.innerHTML="<p>No feedback yet.</p>";} snap.forEach(doc=>{const d=doc.data(); const div=document.createElement('div'); div.className="comment-list-item"; div.innerHTML=`<div class="stars">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</div><strong>${d.name}</strong><p>${d.comment}</p>`; listEl.appendChild(div);}); document.getElementById('allCommentsModal').style.display='flex';});}
-document.getElementById('commentIcon').onclick=function(e){clearCommentForm(); document.getElementById('commentModal').style.display='flex'; e.stopPropagation();};
-function closeComment(){clearCommentForm();document.getElementById('commentModal').style.display='none';}
-function closeAllComments(){document.getElementById('allCommentsModal').style.display='none';}
-
-
-//this the ebs respnse
-let DATA = [];
-
-function showToast(msg="Copied!") {
-  const toast = document.getElementById("toast");
-  toast.textContent = msg;
-  toast.style.opacity = "1";
-  toast.style.transform = "translateY(0)";
-  setTimeout(() => {
-    toast.style.opacity = "0";
-    toast.style.transform = "translateY(10px)";
-  }, 1400);
-}
-
-function stripWrappingQuotes(text) {
-  if (!text) return "";
-  if (
-    (text.startsWith('"') && text.endsWith('"')) ||
-    (text.startsWith("“") && text.endsWith("”"))
-  ) {
-    return text.slice(1, -1);
+  // ---------- CALENDAR ----------
+  let currentMonth=getPhilippineNow().getMonth();
+  let currentYear=getPhilippineNow().getFullYear();
+  const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function renderCalendar(y,m){
+    const grid=document.getElementById('calendarGrid');
+    grid.innerHTML="";
+    document.getElementById('monthYear').textContent=`${monthNames[m]} ${y}`;
+    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{const e=document.createElement('div'); e.className="day-name"; e.textContent=d; grid.appendChild(e);});
+    const firstDay=new Date(y,m,1).getDay();
+    for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
+    const daysInMonth=new Date(y,m+1,0).getDate();
+    const todayPHT=getPhilippineNow();
+    for(let d=1;d<=daysInMonth;d++){
+      const cell=document.createElement('div'); cell.className="day"; cell.textContent=d;
+      if(d===todayPHT.getDate() && m===todayPHT.getMonth() && y===todayPHT.getFullYear()) cell.classList.add('today');
+      grid.appendChild(cell);
+    }
   }
-  return text;
-}
 
-function normalizeRows(rows) {
-  let lastConcern = "";
-  let lastDesc = "";
+  document.getElementById('prevMonth').onclick=()=>{currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(currentYear,currentMonth);}
+  document.getElementById('nextMonth').onclick=()=>{currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(currentYear,currentMonth);}
+  document.getElementById('clockBtn').onclick=function(e){const popup=document.getElementById('timeCalendarPopup'); popup.style.display=popup.style.display==='block'?'none':'block'; renderCalendar(currentYear,currentMonth); e.stopPropagation();}
+  document.addEventListener('click', function(event){const popup=document.getElementById('timeCalendarPopup'); const btn=document.getElementById('clockBtn'); if(popup.style.display==='block'&&!popup.contains(event.target)&&!btn.contains(event.target)){popup.style.display='none';}});
 
-  return rows.map(r => {
-    r.Concern = (r.Concern || "").trim();
-    r.Description = (r.Description || "").trim();
-    r.Type = (r.Type || "").trim();
-    r["Response Template"] = r["Response Template"] || "";
-    r.Note = (r.Note || "").trim();
+  // ---------- HELP ----------
+  document.getElementById('helpIcon').onclick=(e)=>{document.getElementById('helpModal').style.display='flex'; e.stopPropagation();};
+  window.closeHelp=()=>{document.getElementById('helpModal').style.display='none';};
 
-    if (r.Concern) lastConcern = r.Concern;
-    else r.Concern = lastConcern;
-
-    if (r.Description) lastDesc = r.Description;
-    else r.Description = lastDesc;
-
-    return r;
+  // ---------- COMMENTS ----------
+  let selectedRating=0;
+  document.querySelectorAll('.rating-star').forEach(star=>{
+    star.onclick=function(ev){
+      selectedRating=parseInt(this.dataset.value);
+      document.querySelectorAll('.rating-star').forEach(s=>s.classList.toggle('selected',parseInt(s.dataset.value)<=selectedRating));
+      ev.stopPropagation();
+    };
   });
-}
+  window.sendComment=()=>{const name=document.getElementById('commentName').value.trim(); const comment=document.getElementById('commentText').value.trim(); if(selectedRating===0){alert("Select a rating."); return;} db.collection("feedback").add({rating:selectedRating,name:name||"Anonymous",comment:comment,createdAt: firebase.firestore.FieldValue.serverTimestamp()}).then(()=>{alert("Saved!"); clearCommentForm();}).catch(()=>alert("Save failed."));}
+  function clearCommentForm(){selectedRating=0; document.getElementById('commentName').value=""; document.getElementById('commentText').value=""; document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('selected'));}
+  let unsubscribeListener=null;
+  window.showAllComments=()=>{const listEl=document.getElementById('commentsList'); listEl.innerHTML="Loading…"; if(unsubscribeListener) unsubscribeListener(); unsubscribeListener=db.collection("feedback").orderBy("createdAt","desc").onSnapshot(snap=>{ listEl.innerHTML=""; if(snap.empty){ listEl.innerHTML="<p>No feedback yet.</p>";} snap.forEach(doc=>{const d=doc.data(); const div=document.createElement('div'); div.className="comment-list-item"; div.innerHTML=`<div class="stars">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</div><strong>${d.name}</strong><p>${d.comment}</p>`; listEl.appendChild(div);}); document.getElementById('allCommentsModal').style.display='flex';});}
+  document.getElementById('commentIcon').onclick=function(e){clearCommentForm(); document.getElementById('commentModal').style.display='flex'; e.stopPropagation();};
+  window.closeComment=()=>{clearCommentForm();document.getElementById('commentModal').style.display='none';}
+  window.closeAllComments=()=>{document.getElementById('allCommentsModal').style.display='none';}
 
-fetch("ebs-response.ods")
-  .then(res => res.arrayBuffer())
-  .then(buf => {
-    const wb = XLSX.read(buf, { type: "array" });
-    const sheet = wb.Sheets[wb.SheetNames[0]];
+  // ---------- EBS RESPONSE LOGIC ----------
+  let DATA = [];
+  function showToast(msg="Copied!") {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.style.opacity = "1";
+    toast.style.transform = "translateY(0)";
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(10px)";
+    }, 1400);
+  }
+  function stripWrappingQuotes(text){if(!text)return""; if((text.startsWith('"')&&text.endsWith('"'))||(text.startsWith("“")&&text.endsWith("”"))){return text.slice(1,-1);} return text;}
+  function normalizeRows(rows){let lastConcern="",lastDesc=""; return rows.map(r=>{r.Concern=(r.Concern||"").trim(); r.Description=(r.Description||"").trim(); r.Type=(r.Type||"").trim(); r["Response Template"]=r["Response Template"]||""; r.Note=(r.Note||"").trim(); if(r.Concern) lastConcern=r.Concern; else r.Concern=lastConcern; if(r.Description) lastDesc=r.Description; else r.Description=lastDesc; return r;}); }
 
-    const raw = XLSX.utils.sheet_to_json(sheet, {
-      defval: "",
-      header: ["Concern", "Description", "Type", "Response Template", "Note"],
-      range: 1
-    });
+  fetch("ebs-response.ods")
+    .then(res=>res.arrayBuffer())
+    .then(buf=>{
+      const wb=XLSX.read(buf,{type:"array"});
+      const sheet=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(sheet,{defval:"",header:["Concern","Description","Type","Response Template","Note"],range:1});
+      DATA=normalizeRows(raw);
+      const concerns=[...new Set(DATA.map(r=>r.Concern).filter(Boolean))].sort();
+      const concernSelect=document.getElementById("concernSelect");
+      concernSelect.innerHTML=`<option value="">Select Concern</option>`;
+      concerns.forEach(c=>{const opt=document.createElement("option"); opt.value=c; opt.textContent=c; concernSelect.appendChild(opt);});
+    })
+    .catch(err=>{console.error(err); alert("Failed to load ebs-response.ods");});
 
-    DATA = normalizeRows(raw);
+  function onConcernChange(){
+    const concern=this.value;
+    const typeSelect=document.getElementById("typeSelect");
+    const responseBox=document.getElementById("responseBox");
+    const noteBox=document.getElementById("noteBox");
+    const descBox=document.getElementById("descBox");
 
-    const concerns = [...new Set(DATA.map(r => r.Concern).filter(Boolean))].sort();
-    const concernSelect = document.getElementById("concernSelect");
+    typeSelect.innerHTML=`<option value="">Select Type</option>`;
+    responseBox.value="";
+    noteBox.style.display="none";
+    descBox.textContent="";
 
-    concernSelect.innerHTML = `<option value="">Select Concern</option>`;
-    concerns.forEach(c => {
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.textContent = c;
-      concernSelect.appendChild(opt);
-    });
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Failed to load ebs-response.ods");
-  });
-
-document.getElementById("concernSelect").addEventListener("change", function () {
-  const concern = this.value;
-  const typeSelect = document.getElementById("typeSelect");
-  const responseBox = document.getElementById("responseBox");
-  const noteBox = document.getElementById("noteBox");
-  const descBox = document.getElementById("descBox");
-
-  typeSelect.innerHTML = `<option value="">Select Type</option>`;
-  responseBox.value = "";
-  noteBox.style.display = "none";
-  descBox.textContent = "";
-
-  if (!concern) {
-    typeSelect.disabled = true;
+    if(!concern){typeSelect.disabled=true; updateEmailLinks(); return;}
+    const rows=DATA.filter(r=>r.Concern===concern);
+    descBox.textContent=rows[0]?.Description||"";
+    const types=[...new Set(rows.map(r=>r.Type).filter(Boolean))].sort();
+    types.forEach(t=>{const opt=document.createElement("option"); opt.value=t; opt.textContent=t; typeSelect.appendChild(opt);});
+    typeSelect.disabled=false;
     updateEmailLinks();
-    return;
   }
 
-  const rows = DATA.filter(r => r.Concern === concern);
-  descBox.textContent = rows[0]?.Description || "";
-
-  const types = [...new Set(rows.map(r => r.Type).filter(Boolean))].sort();
-  types.forEach(t => {
-    const opt = document.createElement("option");
-    opt.value = t;
-    opt.textContent = t;
-    typeSelect.appendChild(opt);
-  });
-
-  typeSelect.disabled = false;
-  updateEmailLinks();
-});
-
-document.getElementById("typeSelect").addEventListener("change", function () {
-  const concern = document.getElementById("concernSelect").value;
-  const type = this.value;
-
-  const match = DATA.find(r => r.Concern === concern && r.Type === type);
-  if (!match) return;
-
-  const template = stripWrappingQuotes(match["Response Template"] || "");
-  const formatted = formatEmailSpacing(template);
-
-  document.getElementById("responseBox").value = formatted;
-
-  const noteBox = document.getElementById("noteBox");
-  if (match.Note) {
-    noteBox.style.display = "block";
-    noteBox.textContent = "Note: " + match.Note;
-  } else {
-    noteBox.style.display = "none";
+  function onTypeChange(){
+    const concern=document.getElementById("concernSelect").value;
+    const type=this.value;
+    const match=DATA.find(r=>r.Concern===concern&&r.Type===type);
+    if(!match) return;
+    const template=stripWrappingQuotes(match["Response Template"]||"");
+    document.getElementById("responseBox").value=formatEmailSpacing(template);
+    const noteBox=document.getElementById("noteBox");
+    if(match.Note){ noteBox.style.display="block"; noteBox.textContent="Note: "+match.Note; } else noteBox.style.display="none";
+    updateEmailLinks();
   }
 
-  updateEmailLinks();
+  document.getElementById("concernSelect").addEventListener("change", onConcernChange);
+  document.getElementById("typeSelect").addEventListener("change", onTypeChange);
+
+  window.copyResponse=()=>{
+    const text=document.getElementById("responseBox").value;
+    if(!text) return;
+    navigator.clipboard.writeText(text).then(()=>showToast("Response copied!"));
+  }
+
+  function updateEmailLinks(){
+    const concern=document.getElementById("concernSelect").value||"EBS Response";
+    const type=document.getElementById("typeSelect").value||"";
+    const body=document.getElementById("responseBox").value||"";
+    const subject=encodeURIComponent(`${concern}${type?" — "+type:""}`);
+    const encodedBody=encodeURIComponent(body);
+    document.getElementById("gmailLink").href=`https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodedBody}`;
+    document.getElementById("outlookLink").href=`https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${encodedBody}`;
+  }
+
+  function formatEmailSpacing(text){
+    if(!text)return"";
+    let t=text.replace(/\r\n/g,"\n");
+    t=t.replace(/\n{2,}/g,"\n\n");
+    t=t.replace(/([^\n])\n([^\n])/g,"$1\n\n$2");
+    return t;
+  }
+
 });
-
-function copyResponse() {
-  const text = document.getElementById("responseBox").value;
-  if (!text) return;
-  navigator.clipboard.writeText(text).then(() => showToast("Response copied!"));
-}
-
-function updateEmailLinks() {
-  const concern = document.getElementById("concernSelect").value || "EBS Response";
-  const type = document.getElementById("typeSelect").value || "";
-  const body = document.getElementById("responseBox").value || "";
-
-  const subject = encodeURIComponent(`${concern}${type ? " — " + type : ""}`);
-  const encodedBody = encodeURIComponent(body);
-
-  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodedBody}`;
-  const outlook = `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${encodedBody}`;
-
-  document.getElementById("gmailLink").href = gmail;
-  document.getElementById("outlookLink").href = outlook;
-}
-</script>
-<script>
-function formatEmailSpacing(text) {
-  if (!text) return "";
-  // Normalize line endings
-  let t = text.replace(/\r\n/g, "\n");
-
-  // If there are single line breaks between paragraphs, expand them to double breaks
-  // This makes emails look like your ODS formatting (spaced paragraphs)
-  t = t.replace(/\n{2,}/g, "\n\n");      // collapse crazy spacing to 2
-  t = t.replace(/([^\n])\n([^\n])/g, "$1\n\n$2"); // ensure blank line between paragraphs
-
-  return t;
-}
 </script>
 </body>
 </html>
