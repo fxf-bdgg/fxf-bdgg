@@ -3,111 +3,206 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BD Tools — EBS Response Template</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>BD Tools — EBS Response</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
-body{font-family:sans-serif;background:#f4f7fb;margin:0;padding:0;}
-.main{padding:20px;max-width:1200px;margin:auto;}
-select{padding:8px;margin-right:10px;}
-.response-item{background:white;padding:15px;margin:10px 0;border-left:4px solid #4d148c;}
-.copy-btn{padding:5px 10px;margin-top:10px;cursor:pointer;}
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --muted:#64748b;
+  --accent:#4d148c;
+  --accent-dark:#3a0f6b;
+  font-family: Inter, ui-sans-serif, system-ui;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);min-height:100vh;display:flex;flex-direction:column;}
+
+header{
+  background:var(--accent);
+  color:white;
+  padding:16px 28px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.nav-tabs{display:flex;gap:30px;}
+.tab{color:white;text-decoration:none;font-weight:600;}
+.tab.active::after{content:"";display:block;height:3px;background:#ff6600;border-radius:3px;margin-top:4px;}
+
+.main{flex:1;padding:40px;display:flex;justify-content:center;}
+.message-box{
+  background:white;
+  padding:40px;
+  border-radius:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  width:100%;
+  max-width:1400px;
+}
+
+.select-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+select, textarea{
+  width:100%;
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  font-size:15px;
+}
+
+textarea{min-height:180px;resize:vertical;}
+
+.btn{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn:hover{background:var(--accent-dark);}
+
+.note-box{
+  margin-top:10px;
+  background:#f8fafc;
+  border-left:5px solid var(--accent);
+  padding:12px;
+  border-radius:6px;
+  color:#334155;
+  font-size:14px;
+}
+
+footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 </style>
 </head>
 <body>
+
+<header>
+  <div style="display:flex;gap:40px;align-items:center;">
+    <a href="index.html"><img src="fedex.png" style="height:40px"></a>
+    <nav class="nav-tabs">
+      <a href="index.html" class="tab">Home</a>
+      <a href="case-directory.html" class="tab">Case Directory</a>
+      <a href="ebs-response-template.html" class="tab active">EBS Response</a>
+    </nav>
+  </div>
+</header>
+
 <div class="main">
-<h2>EBS Response Template</h2>
+  <div class="message-box">
+    <h1 style="color:#4d148c;">EBS Response</h1>
+    <p>Select the concern and type to generate the correct response template.</p>
 
-<label>Concern:</label>
-<select id="concernSelect"><option value="">-- Choose Concern --</option></select>
+    <div class="select-row">
+      <select id="concernSelect">
+        <option value="">Select Concern</option>
+      </select>
 
-<label>Type:</label>
-<select id="typeSelect" disabled><option value="">-- All Types --</option></select>
+      <select id="typeSelect" disabled>
+        <option value="">Select Type</option>
+      </select>
+    </div>
 
-<div id="responseContainer"></div>
+    <label><strong>Response Template</strong></label>
+    <textarea id="responseBox" readonly></textarea>
+
+    <button class="btn" onclick="copyResponse()">
+      <i class="fa-regular fa-copy"></i> Copy Response
+    </button>
+
+    <div id="noteBox" class="note-box" style="display:none;"></div>
+  </div>
 </div>
 
+<footer>© 2025 EBS Operations</footer>
+
 <script>
-// ------------------- COPY BUTTON -------------------
-function copyToClipboard(btn){
-  const text = btn.previousElementSibling.textContent;
-  navigator.clipboard.writeText(text).then(()=>{btn.textContent='✓ Copied';setTimeout(()=>{btn.textContent='Copy Template';},1500);});
-}
+let DATA = [];
 
-// ------------------- DISPLAY TEMPLATES -------------------
-function displayTemplates(concern,type){
-  const container=document.getElementById('responseContainer');
-  container.innerHTML='';
-  if(!concern) return;
+fetch("ebs-response.ods")
+  .then(res => res.arrayBuffer())
+  .then(data => {
+    const workbook = XLSX.read(data, { type: "array" });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    DATA = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-  let templates = window.TEMPLATES.filter(t => t.Concern === concern);
-  if(type) templates = templates.filter(t => t.Type === type);
+    const concerns = [...new Set(DATA.map(r => r["Concern"]).filter(Boolean))].sort();
+    const concernSelect = document.getElementById("concernSelect");
 
-  if(templates.length===0){
-    container.textContent='No templates found.';
+    concerns.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      concernSelect.appendChild(opt);
+    });
+  })
+  .catch(err => {
+    alert("Failed to load ebs-response.ods");
+    console.error(err);
+  });
+
+document.getElementById("concernSelect").addEventListener("change", function () {
+  const concern = this.value;
+  const typeSelect = document.getElementById("typeSelect");
+  const responseBox = document.getElementById("responseBox");
+  const noteBox = document.getElementById("noteBox");
+
+  typeSelect.innerHTML = `<option value="">Select Type</option>`;
+  responseBox.value = "";
+  noteBox.style.display = "none";
+
+  if (!concern) {
+    typeSelect.disabled = true;
     return;
   }
 
-  templates.forEach(t=>{
-    const div=document.createElement('div');
-    div.className='response-item';
-    div.innerHTML=`<strong>Concern:</strong> ${t.Concern}<br>
-                   <strong>Type:</strong> ${t.Type || 'N/A'}<br>
-                   <div>${t['Response Template']}</div>
-                   <button class="copy-btn" onclick="copyToClipboard(this)">Copy Template</button>`;
-    container.appendChild(div);
-  });
-}
+  const types = DATA
+    .filter(r => r["Concern"] === concern)
+    .map(r => r["Type"])
+    .filter(Boolean);
 
-// ------------------- POPULATE CONCERN -------------------
-function populateConcerns(){
-  const select = document.getElementById('concernSelect');
-  const concerns = [...new Set(window.TEMPLATES.map(t => t.Concern).filter(Boolean))].sort();
-  concerns.forEach(c=>{
-    const opt=document.createElement('option');
-    opt.value=c; opt.textContent=c;
-    select.appendChild(opt);
-  });
-}
-
-// ------------------- POPULATE TYPE BASED ON CONCERN -------------------
-function populateTypes(concern){
-  const typeSelect = document.getElementById('typeSelect');
-  typeSelect.innerHTML='<option value="">-- All Types --</option>';
-  if(!concern){typeSelect.disabled=true; return;}
-  const types = [...new Set(window.TEMPLATES.filter(t => t.Concern === concern).map(t=>t.Type).filter(Boolean))].sort();
-  types.forEach(t=>{
-    const opt=document.createElement('option');
-    opt.value=t; opt.textContent=t;
+  [...new Set(types)].sort().forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
     typeSelect.appendChild(opt);
   });
-  typeSelect.disabled = types.length===0;
+
+  typeSelect.disabled = false;
+});
+
+document.getElementById("typeSelect").addEventListener("change", function () {
+  const concern = document.getElementById("concernSelect").value;
+  const type = this.value;
+
+  const match = DATA.find(r => r["Concern"] === concern && r["Type"] === type);
+
+  if (!match) {
+    document.getElementById("responseBox").value = "";
+    document.getElementById("noteBox").style.display = "none";
+    return;
+  }
+
+  document.getElementById("responseBox").value = match["Response Template"] || "";
+
+  if (match["Note"]) {
+    document.getElementById("noteBox").style.display = "block";
+    document.getElementById("noteBox").textContent = "Note: " + match["Note"];
+  } else {
+    document.getElementById("noteBox").style.display = "none";
+  }
+});
+
+function copyResponse() {
+  const text = document.getElementById("responseBox").value;
+  if (!text) return alert("No response to copy.");
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Response copied!");
+  });
 }
-
-// ------------------- EVENT LISTENERS -------------------
-document.getElementById('concernSelect').addEventListener('change', e => {
-  const concern = e.target.value;
-  populateTypes(concern);
-  displayTemplates(concern,'');
-});
-
-document.getElementById('typeSelect').addEventListener('change', e => {
-  const concern = document.getElementById('concernSelect').value;
-  const type = e.target.value;
-  displayTemplates(concern,type);
-});
-
-// ------------------- LOAD ODS -------------------
-fetch("ebs-response.ods")
-.then(res => res.arrayBuffer())
-.then(data => {
-  const wb = XLSX.read(data,{type:'array'});
-  const sheet = wb.Sheets[wb.SheetNames[0]];
-  window.TEMPLATES = XLSX.utils.sheet_to_json(sheet,{defval:""});
-  populateConcerns();
-})
-.catch(err=>{
-  document.getElementById('responseContainer').textContent='Error loading ODS: '+err.message;
-});
 </script>
+
 </body>
 </html>
