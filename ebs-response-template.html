@@ -77,16 +77,140 @@ textarea{min-height:180px;resize:vertical;}
 footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 
 /* ---------- POPUPS ---------- */
-.modal {display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); justify-content:center; align-items:center; padding:20px; z-index:1000;}
-.modal-content{background:white; border-radius:10px; padding:24px; width:100%; max-width:500px; box-shadow:0 10px 30px rgba(0,0,0,0.2);}
-.modal-header{display:flex; justify-content:space-between; align-items:center; font-size:20px; font-weight:700; margin-bottom:12px;}
-.modal-close{font-size:22px; cursor:pointer; color:var(--muted);}
-.modal-close:hover{color:var(--accent);}
+/* =========================
+   PROFESSIONAL MODALS
+========================= */
 
-.comment-modal-footer{display:flex; justify-content:space-between; align-items:center; margin-top:12px;}
-.link-text{color:var(--accent-dark); cursor:pointer; text-decoration:underline; font-size:14px; display:block; margin-top:10px;}
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,0.55);
+  backdrop-filter:blur(6px);
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  z-index:2000;
+  animation:fadeIn .25s ease;
+}
 
-#timeCalendarPopup{display:none; position:absolute; top:60px; right:20px; background:white; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.25); padding:16px; width:310px; z-index:900;}
+@keyframes fadeIn{
+  from{opacity:0;}
+  to{opacity:1;}
+}
+
+.modal-content{
+  background:#ffffff;
+  border-radius:18px;
+  padding:28px;
+  width:100%;
+  max-width:520px;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(255,255,255,0.4) inset;
+  animation:modalSlide .3s cubic-bezier(.22,1,.36,1);
+  position:relative;
+}
+.modal-content input,
+.modal-content textarea{
+  color:#1e293b !important;
+  background:#ffffff !important;
+  caret-color:#4d148c !important;
+}
+
+@keyframes modalSlide{
+  from{
+    transform:translateY(20px) scale(.96);
+    opacity:0;
+  }
+  to{
+    transform:translateY(0) scale(1);
+    opacity:1;
+  }
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:20px;
+  font-weight:700;
+  margin-bottom:20px;
+  color:var(--accent-dark);
+}
+
+.modal-close{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  background:#f1f5f9;
+  transition:.2s ease;
+  font-size:18px;
+}
+
+.modal-close:hover{
+  background:#e2e8f0;
+  transform:rotate(90deg);
+}
+
+
+/* Inputs inside modal */
+.modal-content input,
+.modal-content textarea{
+  width:100%;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid #e2e8f0;
+  font-size:14px;
+  margin-top:12px;
+  transition:border .2s, box-shadow .2s;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(77,20,140,0.15);
+}
+
+/* Footer layout */
+.comment-modal-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:18px;
+}
+
+/* View comments link */
+.link-text{
+  color:var(--accent);
+  cursor:pointer;
+  font-size:14px;
+  font-weight:500;
+  transition:.2s;
+}
+
+.link-text:hover{
+  opacity:.7;
+  text-decoration:underline;
+}
+
+#timeCalendarPopup{
+  display:none;
+  position:fixed;     /* CHANGE THIS */
+  top:70px;           /* adjust slightly */
+  right:20px;
+  background:white;
+  border-radius:8px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  padding:16px;
+  width:310px;
+  z-index:9999;       /* INCREASE THIS */
+}
 #timeCalendarPopup h3{margin:0;text-align:center;font-size:18px;color:var(--accent-dark); margin-bottom:8px;}
 .calendar-header{display:flex; justify-content:space-between; align-items:center; background:#f0f0f0; padding:8px; border-radius:6px;}
 .calendar-header span{cursor:pointer;color:var(--accent-dark); font-weight:600;}
@@ -96,6 +220,8 @@ footer{background:var(--accent);color:white;padding:16px;text-align:center;}
 .calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
 .calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
 .calendar-grid .day:hover{background:#f0f0f0;}
+
+
 
 /* ---------- HEADER ---------- */
 header{
@@ -244,6 +370,42 @@ line-height:1.5;
   line-height:1.5;
 }
 
+/* =========================
+   STAR RATING UPGRADED
+========================= */
+
+.rating-container{
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin-top:10px;
+  margin-bottom:8px;
+}
+
+.rating-star{
+  cursor:pointer;
+  font-size:30px;
+  color:#e2e8f0;
+  transition:
+    transform .2s ease,
+    color .25s ease;
+}
+
+.rating-star:hover{
+  transform:scale(1.25);
+}
+
+.rating-star.selected{
+  color:#FF6600;
+  animation:starPop .3s ease;
+}
+
+@keyframes starPop{
+  0%{transform:scale(.6);}
+  60%{transform:scale(1.4);}
+  100%{transform:scale(1);}
+}
+
 </style>
 </head>
 <body>
@@ -372,10 +534,40 @@ line-height:1.5;
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
+<!-- TIME & CALENDAR POPUP -->
+<div id="timeCalendarPopup">
+  <h3 id="calendarTitle"></h3>
+
+  <div class="calendar-header">
+    <span id="prevMonth">◀</span>
+    <span class="calendar-title" id="monthYear"></span>
+    <span id="nextMonth">▶</span>
+  </div>
+
+  <div class="calendar-grid" id="calendarGrid"></div>
+</div>
+
 <script>
 
+/* =========================
+   FIREBASE INIT (FIRST)
+========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.appspot.com",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 
+/* =========================
+   EBS DATA LOADING
+========================= */
 
 let DATA = [];
 
@@ -508,11 +700,44 @@ document.getElementById("typeSelect").addEventListener("change", function () {
   updateEmailLinks();
 });
 
+
+document.getElementById("typeSelect").addEventListener("change", function () {
+  const concern = document.getElementById("concernSelect").value;
+  const type = this.value;
+
+  const match = DATA.find(r => r.Concern === concern && r.Type === type);
+  if (!match) return;
+
+  const template = stripWrappingQuotes(match["Response Template"] || "");
+  document.getElementById("responseBox").value = formatEmailSpacing(template);
+
+  const noteBox = document.getElementById("noteBox");
+  if (match.Note) {
+    noteBox.style.display = "block";
+    noteBox.textContent = "Note: " + match.Note;
+  } else {
+    noteBox.style.display = "none";
+  }
+
+  updateEmailLinks();
+});
+
+
+function formatEmailSpacing(text) {
+  if (!text) return "";
+  let t = text.replace(/\r\n/g, "\n");
+  t = t.replace(/\n{2,}/g, "\n\n");
+  t = t.replace(/([^\n])\n([^\n])/g, "$1\n\n$2");
+  return t;
+}
+
+
 function copyResponse() {
   const text = document.getElementById("responseBox").value;
   if (!text) return;
-  navigator.clipboard.writeText(text).then(() => showToast("Response copied!"));
+  navigator.clipboard.writeText(text);
 }
+
 
 function updateEmailLinks() {
   const concern = document.getElementById("concernSelect").value || "EBS Response";
@@ -522,149 +747,201 @@ function updateEmailLinks() {
   const subject = encodeURIComponent(`${concern}${type ? " — " + type : ""}`);
   const encodedBody = encodeURIComponent(body);
 
-  const gmail = `https://mail.google.com/mail/?view=cm&fs=1&su=${subject}&body=${encodedBody}`;
   const outlook = `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${encodedBody}`;
-
-  document.getElementById("gmailLink").href = gmail;
   document.getElementById("outlookLink").href = outlook;
 }
-</script>
-<script>
-function formatEmailSpacing(text) {
-  if (!text) return "";
-  // Normalize line endings
-  let t = text.replace(/\r\n/g, "\n");
 
-  // If there are single line breaks between paragraphs, expand them to double breaks
-  // This makes emails look like your ODS formatting (spaced paragraphs)
-  t = t.replace(/\n{2,}/g, "\n\n");      // collapse crazy spacing to 2
-  t = t.replace(/([^\n])\n([^\n])/g, "$1\n\n$2"); // ensure blank line between paragraphs
 
-  return t;
+/* =========================
+   CLOCK & CALENDAR
+========================= */
+/* =========================
+   CALENDAR LOGIC
+========================= */
+function getPHTime(){
+  const now = new Date();
+  return new Date(now.toLocaleString("en-US", { timeZone: "Asia/Manila" }));
 }
-</script>
-<script>
-// wait until DOM is fully loaded
-document.addEventListener("DOMContentLoaded", function() {
 
-  // ---------- CLOCK ----------
-  const clockBtn = document.getElementById("clockBtn");
-  const clockText = document.getElementById("clockText");
-  const timeCalendarPopup = document.getElementById("timeCalendarPopup");
-  const fullTimeDisplay = document.getElementById("fullTimeDisplay");
-
-  function updateClock() {
-    const now = new Date(new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" }));
-    if(clockText) clockText.textContent = now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true});
-    if(fullTimeDisplay) fullTimeDisplay.textContent = now.toLocaleString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true, month:'short', day:'numeric', year:'numeric'});
-  }
-
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // ---------- CALENDAR ----------
-  let currentMonth = new Date().getMonth();
-  let currentYear = new Date().getFullYear();
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-  function renderCalendar(y, m){
-    const grid = document.querySelector("#calendarGrid");
-    if(!grid) return;
-    grid.innerHTML="";
-    document.querySelector("#monthYear").textContent = `${monthNames[m]} ${y}`;
-
-    ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
-      const el = document.createElement("div");
-      el.className="day-name";
-      el.textContent=d;
-      grid.appendChild(el);
-    });
-
-    const firstDay = new Date(y,m,1).getDay();
-    for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement("div"));
-
-    const daysInMonth = new Date(y,m+1,0).getDate();
-    const today = new Date(new Date().toLocaleString("en-PH",{timeZone:"Asia/Manila"}));
-    for(let d=1; d<=daysInMonth; d++){
-      const cell = document.createElement("div");
-      cell.className="day";
-      cell.textContent = d;
-      if(d===today.getDate() && m===today.getMonth() && y===today.getFullYear()) cell.classList.add("today");
-      grid.appendChild(cell);
-    }
-  }
-
-  if(document.querySelector("#prevMonth"))
-    document.querySelector("#prevMonth").onclick = () => {
-      currentMonth--;
-      if(currentMonth<0){ currentMonth=11; currentYear--; }
-      renderCalendar(currentYear, currentMonth);
-    }
-
-  if(document.querySelector("#nextMonth"))
-    document.querySelector("#nextMonth").onclick = () => {
-      currentMonth++;
-      if(currentMonth>11){ currentMonth=0; currentYear++; }
-      renderCalendar(currentYear, currentMonth);
-    }
-
-  if(clockBtn){
-    clockBtn.onclick = (e)=>{
-      if(timeCalendarPopup){
-        timeCalendarPopup.style.display = timeCalendarPopup.style.display==="block" ? "none":"block";
-        renderCalendar(currentYear, currentMonth);
-        e.stopPropagation();
-      }
-    }
-  }
-
-  document.addEventListener("click", function(event){
-    if(timeCalendarPopup && clockBtn){
-      if(timeCalendarPopup.style.display==="block" && !timeCalendarPopup.contains(event.target) && !clockBtn.contains(event.target)){
-        timeCalendarPopup.style.display="none";
-      }
-    }
+function updateClock(){
+  const now = getPHTime();
+  const timeStr = now.toLocaleTimeString("en-PH", {
+    hour: "2-digit",
+    minute: "2-digit"
   });
+  document.getElementById("clockText").textContent = timeStr;
+}
 
-  // ---------- HELP MODAL ----------
-  const helpModal = document.getElementById("helpModal");
-  const commentModal = document.getElementById("commentModal");
-  const allCommentsModal = document.getElementById("allCommentsModal");
+setInterval(updateClock, 1000);
+updateClock();
 
-  document.getElementById("helpIcon")?.addEventListener("click", ()=>{ if(helpModal) helpModal.style.display="flex"; });
-  document.getElementById("commentIcon")?.addEventListener("click", ()=>{ if(commentModal) commentModal.style.display="flex"; });
+const clockBtn = document.getElementById("clockBtn");
+const calendarPopup = document.getElementById("timeCalendarPopup");
+const calendarGrid = document.getElementById("calendarGrid");
+const monthYear = document.getElementById("monthYear");
 
-  window.closeHelp = function(){ if(helpModal) helpModal.style.display="none"; }
-  window.closeComment = function(){ if(commentModal) commentModal.style.display="none"; }
-  window.closeAllComments = function(){ if(allCommentsModal) allCommentsModal.style.display="none"; }
+let currentDate = getPHTime();
 
-  // prevent modal clicks from closing
-  [helpModal, commentModal, allCommentsModal].forEach(modal=>{
-    if(modal){
-      modal.addEventListener("click", ()=>{ modal.style.display="none"; });
-      modal.querySelector(".modal-content")?.addEventListener("click", e=>e.stopPropagation());
-    }
-  });
+clockBtn.onclick = function(e){
+  e.stopPropagation();
+  calendarPopup.style.display =
+    calendarPopup.style.display === "block" ? "none" : "block";
+  renderCalendar(currentDate);
+};
 
-  // ---------- FIREBASE ----------
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MSG_ID",
-    appId: "YOUR_APP_ID"
-  };
-
-  if(firebase?.initializeApp){
-    firebase.initializeApp(firebaseConfig);
-    window.db = firebase.firestore();
-  }
-
+document.addEventListener("click", function(){
+  calendarPopup.style.display = "none";
 });
+
+document.getElementById("prevMonth").onclick = function(e){
+  e.stopPropagation();
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar(currentDate);
+};
+
+document.getElementById("nextMonth").onclick = function(e){
+  e.stopPropagation();
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar(currentDate);
+};
+
+function renderCalendar(date){
+  calendarGrid.innerHTML = "";
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  monthYear.textContent =
+    date.toLocaleString("en-PH", { month: "long", year: "numeric" });
+
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  dayNames.forEach(d=>{
+    const el = document.createElement("div");
+    el.className="day-name";
+    el.textContent=d;
+    calendarGrid.appendChild(el);
+  });
+
+  for(let i=0;i<firstDay;i++){
+    const empty=document.createElement("div");
+    calendarGrid.appendChild(empty);
+  }
+
+  const today = getPHTime();
+
+  for(let d=1; d<=daysInMonth; d++){
+    const day=document.createElement("div");
+    day.className="day";
+    day.textContent=d;
+
+    if(
+      d===today.getDate() &&
+      month===today.getMonth() &&
+      year===today.getFullYear()
+    ){
+      day.classList.add("today");
+    }
+
+    calendarGrid.appendChild(day);
+  }
+}
+/* =========================
+   MODALS
+========================= */
+
+document.getElementById("helpIcon").onclick = () =>
+  document.getElementById("helpModal").style.display = "flex";
+
+document.getElementById("commentIcon").onclick = () => {
+  clearCommentForm();
+  document.getElementById("commentModal").style.display = "flex";
+};
+
+function closeHelp(){document.getElementById("helpModal").style.display="none";}
+function closeComment(){document.getElementById("commentModal").style.display="none";}
+function closeAllComments(){document.getElementById("allCommentsModal").style.display="none";}
+
+
+/* =========================
+   FEEDBACK SYSTEM
+========================= */
+
+let selectedRating = 0;
+
+document.querySelectorAll('.rating-star').forEach(star=>{
+  star.onclick=function(){
+    selectedRating=parseInt(this.dataset.value);
+    document.querySelectorAll('.rating-star').forEach(s=>
+      s.classList.toggle('selected', parseInt(s.dataset.value)<=selectedRating)
+    );
+  };
+});
+
+
+function sendComment(){
+  const name = document.getElementById('commentName').value.trim();
+  const comment = document.getElementById('commentText').value.trim();
+
+  if(selectedRating===0){
+    alert("Select a rating.");
+    return;
+  }
+
+  db.collection("feedback").add({
+    rating:selectedRating,
+    name:name||"Anonymous",
+    comment:comment,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    alert("Saved!");
+    clearCommentForm();
+  }).catch(()=>alert("Save failed."));
+}
+
+
+function clearCommentForm(){
+  selectedRating=0;
+  document.getElementById('commentName').value="";
+  document.getElementById('commentText').value="";
+  document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('selected'));
+}
+
+
+let unsubscribeListener=null;
+
+function showAllComments(){
+  const listEl=document.getElementById('commentsList');
+  listEl.innerHTML="Loading…";
+
+  if(unsubscribeListener) unsubscribeListener();
+
+  unsubscribeListener=db.collection("feedback")
+    .orderBy("createdAt","desc")
+    .onSnapshot(snap=>{
+      listEl.innerHTML="";
+      if(snap.empty){
+        listEl.innerHTML="<p>No feedback yet.</p>";
+      }
+      snap.forEach(doc=>{
+        const d=doc.data();
+        const div=document.createElement('div');
+        div.className="comment-list-item";
+        div.innerHTML=`
+          <div class="stars">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</div>
+          <strong>${d.name}</strong>
+          <p>${d.comment}</p>
+        `;
+        listEl.appendChild(div);
+      });
+      document.getElementById('allCommentsModal').style.display='flex';
+    });
+}
+
 </script>
 
 
 </body>
 </html>
-
