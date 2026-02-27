@@ -60,6 +60,10 @@ header{position:relative;overflow:hidden}
 header::after{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(120deg,#4d148c,#ff6600,#4d148c);transform:skewX(-20deg);animation:sweep 1s ease-out forwards;opacity:.2}
 @keyframes sweep{to{left:100%}}
 @media(max-width:1200px){.container{grid-template-columns:1fr}}
+.edit-icon{cursor:pointer;font-size:14px;margin-left:6px;color:var(--accent)}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:1000}
+.modal-content{background:#fff;padding:25px;border-radius:12px;min-width:500px;max-width:600px}
+textarea{resize:none;width:100%;min-height:120px;padding:10px;border-radius:8px;border:1px solid #d1d5db;margin-top:10px}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -101,18 +105,19 @@ header::after{content:"";position:absolute;top:0;left:-100%;width:100%;height:10
     <div class="node"><strong>Recommended Action</strong><div id="recommendation" class="result">No recommendation yet.</div></div>
   </div>
 
-  <div class="card" id="suggestedPanel" style="display:none;">
+   <div class="card" id="suggestedPanel" style="display:none;">
     <div class="output-card">
-      <div class="output-header">Suggested Comment</div>
+      <div class="output-header">Suggested Comment <span class="edit-icon" onclick="attemptEdit('comment')">✏️</span></div>
       <div id="suggestedComment" class="output-box"></div>
     </div>
     <div class="output-card">
-      <div class="output-header">Possible CORR CODE</div>
+      <div class="output-header">Possible CORR CODE <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span></div>
       <div id="suggestedCorrCode" class="output-box"></div>
     </div>
     <div class="output-card">
-      <div class="output-header">Suggested Email</div>
+      <div class="output-header">Suggested Email <span class="edit-icon" onclick="attemptEdit('email')">✏️</span></div>
       <div id="suggestedEmail" class="output-box"></div>
+      <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
     </div>
   </div>
 </div>
@@ -488,7 +493,110 @@ window.addEventListener('load',()=>{
     c.style.animationDelay=`${1+i*.15}s`;
   });
 });
-</script>
 
+let currentEditType="";
+
+function attemptEdit(type){
+  currentEditType=type;
+  document.getElementById("passwordModal").style.display="flex";
+}
+
+function closePasswordModal(){
+  document.getElementById("passwordModal").style.display="none";
+}
+
+function checkPassword(){
+  if(document.getElementById("adminPassword").value==="admin"){
+    closePasswordModal();
+    openEditModal();
+  }else{
+    alert("Incorrect password");
+  }
+}
+
+function openEditModal(){
+  const map={
+    comment:"suggestedComment",
+    email:"suggestedEmail",
+    corr:"suggestedCorrCode"
+  };
+
+  document.getElementById("editTextarea").value=
+    document.getElementById(map[currentEditType]).innerText;
+
+  document.getElementById("modalTitle").innerText=
+    "Edit "+currentEditType.toUpperCase();
+
+  document.getElementById("editModal").style.display="flex";
+}
+
+function closeEditModal(){
+  document.getElementById("editModal").style.display="none";
+}
+
+async function saveEdit(){
+  const textarea = document.getElementById("editTextarea");
+  const saveBtn = document.querySelector("#editModal button");
+  const val = textarea.value.trim();
+
+  if(!val){
+    alert("Cannot save empty text");
+    return;
+  }
+
+  try{
+    // Show saving state
+    saveBtn.disabled = true;
+    const originalText = saveBtn.innerText;
+    saveBtn.innerText = "Saving...";
+
+    const ref = db.collection(COLLECTION)
+      .doc(getDocId(currentFinalRecommendation,currentEditType));
+
+    await ref.set({text:val,type:currentEditType});
+
+    // Update UI immediately
+    document.getElementById(
+      currentEditType==="comment"?"suggestedComment":
+      currentEditType==="email"?"suggestedEmail":"suggestedCorrCode"
+    ).innerText = val;
+
+    // Restore button
+    saveBtn.innerText = originalText;
+    saveBtn.disabled = false;
+
+    closeEditModal();
+    alert("Changes saved successfully.");
+
+  } catch(error){
+    console.error("Save failed:", error);
+    alert("Error saving changes. Please try again.");
+    saveBtn.disabled = false;
+    saveBtn.innerText = "Save";
+  }
+}
+
+</script>
+<div id="passwordModal" class="modal">
+  <div class="modal-content">
+    <h3>Enter Password</h3>
+    <input type="password" id="adminPassword" placeholder="Password">
+    <div style="margin-top:15px;text-align:right;">
+      <button onclick="checkPassword()">Submit</button>
+      <button onclick="closePasswordModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle"></h3>
+    <textarea id="editTextarea"></textarea>
+    <div style="margin-top:15px;text-align:right;">
+      <button onclick="saveEdit()">Save</button>
+      <button onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
