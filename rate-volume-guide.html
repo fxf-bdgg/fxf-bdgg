@@ -524,22 +524,46 @@ function closeEditModal(){
 }
 
 async function saveEdit(){
-  const val=document.getElementById("editTextarea").value.trim();
-  if(!val) return alert("Cannot save empty text");
+  const textarea = document.getElementById("editTextarea");
+  const saveBtn = document.querySelector("#editModal button");
+  const val = textarea.value.trim();
 
-  const ref=db.collection(COLLECTION)
-    .doc(getDocId(currentFinalRecommendation,currentEditType));
+  if(!val){
+    alert("Cannot save empty text");
+    return;
+  }
 
-  await ref.set({text:val,type:currentEditType});
+  try{
+    // Show saving state
+    saveBtn.disabled = true;
+    const originalText = saveBtn.innerText;
+    saveBtn.innerText = "Saving...";
 
-  document.getElementById(
-    currentEditType==="comment"?"suggestedComment":
-    currentEditType==="email"?"suggestedEmail":"suggestedCorrCode"
-  ).innerText=val;
+    const ref = db.collection(COLLECTION)
+      .doc(getDocId(currentFinalRecommendation,currentEditType));
 
-  closeEditModal();
+    await ref.set({text:val,type:currentEditType});
+
+    // Update UI immediately
+    document.getElementById(
+      currentEditType==="comment"?"suggestedComment":
+      currentEditType==="email"?"suggestedEmail":"suggestedCorrCode"
+    ).innerText = val;
+
+    // Restore button
+    saveBtn.innerText = originalText;
+    saveBtn.disabled = false;
+
+    closeEditModal();
+    alert("Changes saved successfully.");
+
+  } catch(error){
+    console.error("Save failed:", error);
+    alert("Error saving changes. Please try again.");
+    saveBtn.disabled = false;
+    saveBtn.innerText = "Save";
+  }
 }
-
 </script>
 <div id="passwordModal" class="modal">
   <div class="modal-content">
