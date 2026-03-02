@@ -1,0 +1,50 @@
+body {
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#f1f5f9;
+}
+
+/* HEADER */
+.top-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 30px;
+  background:#0f172a;
+  color:white;
+}
+
+.logo {
+  font-size:18px;
+  font-weight:600;
+}
+
+.top-header button {
+  background:#1e293b;
+  border:none;
+  color:white;
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+.top-header button:hover {
+  background:#334155;
+}
+
+/* MODAL */
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  justify-content:center;
+  align-items:center;
+}
+
+.modal-content {
+  background:white;
+  padding:30px;
+  border-radius:10px;
+  width:400px;
+}
