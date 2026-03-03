@@ -1,13 +1,13 @@
-// Wait until page is ready
 document.addEventListener("DOMContentLoaded", function () {
 
-  // Load header
+  // Load header first
   fetch("header.html")
     .then(res => res.text())
     .then(data => {
       document.getElementById("header-container").innerHTML = data;
+      startClock();
       highlightActiveTab();
-      updateTime();
+      attachHeaderEvents();
     });
 
   // Load modals
@@ -17,7 +17,9 @@ document.addEventListener("DOMContentLoaded", function () {
       document.body.insertAdjacentHTML("beforeend", data);
     });
 
-  // Clock
+});
+
+function startClock() {
   function updateTime() {
     const now = new Date();
     const el = document.getElementById("clockText");
@@ -25,42 +27,36 @@ document.addEventListener("DOMContentLoaded", function () {
       el.innerText = now.toLocaleTimeString();
     }
   }
-
+  updateTime();
   setInterval(updateTime, 1000);
+}
 
-  // Active tab
-  function highlightActiveTab() {
-    const currentPage = window.location.pathname.split("/").pop();
+function highlightActiveTab() {
+  const currentPage = window.location.pathname.split("/").pop();
+  document.querySelectorAll(".nav-tabs .tab").forEach(link => {
+    if (link.getAttribute("href") === currentPage) {
+      link.classList.add("active");
+    }
+  });
+}
 
-    document.querySelectorAll(".nav-tabs .tab").forEach(link => {
-      if (link.getAttribute("href") === currentPage) {
-        link.classList.add("active");
-      }
+function attachHeaderEvents() {
+  const helpIcon = document.getElementById("helpIcon");
+  const commentIcon = document.getElementById("commentIcon");
+
+  if (helpIcon) {
+    helpIcon.addEventListener("click", () => {
+      const modal = document.getElementById("helpModal");
+      if (modal) modal.style.display = "flex";
     });
   }
 
-  // Click handlers
-  document.addEventListener("click", function(e) {
-    if (e.target.closest("#helpIcon")) {
-      openHelp();
-    }
-
-    if (e.target.closest("#commentIcon")) {
-      openFeedback();
-    }
-  });
-
-});
-
-// Modal functions
-function openHelp() {
-  const modal = document.getElementById("helpModal");
-  if (modal) modal.style.display = "flex";
-}
-
-function openFeedback() {
-  const modal = document.getElementById("feedbackModal");
-  if (modal) modal.style.display = "flex";
+  if (commentIcon) {
+    commentIcon.addEventListener("click", () => {
+      const modal = document.getElementById("feedbackModal");
+      if (modal) modal.style.display = "flex";
+    });
+  }
 }
 
 function closeModal(id) {
