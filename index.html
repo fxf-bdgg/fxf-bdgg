@@ -449,6 +449,26 @@ header::after {
   font-weight: 500;
 }
 
+/*pop up time style*/
+/* POPUP TIME STYLE (Windows-like) */
+.popup-time{
+  font-size:34px;
+  font-weight:600;
+  text-align:left;
+  margin-bottom:4px;
+  color:#111;
+}
+
+#timeCalendarPopup {
+  background:white;}
+
+.popup-date{
+  font-size:14px;
+  color:#555;
+  margin-bottom:14px;
+  text-align:left;
+}
+
 </style>
 </head>
 
@@ -485,13 +505,18 @@ header::after {
 
 
 <div id="timeCalendarPopup">
-  <h3 id="fullTimeDisplay">--:--:-- — --/--/----</h3>
+
+  <div class="popup-time" id="popupTime"></div>
+  <div class="popup-date" id="popupDate"></div>
+
   <div class="calendar-header">
-    <span id="prevMonth">&lt;</span>
-    <span class="calendar-title" id="monthYear"></span>
-    <span id="nextMonth">&gt;</span>
+    <span id="prevMonth">‹</span>
+    <div id="monthYear" class="calendar-title"></div>
+    <span id="nextMonth">›</span>
   </div>
+
   <div class="calendar-grid" id="calendarGrid"></div>
+
 </div>
 
 
@@ -730,122 +755,129 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ---------- PHILIPPINE TIME UTILITY ----------
-function getPhilippineNow() {
-  // Use Intl API to get a Date object in PHT
-  const nowStr = new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" });
-  return new Date(nowStr);
-}
+
 
 // ---------- HEADER CLOCK ----------
-function updateHeaderClock(){
-  const now = getPhilippineNow();
+function updateClock(){
+  const now = new Date();
 
-  // Clock display (HH:MM AM/PM)
-  document.getElementById('clockText').textContent =
-    now.toLocaleTimeString('en-PH', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'Asia/Manila'
-    });
+  // HEADER TIME (Hour + Minute only)
+  const headerTime = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).format(now);
 
-  // Full display with seconds and date
-  document.getElementById('fullTimeDisplay').textContent =
-    now.toLocaleString('en-PH', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      timeZone: 'Asia/Manila'
-    });
+  // POPUP TIME (Hour + Minute + Second)
+  const popupTime = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  }).format(now);
+
+  const popupDate = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  }).format(now);
+
+  // Update header
+  document.getElementById("clockText").textContent = headerTime;
+
+  // Update popup
+  document.getElementById("popupTime").textContent = popupTime;
+  document.getElementById("popupDate").textContent = popupDate;
 }
-setInterval(updateHeaderClock, 1000);
-updateHeaderClock();
+// START CLOCK
+updateClock();
+setInterval(updateClock, 1000);
 
-// ---------- CALENDAR ----------
-let phNow = getPhilippineNow();
-let currentMonth = phNow.getMonth();
-let currentYear = phNow.getFullYear();
 
-const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const clockBtn = document.getElementById("clockBtn");
+const calendarPopup = document.getElementById("timeCalendarPopup");
+const calendarGrid = document.getElementById("calendarGrid");
+const monthYear = document.getElementById("monthYear");
 
-function renderCalendar(y, m){
-  const grid = document.getElementById('calendarGrid');
-  grid.innerHTML = "";
+let currentDate = new Date();
 
-  // Month/Year
-  document.getElementById('monthYear').textContent = `${monthNames[m]} ${y}`;
+clockBtn.onclick = function(e){
+  e.stopPropagation();
+  calendarPopup.style.display =
+    calendarPopup.style.display === "block" ? "none" : "block";
+  renderCalendar(currentDate);
+};
 
-  // Day names
-  ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>{
-    const e = document.createElement('div'); 
-    e.className = "day-name"; 
-    e.textContent = d; 
-    grid.appendChild(e);
+document.addEventListener("click", function(){
+  calendarPopup.style.display = "none";
+});
+
+document.getElementById("prevMonth").onclick = function(e){
+  e.stopPropagation();
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar(currentDate);
+};
+
+document.getElementById("nextMonth").onclick = function(e){
+  e.stopPropagation();
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar(currentDate);
+};
+
+function renderCalendar(date){
+  calendarGrid.innerHTML = "";
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  monthYear.textContent =
+    date.toLocaleString("en-PH", { month: "long", year: "numeric" });
+
+  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  dayNames.forEach(d=>{
+    const el = document.createElement("div");
+    el.className="day-name";
+    el.textContent=d;
+    calendarGrid.appendChild(el);
   });
 
-  const firstDay = new Date(y, m, 1).getDay();
-  for(let i=0;i<firstDay;i++) grid.appendChild(document.createElement('div'));
+  for(let i=0;i<firstDay;i++){
+    const empty=document.createElement("div");
+    calendarGrid.appendChild(empty);
+  }
 
-  const daysInMonth = new Date(y, m + 1, 0).getDate();
-  const todayPHT = getPhilippineNow();
+ const today = new Date(
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric"
+  }).format(new Date())
+);
 
   for(let d=1; d<=daysInMonth; d++){
-    const cell = document.createElement('div');
-    cell.className = "day";
-    cell.textContent = d;
+    const day=document.createElement("div");
+    day.className="day";
+    day.textContent=d;
 
-    // Highlight today
-    if(d === todayPHT.getDate() && m === todayPHT.getMonth() && y === todayPHT.getFullYear()){
-      cell.classList.add('today');
+    if(
+      d===today.getDate() &&
+      month===today.getMonth() &&
+      year===today.getFullYear()
+    ){
+      day.classList.add("today");
     }
 
-    grid.appendChild(cell);
+    calendarGrid.appendChild(day);
   }
 }
-
-// Month navigation
-document.getElementById('prevMonth').onclick = ()=>{
-  currentMonth--;
-  if(currentMonth < 0){ currentMonth = 11; currentYear--; }
-  renderCalendar(currentYear, currentMonth);
-};
-
-document.getElementById('nextMonth').onclick = ()=>{
-  currentMonth++;
-  if(currentMonth > 11){ currentMonth = 0; currentYear++; }
-  renderCalendar(currentYear, currentMonth);
-};
-
-// Clock button to toggle calendar
-document.getElementById('clockBtn').onclick = function(e){
-  const popup = document.getElementById('timeCalendarPopup');
-  popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-  renderCalendar(currentYear, currentMonth);
-  e.stopPropagation();
-};
-
-// Close calendar if clicking outside
-document.addEventListener('click', function(event){
-  const popup = document.getElementById('timeCalendarPopup');
-  const btn = document.getElementById('clockBtn');
-  if(popup.style.display === 'block' && !popup.contains(event.target) && !btn.contains(event.target)){
-    popup.style.display = 'none';
-  }
-});
-
-// Close calendar when clicking outside
-document.addEventListener('click', function(event){
-  const popup = document.getElementById('timeCalendarPopup');
-  const btn = document.getElementById('clockBtn');
-  if(popup.style.display==='block' && !popup.contains(event.target) && !btn.contains(event.target)){
-    popup.style.display='none';
-  }
-});
 
 // Help modal
 document.getElementById('helpIcon').onclick=(e)=>{
@@ -994,7 +1026,6 @@ function resetCards() {
 
 </body>
 </html>
-
 
 
 
