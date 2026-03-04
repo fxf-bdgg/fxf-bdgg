@@ -330,6 +330,7 @@ cc_weight_change:{
   choices:[
     {label:"Biller – Initial entry of information",next:"cc_class_biller_confusing"},
     {label:"Revenue Services Agent / Revenue Quality Agent",next:"cc_class_rsa_confusing"}
+    {label:"Origin/Destination Service Center",next:"cc_class_weightupdate"}
   ]
 },
 
@@ -338,6 +339,13 @@ cc_class_biller_confusing:{
   choices:[
     {label:"YES",next:"cc_class_cusi"},
     {label:"NO",next:"cc_class_ewpd"}
+  ]
+},
+  cc_class_weightupdate:{
+  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion?",
+  choices:[
+    {label:"Origin Service Cente/ Others Service Centers.",next:"cc_class_opso"},
+    {label:"Destination Service Center.",next:"cc_class_opsd"}
   ]
 },
 
@@ -349,6 +357,8 @@ cc_class_rsa_confusing:{
   ]
 },
 
+cc_class_opso:{ text:"CORR OPSO - Origin Service Cente/ Others Service Centers.", choices:[] },  
+cc_class_opsd:{ text:"CORR OPSD – Destination Service Center.", choices:[] },  
 cc_class_cusi:{ text:"CORR CUSI – Incorrect class/weight due to confusing or inaccurate BOL.", choices:[] },
 cc_class_ewpd:{ text:"CORR EWPD – Incorrect class/weight entered by biller even though BOL is accurate.", choices:[] },
 cc_class_cae_rqe:{ text:"CORR CAE – If error was done by Revenue Services Agent.\nCORR RQE – If error was done by Revenue Quality Agent.", choices:[] },
@@ -568,4 +578,5 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
+
 
