@@ -904,7 +904,7 @@ const NODES = {
   prepaid_consignee_owner_check: {
     text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
     choices: [
-      { label: "Yes", next: "prepaid_consignee_billable_check" },
+      { label: "Yes", next: "prepaid_consignee_owner_check" },
       {
         label: "No",
         action: "Since the request came from the Account no. owner, this will be considered rebill per LOA with Correction Fee."
@@ -921,6 +921,20 @@ const NODES = {
       {
         label: "No",
         action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct)"
+      }
+    ]
+  },
+
+  prepaid_consignee_owner_check: {
+    text: "Is the account number billable(active and a BT account)?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the account number per BOL.",
+      note: "NOTE: If the account number has the same name and address of the Consignee(shipping account), use the account and update the Consignee Section then change the terms to Collect."},
+      
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct with no ABT)",
+        note: "NOTE: If it's a shipping account with an ABT, bill it to the ABT of the Shipping account."
       }
     ]
   },
@@ -1506,4 +1520,5 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
+
 
