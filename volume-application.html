@@ -461,6 +461,21 @@ header::after{
   text-align:left;
 }
 
+/* STEP IMAGES */
+.step-images{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  margin-bottom:20px;
+  align-items:center;
+}
+
+.step-images img{
+  max-width:100%;
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
 </style>
 </head>
 <body>
@@ -508,8 +523,11 @@ header::after{
     <div class="progress-bar" id="progressBar"></div>
   </div>
 
-  <div class="step-title" id="stepTitle"></div>
-  <div class="step-content" id="stepContent"></div>
+<div class="step-title" id="stepTitle"></div>
+
+<div class="step-images" id="stepImages"></div>
+
+<div class="step-content" id="stepContent"></div>
 
   <div class="nav-buttons">
     <button class="btn-prev" id="prevBtn">Previous</button>
@@ -596,6 +614,10 @@ header::after{
 const steps = [
 {
 title:"Adjust Freight Charges",
+images:[
+"Steps/Step1.jpg",
+"Steps/Step1v2.jpg"
+],
 content:`On the freight charges line, change the rate line to FLAT and apply the volume quote amount in the charge line.`
 },
 {
@@ -671,6 +693,7 @@ let currentStep = 0;
 
 const stepTitle = document.getElementById("stepTitle");
 const stepContent = document.getElementById("stepContent");
+const stepImages = document.getElementById("stepImages");
 const stepCounter = document.getElementById("stepCounter");
 const progressBar = document.getElementById("progressBar");
 const prevBtn = document.getElementById("prevBtn");
@@ -681,19 +704,24 @@ function renderStep(){
 
   stepTitle.textContent = step.title;
   stepContent.textContent = step.content;
+
+  /* SHOW STEP IMAGES */
+  stepImages.innerHTML = "";
+
+  if(step.images){
+    step.images.forEach(img => {
+      const image = document.createElement("img");
+      image.src = img;
+      stepImages.appendChild(image);
+    });
+  }
+
   stepCounter.textContent = `Step ${currentStep + 1} of ${steps.length}`;
   progressBar.style.width = ((currentStep+1)/steps.length*100)+"%";
 
   prevBtn.disabled = currentStep === 0;
   nextBtn.textContent = currentStep === steps.length - 1 ? "Finish" : "Next";
 }
-
-prevBtn.onclick = () => {
-  if(currentStep > 0){
-    currentStep--;
-    renderStep();
-  }
-};
 
 nextBtn.onclick = () => {
   if(currentStep < steps.length - 1){
