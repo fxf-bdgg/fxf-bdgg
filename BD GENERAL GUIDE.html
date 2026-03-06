@@ -912,6 +912,19 @@ const NODES = {
     ]
   },
 
+  prepaid_consignee_billable_check: {
+    text: "Is the account number billable(active and a BT account)?",
+    choices: [
+      { label: "Yes", action: "Proceed with rebilling the account number per BOL.(Update the terms if neccessary. Example: Update to Collect if the account is related to the Consignee. Check if the account is ABT of the Consignee)",
+      note: "NOTE: If the account number has the same name and address of the Consignee(shipping account), use the account and update the Consignee Section then change the terms to Collect."},
+      
+      {
+        label: "No",
+        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct)"
+      }
+    ]
+  },
+
  
  
 
@@ -1493,3 +1506,4 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
+
