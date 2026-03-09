@@ -391,6 +391,17 @@ header::after{
   text-align:left;
 }
 
+footer{
+  background:var(--accent);
+  color:white;
+  padding:4px 28px;   /* reduce height */
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  font-size:15px;
+}
 
 </style>
 </head>
@@ -472,7 +483,14 @@ header::after{
   </div>
 </div>
 
-<footer>© 2025 EBS Operations</footer>
+<footer>
+  <p><span style="font-weight:600;">© 2025 EBS Operations</span></p>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:12px;color:white;">
+      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
+    </span>
+  </div>
+</footer>
 
 <!-- HELP Modal -->
 <div id="helpModal" class="modal">
@@ -972,5 +990,4 @@ function showAllComments(){
 
 </body>
 </html>
-
 
