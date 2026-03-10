@@ -750,7 +750,25 @@ choices:[
 ]},
 
 submit_ticket:{
-text:"Submit an ePRT ticket to apply the Proposal Number / ePRS Agreement.\n\n(INSERT LINK FOR ePRT SUBMISSION)\n\nIf the ePRT Team denies the request and states that the fee is valid based on the customer's published pricing, verify their claim before advising the customer.",
+text:`RESOLUTION: Submit an ePRT ticket to apply the Proposal Number / ePRS Agreement.
+
+This should be done when the correct pricing exception exists but the rerated invoice does not pull the correct agreement pricing.
+
+<a href="eprt-submission.html" target="_blank" style="
+display:inline-block;
+margin-top:10px;
+padding:10px 14px;
+background:#ff6600;
+color:white;
+border-radius:6px;
+text-decoration:none;
+font-weight:600;
+font-size:14px;
+">
+<i class="fa-solid fa-arrow-up-right-from-square"></i> Open ePRT Submission
+</a>
+
+If the ePRT Team denies your request stating that the fee is valid based on the customer's published pricing, make sure to validate their claim before returning to your case and advising the customer accordingly.`,
 choices:[
 {label:"Proceed",next:"manual_rate"}
 ]},
@@ -864,7 +882,7 @@ function renderNode(node,key="eprt_start"){
   }
 
   const q=document.createElement("div");
-  q.innerHTML=`<strong>${escapeHtml(node.text)}</strong>`;
+  q.innerHTML=node.text;
   flowArea.appendChild(q);
 
   if(!isFinal){
