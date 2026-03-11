@@ -655,6 +655,37 @@ header::after{
   </div>
 </div>
 
+<style>
+/* IMAGE ZOOM VIEWER */
+
+#imageViewer{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:2000;
+}
+
+#imageViewer img{
+  max-width:95%;
+  max-height:95%;
+  border-radius:10px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+
+#closeViewer{
+  position:absolute;
+  top:25px;
+  right:40px;
+  font-size:36px;
+  color:white;
+  cursor:pointer;
+  font-weight:700;
+}
+</style>
+
 <script>
 firebase.initializeApp({
   apiKey:"AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
@@ -966,11 +997,18 @@ flowArea.appendChild(q);
 /* IMAGE (below text) */
 if(node.image){
   const img=document.createElement("img");
+
   img.src=node.image;
+  img.loading="lazy";          // loads only when needed
+  img.decoding="async";        // faster decoding
+  img.className="guide-img";   // for zoom feature
+
   img.style.maxWidth="100%";
   img.style.display="block";
   img.style.margin="15px 0";
   img.style.borderRadius="8px";
+  img.style.cursor="zoom-in";
+
   flowArea.appendChild(img);
 }
 
@@ -1054,8 +1092,36 @@ window.addEventListener('load',()=>{
     c.style.animationDelay=`${1+i*.15}s`;
   });
 });
+
+/* IMAGE ZOOM */
+
+document.addEventListener("click",function(e){
+
+  if(e.target.classList.contains("guide-img")){
+    const viewer=document.getElementById("imageViewer");
+    const viewerImg=document.getElementById("viewerImg");
+
+    viewerImg.src=e.target.src;
+    viewer.style.display="flex";
+  }
+
+});
+
+document.getElementById("closeViewer").onclick=function(){
+  document.getElementById("imageViewer").style.display="none";
+};
+
+document.getElementById("imageViewer").onclick=function(e){
+  if(e.target.id==="imageViewer"){
+    this.style.display="none";
+  }
+};
+
 </script>
+<div id="imageViewer">
+  <span id="closeViewer">✕</span>
+  <img id="viewerImg">
+</div>
 </body>
 
 </html>
-
