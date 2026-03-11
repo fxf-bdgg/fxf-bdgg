@@ -957,18 +957,21 @@ function renderNode(node,key="acc_intro"){
     panel.style.display="none";
   }
 
-  const q=document.createElement("div");
-  q.innerHTML = "<strong>" + escapeHtml(node.text).replace(/\n/g,"<br>") + "</strong>";
-  flowArea.appendChild(q);
-  
-  /* ===== SHOW IMAGE IF NODE HAS ONE ===== */
-  if(node.image){
+ const q=document.createElement("div");
+
+/* TEXT */
+q.innerHTML = "<strong>" + escapeHtml(node.text).replace(/\n/g,"<br>") + "</strong>";
+flowArea.appendChild(q);
+
+/* IMAGE (below text) */
+if(node.image){
   const img=document.createElement("img");
   img.src=node.image;
   img.style.maxWidth="100%";
+  img.style.display="block";
+  img.style.margin="15px 0";
   img.style.borderRadius="8px";
-  img.style.marginBottom="15px";
-  q.appendChild(img);
+  flowArea.appendChild(img);
 }
 
   if(node.choices.length){
