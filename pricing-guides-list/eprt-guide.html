@@ -737,8 +737,13 @@ check_cht_issue:{
 text:"Check if there is any CHT issue.",
 choices:[
 {label:"No CHT Issue",next:"eprs_exception"},
-{label:"CHT Issue Found",text:"Follow CHT submission process"}
+{label:"CHT Issue Found",text:"check_cht_issue_found"}
 ]},
+
+check_cht_issue_found:{
+text:"RESOLUTION: Follow CHT submission process",
+choices:[]
+},
 
 
 /* ================= EPRS AGREEMENT ================= */
@@ -987,5 +992,6 @@ window.addEventListener('load',()=>{
 </body>
 
 </html>
+
 
 
