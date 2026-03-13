@@ -1060,7 +1060,34 @@ images:["steps-images/step9.png"],
 content:`A new Shipper / Consignee / BT account will appear.
 
 Allow 2–3 minutes for processing.`,
-next:"step10"
+next:"step9_copy"
+},
+
+
+step9_copy:{
+title:"Copy the Account Number",
+images:["steps-images/step9_copy.png"],
+content:`Copy the newly created account number and paste it in your tracker.`,
+next:"step9_check"
+},
+
+step9_check:{
+title:"Check Customer Profile",
+content:`Does FBC populate the newly created account details when you click the Customer Profile?`,
+buttons:[
+{label:"YES", goto:"step10"},
+{label:"NO", goto:"step9_wait"}
+]
+},
+
+step9_wait:{
+title:"Account Still Processing",
+content:`Skip the PRO or place it on pending.
+
+Go back after 5–10 minutes.
+
+⚠ DO NOT ATTEMPT TO CREATE ANOTHER ACCOUNT.`,
+next:"step9_check"
 },
 
 /* DECISION STEP */
