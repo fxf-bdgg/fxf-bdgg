@@ -735,7 +735,7 @@ cc_intro:{
 
 cc_tbd:{ text:"This branch is not built yet. We’ll continue this later.", choices:[] },
 
-/* ===================== CHANGE TERMS ===================== */
+/* ===================== CHANGE TERMS (UPDATED BASED ON FLOW) ===================== */
 
 cc_change_terms:{ 
   text:"Why are you changing the terms?", 
@@ -745,50 +745,115 @@ cc_change_terms:{
   ]
 },
 
+/* ---------- REBILL ATTEMPT ---------- */
+
 cc_terms_rebill_attempt:{ 
-  text:"CORR ACCR – Any update made on Terms or Account in attempt of payment when PRO is billing correctly per BOL.\n\nPro is billing correctly but Consignee refused to pay. If unpaid for more than 6 months, try rebilling to Shipper.", 
+  text:"CORR ACCR – Any update made on Terms or Account in attempt of payment when PRO is billing correctly per BOL.",
+  note:
+    "Pro is billing correctly but Consignee refused to pay for the freight charge.\n\n" +
+    "Since the invoice is more than 6 months old, we attempt to rebill it to the Shipper in attempt of payment.",
   choices:[]
 },
 
+/* ---------- WHO ENTERED INCORRECT TERMS ---------- */
+
 cc_terms_incorrect_who:{ 
-  text:"Who entered the incorrect terms?", 
+  text:"Who entered the incorrect Terms?", 
   choices:[
-    {label:"Biller",next:"cc_terms_bol_confusing_biller"},
-    {label:"Revenue Services / Revenue Quality Agent",next:"cc_terms_bol_confusing_biller"},
+    {label:"Biller",next:"cc_terms_biller_confusing"},
+    {label:"Revenue Services Agent / Revenue Quality Agent",next:"cc_terms_agent_confusing"},
     {label:"Customer via ISPI",next:"cc_terms_cusi"},
-    {label:"System",next:"cc_terms_bol_confusing_system"}
+    {label:"System",next:"cc_terms_sysm"},
+    {label:"Revenue Service Agent (after initial entry of biller)",next:"cc_terms_ops_check"}
   ]
 },
 
-cc_terms_bol_confusing_biller:{ 
-  text:"Is the BOL confusing or does it provide conflicting information that can cause confusion?", 
+/* ---------- BILLER PATH ---------- */
+
+cc_terms_biller_confusing:{ 
+  text:"Is the BOL confusing or provide conflicting information that can cause confusion to the Biller?", 
   choices:[
-    {label:"YES",next:"cc_terms_cusi"},
+    {label:"YES",next:"cc_terms_cusi_biller"},
     {label:"NO",next:"cc_terms_etms"}
   ]
 },
 
-cc_terms_bol_confusing_system:{ 
-  text:"Is the BOL confusing or does it provide conflicting information that can cause confusion to the agent?", 
+cc_terms_cusi_biller:{
+  text:"CORR CUSI – Biller entered incorrect Terms since BOL is confusing or inaccurate.",
+  choices:[]
+},
+
+cc_terms_etms:{
+  text:"CORR ETMS – Biller entered incorrect Terms even if BOL is accurate.",
+  choices:[]
+},
+
+/* ---------- AGENT (RSA / RQA) PATH ---------- */
+
+cc_terms_agent_confusing:{ 
+  text:"Is the BOL confusing or provide conflicting information that can cause confusion to the agent?", 
   choices:[
-    {label:"YES",next:"cc_terms_agent_billed_back"},
-    {label:"NO",next:"cc_terms_rqe"}
+    {label:"YES",next:"cc_terms_agent_process_check"},
+    {label:"NO",next:"cc_terms_agent_error"}
   ]
 },
 
-cc_terms_agent_billed_back:{ 
-  text:"Did the agent bill it back to the shipper due to conflicting information?", 
+cc_terms_agent_process_check:{
+  text:"Did the agent follow the right process per Rebill per BOL decision Tree?",
   choices:[
-    {label:"YES",next:"cc_terms_cusi"},
-    {label:"NO",next:"cc_terms_cae"}
+    {label:"YES",next:"cc_terms_cusi_agent"},
+    {label:"NO",next:"cc_terms_cae_rqe"}
   ]
 },
 
-cc_terms_cusi:{ text:"CORR CUSI – Incorrect terms due to confusing or inaccurate BOL.", choices:[] },
-cc_terms_etms:{ text:"CORR ETMS – Biller entered incorrect terms even if BOL is accurate.", choices:[] },
-cc_terms_cae:{ text:"CORR CAE – RSA entered incorrect terms even if BOL is accurate.", choices:[] },
-cc_terms_rqe:{ text:"CORR RQE – RQA entered incorrect terms even if BOL is accurate.", choices:[] },
+cc_terms_cusi_agent:{
+  text:"CORR CUSI – RSA incorrect Terms since BOL is confusing or inaccurate.",
+  choices:[]
+},
 
+cc_terms_cae_rqe:{
+  text:"CORR CAE – RSA entered incorrect Terms even if BOL is accurate.\nCORR RQE – RQA entered incorrect Terms even if BOL is accurate.",
+  choices:[]
+},
+
+cc_terms_agent_error:{
+  text:"CORR CAE – RSA entered incorrect Terms even if BOL is accurate.\nCORR RQE – RQA entered incorrect Terms even if BOL is accurate.",
+  choices:[]
+},
+
+/* ---------- SYSTEM ---------- */
+
+cc_terms_sysm:{
+  text:"CORR SYSM – Change terms due to system error.",
+  choices:[]
+},
+
+/* ---------- OPS (SERVICE CENTER) ---------- */
+
+cc_terms_ops_check:{
+  text:"Was the error made by Origin or Destination Service Center?",
+  choices:[
+    {label:"Origin Service Center",next:"cc_terms_opso"},
+    {label:"Destination Service Center",next:"cc_terms_opsd"}
+  ]
+},
+
+cc_terms_opso:{
+  text:"CORR OPSO – Origin Service Center entered incorrect Terms.",
+  choices:[]
+},
+
+cc_terms_opsd:{
+  text:"CORR OPSD – Destination Service Center entered incorrect Terms.",
+  choices:[]
+},
+
+/* ---------- CUSTOMER ---------- */
+
+cc_terms_cusi:{
+  text:"CORR CUSI – Change due to customer-provided information that is not aligned or supported clearly by BOL.",
+  choices:[]
+},
 /* ===================== CHANGE ACCOUNT CODE ===================== */
 
 cc_change_account:{
@@ -802,6 +867,8 @@ cc_change_account:{
 
 cc_acct_rebill_attempt:{ 
   text:"CORR ACCR – Any update made on Terms or Account in attempt of payment when PRO is billing correctly per BOL.", 
+   note:
+    "Example: Collector or Sales Request to bill it to a different account no. in attempt of payment even if pro is billing correctly (terms or account) per BOL",
   choices:[]
 },
 
@@ -827,58 +894,116 @@ cc_acct_customer_request:{
 cc_acct_ecd_customer:{ text:"CORR ECD – Used when changing Account Code since biller entered an incorrect code not on the BOL or different from what the BOL states.", choices:[] },
 cc_acct_accr_customer:{ text:"CORR ACCR – Used when changing Account Code per customer request or proper billing (found through Customer Search).", choices:[] },
 
-/* ===================== CHANGE CLASS / WEIGHT ===================== */
+/* ===================== CHANGE CLASS ===================== */
 
 cc_class_change:{
   text:"Who entered the incorrect Class?",
   choices:[
     {label:"Biller – Initial entry of information",next:"cc_class_biller_confusing"},
-    {label:"Revenue Services Agent / Revenue Quality Agent",next:"cc_class_rsa_confusing"}
-  ]
-},
-
-cc_weight_change:{
-  text:"Who entered the incorrect Weight?",
-  choices:[
-    {label:"Biller – Initial entry of information",next:"cc_class_biller_confusing"},
     {label:"Revenue Services Agent / Revenue Quality Agent",next:"cc_class_rsa_confusing"},
-    {label:"Origin/Destination Service Center",next:"cc_class_weightupdate"}
+    {label:"Origin/Destination Service Center",next:"cc_class_service_center"}
   ]
 },
 
 cc_class_biller_confusing:{
-  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion?",
+  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion to the biller?",
   choices:[
     {label:"YES",next:"cc_class_cusi"},
     {label:"NO",next:"cc_class_ewpd"}
   ]
 },
-  cc_class_weightupdate:{
-  text:"Who from the Service center entered the incorrect Weight?",
-  choices:[
-    {label:"Origin Service Cente/ Others Service Centers.",next:"cc_class_opso"},
-    {label:"Destination Service Center.",next:"cc_class_opsd"}
-  ]
-},
 
 cc_class_rsa_confusing:{
-  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion?",
+  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion to the agent?",
   choices:[
     {label:"YES",next:"cc_class_cusi"},
-    {label:"NO",next:"cc_class_cae_rqe"}
+    {label:"NO",next:"cc_class_agent_type"}
   ]
 },
 
-cc_class_opso:{ text:"CORR OPSO - Origin Service Cente/ Others Service Centers.", choices:[] },  
-cc_class_opsd:{ text:"CORR OPSD – Destination Service Center.", choices:[] },  
-cc_class_cusi:{ text:"CORR CUSI – Incorrect class/weight due to confusing or inaccurate BOL.", choices:[] },
-cc_class_ewpd:{ text:"CORR EWPD – Incorrect class/weight entered by biller even though BOL is accurate.", choices:[] },
-cc_class_cae_rqe:{ text:"CORR CAE – If error was done by Revenue Services Agent.\nCORR RQE – If error was done by Revenue Quality Agent.", choices:[] },
+cc_class_agent_type:{
+  text:"Who made the error?",
+  choices:[
+    {label:"Revenue Services Agent",next:"cc_class_cae"},
+    {label:"Revenue Quality Agent",next:"cc_class_rqe"}
+  ]
+},
+
+cc_class_service_center:{
+  text:"Where did the error come from?",
+  choices:[
+    {label:"Origin Service Center / Other Service Centers",next:"cc_class_opso"},
+    {label:"Destination Service Center",next:"cc_class_opsd"}
+  ]
+},
+
+cc_class_opso:{ text:"CORR OPSO – Origin or other Service Center entered incorrect class.", choices:[] },  
+cc_class_opsd:{ text:"CORR OPSD – Destination Service Center entered incorrect class.", choices:[] },  
+cc_class_cusi:{ text:"CORR CUSI – Incorrect class due to confusing or inaccurate BOL.", choices:[] },
+cc_class_ewpd:{ text:"CORR EWPD – Incorrect class entered by biller even though BOL is accurate.", choices:[] },
+cc_class_cae:{ text:"CORR CAE – Incorrect class entered by Revenue Services Agent even if BOL is accurate.", choices:[] },
+cc_class_rqe:{ text:"CORR RQE – Incorrect class entered by Revenue Quality Agent even if BOL is accurate.", choices:[] },
+
+
+
+/* ===================== CHANGE WEIGHT ===================== */
+
+cc_weight_change:{
+  text:"Who entered the incorrect Weight?",
+  choices:[
+    {label:"Biller – Initial entry of information",next:"cc_weight_biller_confusing"},
+    {label:"Revenue Services Agent / Revenue Quality Agent",next:"cc_weight_rsa_confusing"},
+    {label:"Origin/Destination Service Center",next:"cc_weight_service_center"}
+  ]
+},
+
+cc_weight_biller_confusing:{
+  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion to the biller?",
+  choices:[
+    {label:"YES",next:"cc_weight_cusi"},
+    {label:"NO",next:"cc_weight_ewpd"}
+  ]
+},
+
+cc_weight_rsa_confusing:{
+  text:"Is the BOL confusing or provide conflicting/incomplete information that can cause confusion to the agent?",
+  choices:[
+    {label:"YES",next:"cc_weight_cusi"},
+    {label:"NO",next:"cc_weight_agent_type"}
+  ]
+},
+
+cc_weight_agent_type:{
+  text:"Who made the error?",
+  choices:[
+    {label:"Revenue Services Agent",next:"cc_weight_cae"},
+    {label:"Revenue Quality Agent",next:"cc_weight_rqe"}
+  ]
+},
+
+cc_weight_service_center:{
+  text:"Where did the error come from?",
+  choices:[
+    {label:"Origin Service Center / Other Service Centers",next:"cc_weight_opso"},
+    {label:"Destination Service Center",next:"cc_weight_opsd"}
+  ]
+},
+
+cc_weight_opso:{ text:"CORR OPSO – Origin or other Service Center entered incorrect weight.", choices:[] },  
+cc_weight_opsd:{ text:"CORR OPSD – Destination Service Center entered incorrect weight.", choices:[] },  
+cc_weight_cusi:{ text:"CORR CUSI – Incorrect weight due to confusing or inaccurate BOL.", choices:[] },
+cc_weight_ewpd:{ text:"CORR EWPD – Incorrect weight entered by biller even though BOL is accurate.", choices:[] },
+cc_weight_cae:{ text:"CORR CAE – Incorrect weight entered by Revenue Services Agent even if BOL is accurate.", choices:[] },
+cc_weight_rqe:{ text:"CORR RQE – Incorrect weight entered by Revenue Quality Agent even if BOL is accurate.", choices:[] },
+
+
 
 /* ===================== CHANGE SERVICE TYPE ===================== */
 
-cc_service_type:{ text:"CORR EPDC – Service Type correction.", choices:[] },
-
+cc_service_type:{ 
+  text:"CORR EPDC – Service Type correction.", 
+  choices:[] 
+},
 /* ===================== REFERENCE NO EDIT ===================== */
 
 cc_reference_edit:{
@@ -900,12 +1025,14 @@ cc_accessorial:{
     {label:"Adding Accessorial not requested on BOL",next:"cc_acc_acc"},
     {label:"Changing Accessorial from one type to another",next:"cc_acc_eadl"},
     {label:"Removing Accessorial since not performed",next:"cc_acc_nacc"},
-    {label:"Adding/Removing per BOL request or changing debtor",next:"cc_acc_eacc"},
-    {label:"Removing due to Service Center Error",next:"cc_acc_ops"},
-    {label:"Removing due to Revenue Services / Revenue Quality Error",next:"cc_acc_rev_error"}
+    {label:"Adding/Removing Accessorial per BOL request or changing debtor",next:"cc_acc_eacc"},
+    {label:"Removing Accessorial due to Service Center Error",next:"cc_acc_ops"},
+    {label:"Removing Accessorial due to Revenue Services / Revenue Quality Error",next:"cc_acc_rev_error"},
+    {label:"Debtor change per LOA",next:"cc_acc_loa"}
   ]
 },
 
+cc_acc_loa:{ text:"CORR LOA – All update made per LOA corr is LOA.", choices:[] },
 cc_acc_acc:{ text:"CORR ACC – Adding accessorial not requested on BOL.", choices:[] },
 cc_acc_eadl:{ text:"CORR EADL – Changing accessorial from one type to another.", choices:[] },
 cc_acc_nacc:{ text:"CORR NACC – Removing accessorial since not performed.", choices:[] },
@@ -943,7 +1070,8 @@ cc_pricing:{
     {label:"Rating correction error by Revenue Services",next:"cc_pricing_prce"},
     {label:"General protection of invoice",next:"cc_pricing_prot"},
     {label:"PRO protected per CHT Hierarchy Update",next:"cc_pricing_prha"},
-    {label:"Brand new pricing within 10 days from Ship Date",next:"cc_pricing_ssdy"}
+    {label:"Brand new pricing within 10 days from Ship Date",next:"cc_pricing_ssdy"},
+    {label:"Brand new pricing after 10 days from Ship Date",next:"cc_pricing_year"}
   ]
 },
 
@@ -952,7 +1080,8 @@ cc_pricing_expr:{ text:"CORR EXPR – Expired freight pricing or surcharge excep
 cc_pricing_prce:{ text:"CORR PRCE – Rating correction error by Revenue Services employee.", choices:[] },
 cc_pricing_prot:{ text:"CORR PROT – General protection of invoice.", choices:[] },
 cc_pricing_prha:{ text:"CORR PRHA – PRO protected per CHT hierarchy update.", choices:[] },
-cc_pricing_ssdy:{ text:"CORR SSDY – Brand new pricing and PRO rerated within 10 days from Ship Date.", choices:[] }
+cc_pricing_ssdy:{ text:"CORR SSDY – Brand new pricing and PRO rerated within 10 days from Ship Date.", choices:[] },
+cc_pricing_year:{ text:"CORR YEAR – Brand new pricing and PRO rerated after 10 days from Ship Date.", choices:[] }
 
 };
 
@@ -968,10 +1097,20 @@ function renderNode(node,key="cc_intro"){
   flowArea.innerHTML="";
   if(!node) return;
 
-  if(!node.choices.length){
-    currentFinalRecommendation=node.text;
-    document.getElementById("recommendation").innerHTML=`<strong>${escapeHtml(node.text)}</strong>`;
-    generateSuggestedCommentEmail(node.text);
+if(!node.choices.length){
+  currentFinalRecommendation=node.text;
+
+  let output = `<strong>${escapeHtml(node.text)}</strong>`;
+
+  if(node.note){
+    output += `<div class="note">${escapeHtml(node.note)}</div>`;
+  }
+
+  document.getElementById("recommendation").innerHTML = output;
+
+  generateSuggestedCommentEmail(node.text);
+
+    
   } else {
     currentFinalRecommendation="";
     document.getElementById("recommendation").innerText="No recommendation yet.";
@@ -1090,6 +1229,5 @@ window.addEventListener('load', () => {
 </script>
 </body>
 </html>
-
 
 
