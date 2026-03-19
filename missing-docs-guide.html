@@ -749,7 +749,6 @@ function escapeHtml(t){return t?t.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;'
 function docIdFromText(t){return t.trim().toLowerCase().replace(/\s+/g,"_");}
 function getDocId(t,type){return `${docIdFromText(t)}_${type}`;}
 
-/* ================= RVSL GUIDE ================= */
 
 const NODES = {
 
@@ -872,28 +871,16 @@ choices:[
 /* ================= LESS THAN 30 DAYS ================= */
 
 bol_less_30:{
+  title:"Less than 30 Days",
   text:`
   <strong>Less than 30 Days</strong>
 
-  <div style="
-    background:#fff7ed;
-    border-left:5px solid #ff6600;
-    padding:10px;
-    border-radius:6px;
-    margin-top:10px;
-    font-size:13px;">
+  <div style="background:#fff7ed; border-left:5px solid #ff6600; padding:10px; border-radius:6px; margin-top:10px; font-size:13px;">
     ⚠ Always check A–J Guideline before proceeding to BOL Review.
   </div>
 
   <div style="margin-top:12px;">
-    <button onclick="openAJModal()" style="
-      background:#ff6600;
-      color:white;
-      border:none;
-      padding:8px 12px;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:600;">
+    <button onclick="openAJModal()" style="background:#ff6600;color:white;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-weight:600;">
       📘 View A–J Guideline
     </button>
   </div>
@@ -903,7 +890,15 @@ bol_less_30:{
   </div>
   `,
   choices:[
-    {label:"Continue → BOL Review Check",next:"bol_bol_review_check"}
+    {label:"Continue → BOL Review Check", next:"bol_bol_review_check"}
+  ]
+},
+
+bol_bol_review_check:{
+  text:"Does the dispute require a BOL Review?",
+  choices:[
+    {label:"Yes", next:"bol_customer_provide"},
+    {label:"No", next:"bol_loa_check"}
   ]
 },
 
