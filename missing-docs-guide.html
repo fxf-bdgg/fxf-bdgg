@@ -60,6 +60,46 @@ header::after{content:"";position:absolute;top:0;left:-100%;width:100%;height:10
 @keyframes sweep{to{left:100%}}
 @media(max-width:1200px){.container{grid-template-columns:1fr}}
 
+/* REMINDER + NOTE BLOCKS */
+.reminder-box{
+  background:#fff7ed;
+  border-left:6px solid #ff6600;
+  padding:14px 16px;
+  border-radius:8px;
+  margin-bottom:16px;
+}
+
+.note-box{
+  background:#f5f3ff;
+  border-left:6px solid #4d148c;
+  padding:14px 16px;
+  border-radius:8px;
+}
+
+.reminder-title{
+  font-weight:700;
+  color:#ff6600;
+  margin-bottom:8px;
+}
+
+.note-title{
+  font-weight:700;
+  color:#4d148c;
+  margin-bottom:8px;
+}
+
+.reminder-box ul,
+.note-box ul{
+  margin:0;
+  padding-left:18px;
+}
+
+.reminder-box li,
+.note-box li{
+  margin-bottom:6px;
+  line-height:1.4;
+}
+
 
 </style>
 
@@ -713,6 +753,47 @@ function getDocId(t,type){return `${docIdFromText(t)}_${type}`;}
 
 const NODES = {
 
+reminder_intro:{
+title:"Reminders & Notes",
+text:`
+<div class="reminder-box">
+  <div class="reminder-title">⚠ REMINDERS</div>
+  <ul>
+    <li>Ensure that you have attempted to locate the document in Image Viewer:<br>
+    http://imaging.freight.fedex.com/Viewer/Home.aspx</li>
+
+    <li><strong>ATTENTION:</strong> Once a missing document is retrieved from the center, ensure to send them to imaging@fedex.com to get it imaged on the PRO. Specify if you want it to be imaged under BL or DR. You can directly forward the email from your FedEx email.</li>
+
+    <li>For PROs that are more than 180 days old, access them via EDM 1.0:<br>
+    https://myapps.secure.fedex.com/EDMPortal/</li>
+
+    <li>For Document Requests for PROs that are already more than 90 days, proceed and send it to Invoice Reprint.</li>
+  </ul>
+</div>
+
+<div class="note-box">
+  <div class="note-title">📌 NOTE</div>
+  <p>If customer disputes the charges and wants it to be rebilled to another party per BOL, but BOL is missing:</p>
+  
+  <ul>
+    <li>Utilize previous shipments</li>
+    <li>Use Shipper Code, Consignee Code, Bill-To Code, or Origin/Destination</li>
+    <li>Prefer paid/closed PROs</li>
+  </ul>
+
+  <p><strong>When rebilling, add keyword:</strong></p>
+
+  <div style="background:#fff;border:1px dashed #ccc;padding:10px;border-radius:6px;font-size:12px;">
+    VS-BLER-CASE#-UPDATED BT XXXXXXXX PER PREVIOUS SHIPMENTS<br>
+    E.G. PRO XXXXXXX IN ATTEMPT FOR PAYMENT SINCE NO BOL ON FILE
+  </div>
+</div>
+`,
+choices:[
+{label:"Proceed to Missing Documents Guide",next:"missing_docs_intro"}
+]
+},
+
 /* ================= MISSING DOCUMENTS GUIDE ================= */
 
 missing_docs_intro:{
@@ -768,6 +849,7 @@ choices:[
 r0_pro:{
 text:"What document type is missing?",
 choices:[
+{label:"Bill of Lading (BOL)",next:"bol_start"},
 {label:"Delivery Receipt (DR)",next:"dr_delivered"},
 {label:"Cargo Care (CC) / Return Delivery Receipt (RD)",next:"ccrd_start"},
 {label:"Inspection Certificate",next:"inspection_start"},
@@ -775,6 +857,212 @@ choices:[
 {label:"Letter of Authority (LOA) / Letter of Denial (LOD)",next:"loa_start"}
 ]
 },
+
+/* ================= BOL (MISSING BOL - FULL FLOW) ================= */
+
+bol_start:{
+text:"What is the age of the PRO?",
+choices:[
+{label:"Less than 30 days",next:"bol_less_30"},
+{label:"More than 30 days but less than 90 days",next:"bol_30_90"},
+{label:"More than 90 days",next:"bol_over_90"}
+]
+},
+
+/* ================= LESS THAN 30 DAYS ================= */
+
+bol_less_30:{
+  text:`
+  <strong>Less than 30 Days</strong>
+
+  <div style="
+    background:#fff7ed;
+    border-left:5px solid #ff6600;
+    padding:10px;
+    border-radius:6px;
+    margin-top:10px;
+    font-size:13px;">
+    ⚠ Always check A–J Guideline before proceeding to BOL Review.
+  </div>
+
+  <div style="margin-top:12px;">
+    <button onclick="openAJModal()" style="
+      background:#ff6600;
+      color:white;
+      border:none;
+      padding:8px 12px;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:600;">
+      📘 View A–J Guideline
+    </button>
+  </div>
+
+  <div style="margin-top:10px;font-size:13px;color:#64748b;">
+    Review the guideline first, then continue.
+  </div>
+  `,
+  choices:[
+    {label:"Continue → BOL Review Check",next:"bol_bol_review_check"}
+  ]
+},
+
+bol_customer_provide:{
+text:"Did customer provide a BOL?",
+choices:[
+{label:"Yes",next:"bol_stamp_check"},
+{label:"No",next:"bol_send_email_process"}
+]
+},
+
+bol_stamp_check:{
+text:"Does the document have FedEx Stamp?",
+choices:[
+{label:"Yes",next:"bol_debtor_name"},
+{label:"No",next:"bol_send_email_process"}
+]
+},
+
+bol_debtor_name:{
+text:"Does it have the debtor’s name?",
+choices:[
+{label:"Yes",next:"bol_advise_standard"},
+{label:"No",next:"bol_no_debtor"}
+]
+},
+
+bol_no_debtor:{
+text:"Is there no debtor’s name?",
+choices:[
+{label:"Yes",next:"bol_advise_standard"},
+{label:"No",next:"bol_shipper_check"}
+]
+},
+
+bol_shipper_check:{
+text:"Is the customer already the shipper?",
+choices:[
+{label:"Yes",next:"bol_advise_loa_needed"},
+{label:"No",next:"bol_advise_standard"}
+]
+},
+
+bol_advise_standard:{
+text:"Advise: The document on file was the only document provided to us at the time of pickup and was used to bill the PRO.",
+choices:[]
+},
+
+bol_advise_loa_needed:{
+text:"Advise: The document on file was the only document provided to us at the time of pickup and was used to bill the PRO. A letter of authorization with a letterhead is needed from a different debtor accepting the shipping charges or an LOA from the new debtor’s email domain.",
+choices:[]
+},
+
+bol_send_email_process:{
+text:"Follow the 3 steps on 'Sending Emails' process to retrieve the BOL.",
+choices:[]
+},
+
+/* ================= NO BOL REVIEW ================= */
+
+bol_loa_check:{
+text:"Is the request rebill per LOA?",
+choices:[
+{label:"Yes",next:"bol_proceed_loa"},
+{label:"No",next:"bol_guideline_check"}
+]
+},
+
+bol_proceed_loa:{
+text:"Proceed with LOA (No correction fee).",
+choices:[]
+},
+
+bol_guideline_check:{
+text:"Is the dispute included in A-J Guideline?\n\nRebill per BOL\nClass Update per BOL\nClass Update per Reweigh\nWeight Dispute\nReweigh Dispute\nService Type\nOVRL/XL/HC Dispute\nAccessorial Dispute per BOL\nReference No. Edit Request\nDocument Request",
+choices:[
+{label:"Yes",next:"bol_follow_guideline"},
+{label:"No",next:"bol_address_dispute"}
+]
+},
+
+bol_follow_guideline:{
+text:"Follow specific A-J guideline based on the customer’s dispute.",
+choices:[]
+},
+
+bol_address_dispute:{
+text:"Address the dispute of the customer accordingly.",
+choices:[]
+},
+
+/* ================= 30 - 90 DAYS ================= */
+
+bol_30_90:{
+text:"Follow General Rule below:\n\n1. Send email ONLY to Origin Center Managers/Supervisor (DO NOT copy customer) Copy TL + Training Team\nEmail message: 'BOL for PRO XXXX is missing / not available on image...'\n2. Attempt retrieval (DO NOT send to Shannon)\n3. If TOO OLD – Advise customer document may not be retrievable",
+choices:[
+{label:"Continue",next:"bol_invoice_90_check"}
+]
+},
+
+bol_invoice_90_check:{
+text:"Is invoice 90+ days old?",
+choices:[
+{label:"Yes",next:"bol_invoice_reprint"},
+{label:"No",next:"bol_follow_30_90"}
+]
+},
+
+bol_invoice_reprint:{
+text:"Move to Invoice Reprint.",
+choices:[]
+},
+
+bol_follow_30_90:{
+text:"Follow the general rule for more than 30 days but less than 90 days invoices.",
+choices:[]
+},
+
+/* ================= OVER 90 DAYS ================= */
+
+bol_over_90:{
+text:"Does the document not retrievable?",
+choices:[
+{label:"Yes",next:"bol_party_check"},
+{label:"No",next:"bol_invoice_reprint"}
+]
+},
+
+bol_party_check:{
+text:"Who is the party requesting?",
+choices:[
+{label:"Consignee / 3rd Party / 3PL",next:"bol_advise_contact_shipper"},
+{label:"Shipper",next:"bol_shipper_stamp_check"}
+]
+},
+
+bol_advise_contact_shipper:{
+text:"Advise:\n- BOL not on file\n- Requested from center but may no longer be retrievable due to age\n- Ask them to contact shipper for copy with FedEx stamp\n- If 90+ days → Move to Invoice Reprint",
+choices:[]
+},
+
+bol_shipper_stamp_check:{
+text:"Did they attach BOL with FedEx Stamp?",
+choices:[
+{label:"Yes",next:"bol_review_stamp"},
+{label:"No",next:"bol_no_stamp_advise"}
+]
+},
+
+bol_review_stamp:{
+text:"Review the BOL with FedEx Stamp accordingly.",
+choices:[]
+},
+
+bol_no_stamp_advise:{
+text:"Advise:\n- BOL not on file\n- Requested from center\n- If 90+ days → Move to Invoice Reprint",
+choices:[]
+},
+
 
 /* ================= DELIVERY RECEIPT (UPDATED) ================= */
 
@@ -1076,34 +1364,51 @@ text:"Review weight per BOL and update accordingly.",
 choices:[]
 },
 
-/* ================= LOA ================= */
+/* ================= LOA / LOD (UPDATED BASED ON FLOW) ================= */
 
 loa_start:{
 text:"Are LOA or LOD documents present in EDM?",
 choices:[
 {label:"Yes",next:"loa_use_doc"},
-{label:"No",next:"loa_previous_case"}
+{label:"No",next:"loa_rebill_check"}
 ]
 },
 
+/* YES PATH */
 loa_use_doc:{
-text:"Utilize all documents on Image and proceed according to findings.",
+text:"Utilize all documents on Image & proceed according to findings.",
 choices:[]
 },
 
-loa_previous_case:{
-text:"Was the PRO rebilled per LOA/LOD via previous case?",
+/* NO PATH */
+loa_rebill_check:{
+text:"Was PRO rebilled per LOA/LOD with previous case or via PAUD with no previous case?",
 choices:[
-{label:"Yes",next:"loa_case_number"},
-{label:"No",next:"loa_update_pro"}
+{label:"PRO rebilled via previous case",next:"loa_previous_case"},
+{label:"PRO was rebilled via PAUD queue or no previous case",next:"loa_paud_path"}
 ]
 },
 
-loa_case_number:{
-text:"Does the case number start with 3 or 4?",
+/* ================= PREVIOUS CASE PATH ================= */
+
+loa_previous_case:{
+text:"Was PRO rebilled per LOA/LOD via previous case?",
+choices:[
+{label:"Yes",next:"loa_case_number_check"},
+{label:"No",next:"loa_update_bol"}
+]
+},
+
+loa_update_bol:{
+text:"Update the PRO per correct debtor on the BOL.",
+choices:[]
+},
+
+loa_case_number_check:{
+text:"Does the case number start with 3 or 4 (9 digits)?",
 choices:[
 {label:"Yes",next:"loa_contact_tl"},
-{label:"No",next:"loa_valid"}
+{label:"No",next:"loa_valid_check"}
 ]
 },
 
@@ -1112,23 +1417,95 @@ text:"Reach out to your TL to retrieve the LOA via ODC.",
 choices:[]
 },
 
-loa_valid:{
-text:"Is the LOA request valid?",
+loa_valid_check:{
+text:"Is the request a valid LOA?",
 choices:[
-{label:"Yes",next:"loa_forward_imaging"},
-{label:"No",next:"loa_update_pro"}
+{label:"Yes",next:"loa_forwarded_check"},
+{label:"No",next:"loa_update_per_bol"}
 ]
 },
 
-loa_update_pro:{
+loa_update_per_bol:{
 text:"Update the PRO per BOL.",
 choices:[]
 },
 
-loa_forward_imaging:{
+loa_forwarded_check:{
+text:"Was the LOA request forwarded to imaging@fedex.com?",
+choices:[
+{label:"Yes",next:"loa_screenshot_check"},
+{label:"No",next:"loa_forward_to_imaging"}
+]
+},
+
+loa_forward_to_imaging:{
 text:"Forward the LOA request to imaging@fedex.com.",
 choices:[]
-}
+},
+
+loa_screenshot_check:{
+text:"Have you taken a screenshot of the request and attached it?",
+choices:[
+{label:"Yes",next:"loa_month_check"},
+{label:"No",next:"loa_screenshot_action"}
+]
+},
+
+loa_screenshot_action:{
+text:"Screenshot, convert to PDF, and attach it to your response to the customer.",
+choices:[]
+},
+
+loa_month_check:{
+text:"Has it been over a month since the LOA was rebilled and not yet imaged?",
+choices:[
+{label:"Yes",next:"loa_email_client"},
+{label:"No",next:"loa_wait_imaging"}
+]
+},
+
+loa_email_client:{
+text:"Send an email to ask the client to coordinate with the Imaging Team.",
+choices:[]
+},
+
+loa_wait_imaging:{
+text:"Wait for imaging to process.",
+choices:[]
+},
+
+/* ================= PAUD / NO PREVIOUS CASE PATH ================= */
+
+loa_paud_path:{
+text:"Was PRO re-billed via PAUD Queue or no previous case?",
+choices:[
+{label:"Yes",next:"loa_2week_check"},
+{label:"No",next:"loa_pend_case"}
+]
+},
+
+loa_pend_case:{
+text:"Continue to pend the case and review weekly.",
+choices:[]
+},
+
+loa_2week_check:{
+text:"Has it been 2 weeks since the rebill and LOA is still not imaged?",
+choices:[
+{label:"Yes",next:"loa_email_racf"},
+{label:"No",next:"loa_wait_week"}
+]
+},
+
+loa_wait_week:{
+text:"Wait another week and review.",
+choices:[]
+},
+
+loa_email_racf:{
+text:"Send an email to the RACF owner who requested the rebill per LOA and request for the actual LOA from the accepting party.",
+choices:[]
+},
 };
 
 function renderNode(node,key="missing_docs_intro"){
@@ -1155,7 +1532,9 @@ function renderNode(node,key="missing_docs_intro"){
   }
 
 const q=document.createElement("div");
-q.innerHTML=`<strong>${node.text}</strong>`;
+q.innerHTML = key === "reminder_intro"
+  ? `<div style="line-height:1.6; font-size:14px;">${node.text}</div>`
+  : `<strong>${node.text}</strong>`;
 flowArea.appendChild(q);
 
 /* IMAGE SUPPORT FOR GUIDE STEPS */
@@ -1178,7 +1557,12 @@ if(node.image){
 
       btn.onclick=()=>{
         historyStack.push({key,path:[...path]});
-        path.push({question:node.text,answer:c.label});
+       if(key !== "reminder_intro"){
+  path.push({
+    question: node.title || node.text,
+    answer: c.label
+  });
+}
         renderNode(NODES[c.next],c.next);
         updateSelectedPath();
       };
@@ -1190,7 +1574,7 @@ if(node.image){
   }
 
   /* Progress Bar Fix */
-if(key==="missing_docs_intro"){
+if(key==="reminder_intro" || key==="missing_docs_intro"){
 
   progressFill.style.width="0%";
   progressText.textContent="Not started";
@@ -1212,7 +1596,10 @@ if(key==="missing_docs_intro"){
 }
 
   goBackBtn.style.display = historyStack.length && key!=="missing_docs_intro" ? "inline-block" : "none";
-  startOverBtn.style.display = key!=="missing_docs_intro" ? "inline-block" : "none";
+startOverBtn.style.display =
+  (key !== "missing_docs_intro" && key !== "reminder_intro")
+    ? "inline-block"
+    : "none";
 }
 
 function updateSelectedPath(){
@@ -1256,7 +1643,7 @@ goBackBtn.onclick=()=>{if(historyStack.length){const last=historyStack.pop();pat
 startOverBtn.onclick=()=>{path=[];historyStack=[];currentFinalRecommendation="";selectedPath.textContent="No steps selected yet";suggestedPanel.style.display="none";renderNode(NODES.missing_docs_intro,"missing_docs_intro");};
 copyEmailBtn.onclick=()=>navigator.clipboard.writeText(suggestedEmail.innerText||"").then(()=>alert("Email copied!"));
 
-renderNode(NODES.missing_docs_intro,"missing_docs_intro");
+renderNode(NODES.reminder_intro,"reminder_intro");
 
 window.addEventListener('load',()=>{
   document.querySelectorAll('.card').forEach((c,i)=>{
@@ -1275,12 +1662,548 @@ function openImageZoom(src){
 function closeImageZoom(){
   document.getElementById("imageLightbox").style.display="none";
 }
+
+function openAJModal(){
+  document.getElementById("ajModal").style.display = "flex";
+}
+
+function closeAJModal(){
+  document.getElementById("ajModal").style.display = "none";
+}
+
+function toggleAJ(header){
+  const content = header.nextElementSibling;
+  const isOpen = content.style.display === "block";
+
+  // close all
+  document.querySelectorAll('.aj-content').forEach(c => c.style.display = "none");
+
+  // open selected
+  if(!isOpen){
+    content.style.display = "block";
+  }
+}
+
+/* 🔍 SEARCH FILTER */
+function filterAJ(){
+  const input = document.getElementById("ajSearch").value.toLowerCase();
+  const items = document.querySelectorAll(".aj-item");
+
+  items.forEach(item=>{
+    const text = item.innerText.toLowerCase();
+    item.style.display = text.includes(input) ? "block" : "none";
+  });
+}
+
+function openEmailGuide() {
+  document.getElementById("emailGuideModal").style.display = "block";
+}
+
+function closeEmailGuide() {
+  document.getElementById("emailGuideModal").style.display = "none";
+}
+
 </script>
+<script>
+function searchAJ() {
+  let input = document.getElementById("ajSearch").value.toLowerCase();
+  let items = document.querySelectorAll(".aj-item");
+
+  items.forEach(item => {
+    let text = item.innerText.toLowerCase();
+
+    if (text.includes(input)) {
+      item.style.display = "block";
+
+      // auto expand matching section
+      let content = item.querySelector(".aj-content");
+      if (content) content.style.display = "block";
+    } else {
+      item.style.display = "none";
+    }
+  });
+}
+</script>
+<style>
+
+.aj-card{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  padding:14px;
+  margin-bottom:14px;
+}
+
+.aj-card h3{
+  margin-bottom:8px;
+  color:#4d148c;
+}
+
+.advise-box{
+  background:#eef6ff;
+  border-left:4px solid #4d148c;
+  padding:10px;
+  margin:6px 0 10px;
+  border-radius:6px;
+  font-size:13px;
+}
+
+.aj-header{
+  font-weight:700;
+  cursor:pointer;
+  padding:10px;
+  background:#f1f5f9;
+  border-radius:8px;
+  transition:.2s;
+}
+
+.aj-header:hover{
+  background:#e2e8f0;
+}
+
+.aj-content{
+  display:none;
+  margin-top:10px;
+  animation:fadeIn .3s ease-in;
+}
+
+.aj-search-container {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 10px;
+  z-index: 5;
+  border-bottom: 1px solid #ddd;
+}
+
+#ajSearch {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.link-btn {
+  color: #0073e6;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.link-btn:hover {
+  color: #005bb5;
+}
+
+</style>
 
 <!-- IMAGE ZOOM VIEWER -->
 <div id="imageLightbox" class="image-lightbox" onclick="closeImageZoom()">
   <img id="zoomedImage">
 </div>
+
+<!-- a-j guideline modal -->
+<div id="ajModal" class="modal" onclick="closeAJModal()">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width:900px; max-height:90vh; overflow:auto; text-align:left;">
+
+    <div class="modal-header">
+      A–J Guideline
+      <span class="modal-close" onclick="closeAJModal()">×</span>
+    </div>
+    <div class="aj-search-container">
+  <input type="text" id="ajSearch" placeholder="🔍 Search guideline..." onkeyup="searchAJ()" />
+</div>
+
+    <div id="ajContainer">
+
+      <!-- A -->
+      <div class="aj-card aj-item">
+        <div class="aj-header" onclick="toggleAJ(this)">A. REBILL</div>
+        <div class="aj-content">
+
+          <!-- A1 -->
+  <p><strong>A1. Document WITH FedEx Stamp:</strong></p>
+
+  ✔ If document shows debtor’s name:
+  <div class="advise-box">
+  “The document on file was the only document provided to us at the time of pickup and was used to bill the PRO.”
+  </div>
+
+  ✔ If document has NO debtor name:
+  <div class="advise-box">
+  “The document on file was the only document provided to us at the time of pickup. Please reach out to the shipper who may be able to provide a copy of an actual BOL.”
+  </div>
+
+  ✔ If customer is the shipper:
+  <div class="advise-box">
+  “The document on file was the only document provided to us at the time of pickup. A letter of authorization with a letterhead is needed from a different debtor accepting the shipping charges or an LOA from the new debtor's email domain.”
+  </div>
+
+  <!-- A2 -->
+  <p><strong>A2. NO FedEx Stamp OR No Document:</strong></p>
+
+  <ul>
+    <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+  </ul>
+
+  ✔ If customer wants rebill per BOL but BOL is missing:
+  <ul>
+    <li>Utilize Previous Shipments</li>
+    <li>Check using:</li>
+    <ul>
+      <li>Shipper Code</li>
+      <li>Consignee Code</li>
+      <li>Bill-To Code</li>
+      <li>Origin/Destination Center ID</li>
+    </ul>
+    <li>Prefer paid/closed PROs</li>
+  </ul>
+
+  ✔ Add keyword:
+  <div class="advise-box">
+  RVSL<br>
+  VS-BLER-CASE#-UPDATED BT XXXXXXXX PER PREVIOUS SHIPMENTS<br>
+  (e.g. PRO XXXXXXX) IN ATTEMPT FOR PAYMENT SINCE NO BOL ON FILE
+  </div>
+
+  <ul>
+    <li>Email Training Team for confirmation</li>
+  </ul>
+
+  <!-- A3 -->
+  <p><strong>A3. LOA Rebill / Customer Accepting Charges:</strong></p>
+
+  <ul>
+    <li>If rebill per BOL request but BOL is missing → Rebill per LOA <strong>without correction fee</strong></li>
+    <li>If rebill per LOA request and BOL missing → Rebill per LOA <strong>with correction fee</strong></li>
+  </ul>
+
+  ❗ No need to request BOL imaging
+
+  <div class="advise-box">
+  Send LOA to: imaging@fedex.com
+  </div>
+
+  <!-- A4 -->
+  <p><strong>A4. If Shipment Exceeds 30 Days During Processing:</strong></p>
+  <ul>
+    <li>Utilize Previous Shipments in CAPS</li>
+    <li>Email Training Team for confirmation</li>
+  </ul>
+
+  <!-- A5 -->
+  <p><strong>A5. If Shipment Becomes Over 90 Days:</strong></p>
+  <ul>
+    <li>Proceed with Write-Off</li>
+    <li>Complete Write-Off form</li>
+    <li>Send to Manager for approval</li>
+  </ul>
+
+</div>
+
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="aj-card aj-item">
+        <div class="aj-header" onclick="toggleAJ(this)">B. CLASS DISPUTE (No ADIM / No CLAS)</div>
+        <div class="aj-content">
+          <!-- B -->
+<div class="aj-card">
+  <h3>B. CLASS DISPUTE (No ADIM / No CLAS)</h3>
+
+  <ul>
+    <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+  </ul>
+
+  ✔ If PRO has <strong>NDEN (No Density)</strong> keyword:
+
+  <div class="advise-box">
+  Advise customer that supporting documents are required.
+  </div>
+
+  <ul>
+    <li>Purchase Order</li>
+    <li>Invoice</li>
+    <li>Catalog Page</li>
+    <li>Specification Sheet</li>
+    <li>Packing Slip</li>
+    <li>Website product specifications</li>
+  </ul>
+
+</div>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="aj-card aj-item">
+        <div class="aj-header" onclick="toggleAJ(this)">C. CLASS DISPUTE – INSPECTED PRO</div>
+        <div class="aj-content">
+          <!-- C -->
+<div class="aj-card">
+  <h3>C. CLASS DISPUTE – INSPECTED PRO (ADIM / CLAS)</h3>
+
+  <ul>
+    <li>Class is valid per inspection</li>
+  </ul>
+
+  ✔ Reply:
+  <div class="advise-box">
+  “PRO XXXXXXXX has been inspected and found to be at class 300. Please see the attached inspection certificate for your reference.”
+  </div>
+
+  <ul>
+    <li>If customer disputes inspection → Move to <strong>Freight Research > Inspection Review</strong></li>
+  </ul>
+
+</div>
+        </div>
+      </div>
+
+<!-- D -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">D. WEIGHT DISPUTE (Not Reweighed)</div>
+  <div class="aj-content">
+
+    <ul>
+      <li>12-digit PRO → Use <strong>iSPI Shipment History</strong> to verify transmitted weight</li>
+      <li>Non-12-digit PRO → 
+      <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+  </li>
+    </ul>
+
+    ✔ If PRO has <strong>ADIM</strong>:
+    <div class="advise-box">
+      Check for Dimension Certificate and validate weight details.
+    </div>
+
+    <ul>
+      <li>Move to <strong>Freight Research &gt; Inspection Review</strong></li>
+    </ul>
+
+  </div>
+</div>
+
+<!-- E -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">E. REWEIGH DISPUTE (With REWE Certificate)</div>
+  <div class="aj-content">
+
+    <ul>
+      <li>12-digit PRO → Use <strong>iSPI Shipment History</strong></li>
+      <li>
+  Non-12-digit PRO → 
+  <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+</li>
+    </ul>
+
+    ✔ If PRO has <strong>ADIM</strong>:
+    <div class="advise-box">
+      Verify Dimension Certificate and validate reweigh details.
+    </div>
+
+    <ul>
+      <li>Move to <strong>Freight Research &gt; Inspection Review</strong></li>
+    </ul>
+
+  </div>
+</div>
+
+<!-- F -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">F. SERVICE TYPE / LEVEL</div>
+  <div class="aj-content">
+
+    <ul>
+      <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+    </ul>
+
+    <p><strong>Additionally:</strong></p>
+
+    ✔ Consignee / 3rd Party / 3PL:
+    <ul>
+      <li>Advise BOL not on file</li>
+      <li>Ask them to contact shipper for stamped BOL copy</li>
+    </ul>
+
+    ✔ Shipper:
+    <ul>
+      <li>Advise BOL requested from center</li>
+      <li>If they have stamped copy, request submission</li>
+    </ul>
+
+    ✔ If nearing 30 days or multiple attempts:
+    <ul>
+      <li>Use Previous Shipments in CAPS</li>
+      <li>If majority moved as ECON or PRTY → Update Service Level</li>
+    </ul>
+
+    <div class="advise-box">
+      VS-BLER-CASE#-UPDATED TO ECON/PRTY PER PREVIOUS SHIPMENTS<br>
+      (e.g. PRO XXXXXXX) IN ATTEMPT FOR PAYMENT SINCE NO BOL ON FILE
+    </div>
+
+    ✔ Illegible BOL:
+    <ul>
+      <li>Use Previous Shipments</li>
+    </ul>
+
+    ✔ Provided BOL:
+    <ul>
+      <li>Review and process accordingly</li>
+    </ul>
+
+  </div>
+</div>
+
+<!-- G -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">G. OVRL / XLGH</div>
+  <div class="aj-content">
+
+    <p><strong>If Inspected:</strong></p>
+    <ul>
+      <li>Check <strong>FACERT</strong></li>
+      <li>Check <strong>Shipment Inquiry &gt; Shipment History</strong> for inspection photo</li>
+    </ul>
+
+    ✔ If dimension supports fee:
+    <div class="advise-box">
+      Move to WRO Freight Research &gt; Inspection Review
+    </div>
+
+    <p><strong>If NOT Inspected:</strong></p>
+    <ul>
+      <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+    </ul>
+
+  </div>
+</div>
+
+<!-- H -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">H. OTHER ACCESSORIAL FEES (Require BOL)</div>
+  <div class="aj-content">
+
+    <ul>
+      <li>If A0 PRO → Review <strong>XREF PROs</strong> for documents</li>
+      <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+    </ul>
+
+    ✔ If shipment reaches <strong>90 days</strong> without BOL confirming debtor:
+    <div class="advise-box">
+      Proceed with Write-Off<br>
+      Manager approval required
+    </div>
+
+  </div>
+</div>
+
+<!-- I -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">I. REFERENCE NUMBER / EDIT</div>
+  <div class="aj-content">
+
+    ✔ Advise:
+    <div class="advise-box">
+      BOL is missing
+    </div>
+
+    ✔ Ask for:
+    <ul>
+      <li>Reference Type</li>
+      <li>Reference Number</li>
+    </ul>
+
+    ✔ Once provided:
+    <ul>
+      <li>Update accordingly</li>
+    </ul>
+
+    ✔ If unknown:
+    <ul>
+      <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+    </ul>
+
+  </div>
+</div>
+
+<!-- J -->
+<div class="aj-card aj-item">
+  <div class="aj-header" onclick="toggleAJ(this)">J. DOCUMENT REQUEST</div>
+  <div class="aj-content">
+
+    <ul>
+      <a href="#" onclick="openEmailGuide()" class="link-btn">
+   📩Follow Sending Emails – Steps 1, 2 & 3
+</a>
+    </ul>
+
+  </div>
+</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- sending ermail for a-j guidelines -->
+<div id="emailGuideModal" class="modal" onclick="closeEmailGuide()">
+  <div class="modal-content" onclick="event.stopPropagation()" style="max-width:700px; max-height:90vh; overflow:auto; text-align:left;">
+
+    <div class="modal-header">
+      Sending Emails Guide
+      <span class="modal-close" onclick="closeEmailGuide()">×</span>
+    </div>
+
+    <div style="font-size:13px; line-height:1.6;">
+
+      <h3>1. Send Email To:</h3>
+      <ul>
+        <li>Shannon Dunnaway</li>
+        <li>Leslie Jensen</li>
+        <li>Judy Blevins (Imaging Team)</li>
+        <li>Origin Center Managers & Supervisors</li>
+      </ul>
+
+      <div class="advise-box">
+        Do NOT copy the customer.<br>
+        Copy your TL, Chase, Jonie, and Training & Quality Team.
+      </div>
+
+      <h3>2. Use This Message:</h3>
+      <div class="advise-box">
+        "BOL for PRO XXXXXXXXX is missing / not available on image.<br>
+        Please be advised that we do not have access to send using the Missing Documents form."
+      </div>
+
+      <h3>3. Important:</h3>
+      <div class="advise-box">
+        Once document is retrieved, send to:<br>
+        <strong>imaging@fedex.com</strong><br><br>
+        to have it imaged on the PRO.
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
 </body>
 
 </html>
