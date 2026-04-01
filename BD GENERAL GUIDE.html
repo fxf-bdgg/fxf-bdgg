@@ -1,1524 +1,2874 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Billing Dispute General Guide</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Billing Dispute General Guide</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg-soft:#0c1728;
+      --panel:#0f1c31;
+      --panel-2:#12233d;
+      --card:#ffffff;
+      --card-soft:#f8fafc;
+      --text:#0f172a;
+      --text-soft:#475569;
+      --muted:#94a3b8;
+      --line:rgba(148,163,184,.18);
+      --white-line:rgba(255,255,255,.08);
+      --accent:#6d28d9;
+      --accent-2:#4d148c;
+      --accent-3:#ff6600;
+      --success:#16a34a;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --shadow-xl:0 24px 80px rgba(2,6,23,.18);
+      --shadow-lg:0 18px 48px rgba(2,6,23,.12);
+      --shadow-md:0 10px 28px rgba(15,23,42,.10);
+      --shadow-card:0 16px 40px rgba(15,23,42,.06);
+      --radius-xl:28px;
+      --radius-lg:20px;
+      --radius-md:16px;
+      --radius-sm:12px;
+      --max:1920px;
+      font-family:"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      min-height:100vh;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(109,40,217,.24), transparent 28%),
+        radial-gradient(circle at top right, rgba(255,102,0,.14), transparent 22%),
+        linear-gradient(180deg, #091120 0%, #0b1525 32%, #eef4fb 32%, #f5f8fc 100%);
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size:36px 36px;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,.45), transparent 42%);
+      z-index:0;
+    }
+
+    a{color:inherit}
+    button,input,textarea{font:inherit}
+
+    .page{
+      position:relative;
+      z-index:1;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:100;
+      backdrop-filter:blur(16px);
+      background:rgba(7,17,31,.72);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+
+    .topbar-inner{
+      width:min(calc(100% - 32px), var(--max));
+      margin:0 auto;
+      min-height:82px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+    }
+
+    .brand-wrap{
+      display:flex;
+      align-items:center;
+      gap:28px;
+      min-width:0;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      text-decoration:none;
+      flex-shrink:0;
+    }
+
+    .brand-meta{
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+
+    .brand-kicker{
+      color:rgba(255,255,255,.64);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      margin-bottom:4px;
+    }
+
+    .brand-title{
+      color:#fff;
+      font-size:15px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .nav-tabs{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .tab{
+      text-decoration:none;
+      color:rgba(255,255,255,.78);
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:14px;
+      font-weight:600;
+      transition:.22s ease;
+      position:relative;
+    }
+
+    .tab:hover{
+      color:#fff;
+      background:rgba(255,255,255,.07);
+    }
+
+    .tab.active{
+      color:#fff;
+      background:linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-shrink:0;
+    }
+
+    .clock-pill,
+    .icon-btn{
+      border:none;
+      cursor:pointer;
+      transition:.22s ease;
+    }
+
+    .clock-pill{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 16px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+      font-weight:700;
+    }
+
+    .clock-pill:hover{
+      transform:translateY(-1px);
+      background:rgba(255,255,255,.12);
+    }
+
+    .clock-label{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      line-height:1.05;
+    }
+
+    .clock-small{
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,.54);
+      margin-bottom:3px;
+    }
+
+    .icon-btn{
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+      font-size:18px;
+    }
+
+    .icon-btn:hover{
+      transform:translateY(-2px);
+      background:linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+    }
+
+    #timeCalendarPopup{
+      display:none;
+      position:fixed;
+      top:92px;
+      right:24px;
+      width:min(360px, calc(100vw - 32px));
+      background:rgba(255,255,255,.94);
+      border-radius:28px;
+      box-shadow:var(--shadow-xl);
+      border:1px solid rgba(148,163,184,.16);
+      padding:20px;
+      z-index:999;
+      backdrop-filter:blur(16px);
+    }
+
+    .popup-time{
+      font-size:34px;
+      font-weight:800;
+      letter-spacing:-.05em;
+      color:#0f172a;
+      margin-bottom:4px;
+    }
+
+    .popup-date{
+      font-size:14px;
+      color:#64748b;
+      margin-bottom:16px;
+    }
+
+    .calendar-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      background:#f8fafc;
+      box-shadow:inset 0 0 0 1px rgba(148,163,184,.16);
+    }
+
+    .calendar-header span{
+      cursor:pointer;
+      color:#4d148c;
+      font-weight:800;
+      font-size:18px;
+      user-select:none;
+      width:28px;
+      text-align:center;
+    }
+
+    .calendar-title{
+      color:#0f172a;
+      font-size:15px;
+      font-weight:800;
+    }
+
+    .calendar-grid{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:8px;
+    }
+
+    .calendar-grid .day-name{
+      text-align:center;
+      font-size:12px;
+      font-weight:800;
+      color:#64748b;
+      padding:6px 0;
+    }
+
+    .calendar-grid .day{
+      display:grid;
+      place-items:center;
+      aspect-ratio:1;
+      border-radius:16px;
+      background:#fff;
+      font-size:14px;
+      font-weight:700;
+      color:#334155;
+      box-shadow:inset 0 0 0 1px rgba(148,163,184,.14);
+    }
+
+    .calendar-grid .day:hover{ background:#f8fafc; }
+
+    .calendar-grid .today{
+      background:linear-gradient(135deg, #4d148c, #6d28d9);
+      color:#fff;
+      box-shadow:none;
+    }
+
+    .app-shell{
+      width:min(calc(100% - 32px), var(--max));
+      margin:22px auto 24px;
+    }
+
+    .app-frame{
+      min-height:calc(100vh - 180px);
+      background:rgba(255,255,255,.58);
+      backdrop-filter:blur(16px);
+      border:1px solid rgba(255,255,255,.68);
+      border-radius:34px;
+      box-shadow:var(--shadow-xl);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns:minmax(0,1.45fr) 420px 480px;
+    }
+
+    .main{
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      min-width:0;
+    }
+
+    .main-topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:16px 18px;
+      border-radius:24px;
+      background:rgba(255,255,255,.85);
+      border:1px solid rgba(219,228,240,.9);
+      box-shadow:var(--shadow-md);
+    }
+
+    .main-topbar h1{
+      margin:0;
+      font-size:24px;
+      letter-spacing:-.03em;
+    }
+
+    .main-status{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:11px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid #dbe4f0;
+      font-size:12px;
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .pill.primary{
+      background:linear-gradient(135deg,#2563eb,#1d4ed8);
+      color:#fff;
+      border:none;
+    }
+
+    .workspace{
+      display:grid;
+      grid-template-rows:auto 1fr;
+      gap:16px;
+      min-height:0;
+    }
+
+    .progress-card{
+      background:#fff;
+      border:1px solid #dbe4f0;
+      border-radius:22px;
+      padding:16px 18px;
+      box-shadow:var(--shadow-md);
+    }
+
+    .progress-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .progress-title{
+      font-size:14px;
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .progress-status{
+      font-size:12px;
+      font-weight:800;
+      color:#64748b;
+    }
+
+    .progress-bar{
+      height:12px;
+      background:#eaf0f7;
+      border-radius:999px;
+      overflow:hidden;
+    }
+
+    .progress-fill{
+      height:100%;
+      width:0%;
+      border-radius:inherit;
+      background:linear-gradient(90deg,#2563eb 0%, #1d4ed8 55%, #16a34a 100%);
+      transition:width .28s ease;
+    }
+
+    .stage-area{
+      min-height:0;
+      display:grid;
+      grid-template-columns:1fr;
+    }
+
+    .stage-card{
+      background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+      border:1px solid #dbe4f0;
+      border-radius:30px;
+      box-shadow:var(--shadow-card);
+      min-height:640px;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    .stage-top{
+      padding:22px 22px 0;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 13px;
+      border-radius:999px;
+      background:#eef4ff;
+      color:#1d4ed8;
+      font-size:12px;
+      font-weight:800;
+    }
+
+    .badge.alt{
+      background:#f8fafc;
+      color:#334155;
+    }
+
+    .question-wrap{
+      padding:22px;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      flex:1;
+    }
+
+    .question-card{
+      position:relative;
+      padding:30px;
+      border-radius:28px;
+      background:
+        radial-gradient(circle at top right, rgba(37,99,235,.10), transparent 30%),
+        linear-gradient(180deg,#ffffff,#f8fbff);
+      border:1px solid #e6edf7;
+      box-shadow:0 12px 30px rgba(15,23,42,.04);
+    }
+
+    .question-card::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      pointer-events:none;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+    }
+
+    .question-label{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:#334155;
+    }
+
+    .question-text{
+      margin:18px 0 0;
+      font-size:36px;
+      line-height:1.08;
+      letter-spacing:-.045em;
+      font-weight:900;
+    }
+
+    .question-help{
+      margin:14px 0 0;
+      color:#64748b;
+      font-size:14px;
+      line-height:1.75;
+      max-width:760px;
+      white-space:pre-wrap;
+    }
+
+    .choices{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:14px;
+    }
+
+    .choice{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      text-align:left;
+      border-radius:24px;
+      padding:18px;
+      background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+      border:1px solid #e2e8f0;
+      box-shadow:0 12px 28px rgba(15,23,42,.05);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      min-height:112px;
+    }
+
+    .choice:hover{
+      transform:translateY(-3px);
+      box-shadow:0 18px 36px rgba(15,23,42,.08);
+      border-color:#c7d5e6;
+    }
+
+    .choice.selected{
+      background:linear-gradient(135deg,#2563eb,#1d4ed8);
+      color:#fff;
+      border-color:transparent;
+    }
+
+    .choice-icon{
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      display:grid;
+      place-items:center;
+      background:#eef4ff;
+      color:#2563eb;
+      flex:0 0 auto;
+      font-size:17px;
+    }
+
+    .choice.selected .choice-icon{
+      background:rgba(255,255,255,.14);
+      color:#fff;
+    }
+
+    .choice-body{min-width:0}
+
+    .choice-title{
+      font-size:16px;
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .choice-desc{
+      font-size:12px;
+      line-height:1.6;
+      color:#64748b;
+      margin-top:6px;
+    }
+
+    .choice.selected .choice-desc{
+      color:rgba(255,255,255,.8);
+    }
+
+    .decision-footer{
+      margin-top:auto;
+      padding:18px 22px 22px;
+      border-top:1px solid #e8eef7;
+      background:linear-gradient(180deg,rgba(248,250,252,.2),#f8fbff);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .decision-footer-left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+
+    .footer-label{
+      font-size:11px;
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color:#64748b;
+    }
+
+    .footer-value{
+      font-size:14px;
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .decision-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .app-btn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      padding:12px 16px;
+      border-radius:14px;
+      font-size:14px;
+      font-weight:800;
+      transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .app-btn:hover{
+      transform:translateY(-1px);
+    }
+
+    .app-btn.primary{
+      background:#111827;
+      color:#fff;
+      box-shadow:0 8px 20px rgba(17,24,39,.14);
+    }
+
+    .app-btn.secondary{
+      background:#fff;
+      color:#111827;
+      border:1px solid #dbe4f0;
+    }
+
+    .app-btn.ghost{
+      background:#f8fafc;
+      color:#0f172a;
+      border:1px solid #e2e8f0;
+    }
+
+    .final-card{
+      margin:20px;
+      padding:20px 20px 18px;
+      border-radius:24px;
+      background:linear-gradient(180deg,#f0fdf4,#ffffff);
+      border:1px solid #dcfce7;
+      box-shadow:0 16px 34px rgba(22,163,74,.08);
+    }
+
+    .final-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius:999px;
+      background:#dcfce7;
+      color:#166534;
+      font-size:12px;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+    }
+
+    .final-title{
+      margin:14px 0 0;
+      font-size:14px;
+      font-weight:800;
+      color:#166534;
+    }
+
+    .final-text{
+      margin:12px 0 0;
+      font-size:16px;
+      line-height:1.5;
+      letter-spacing:-.02em;
+      font-weight:800;
+      color:#111827;
+      white-space:pre-wrap;
+      max-width:980px;
+    }
+
+    .final-note{
+      margin-top:12px;
+      color:#475569;
+      line-height:1.7;
+      white-space:pre-wrap;
+    }
+
+    .final-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:22px;
+    }
+
+    .side-panel{
+      padding:18px 14px 18px 0;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+    }
+
+    .template-panel{
+      padding:18px 18px 18px 0;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      min-width:0;
+    }
+
+    .side-panel .summary-card,
+    .template-panel .summary-card{
+      background:#fff;
+      border:1px solid #dbe4f0;
+      border-radius:22px;
+      padding:18px;
+      box-shadow:var(--shadow-md);
+    }
+
+    .summary-head{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    .summary-head i{color:#7c3aed}
+
+    .recommendation{
+      min-height:120px;
+      border-radius:18px;
+      padding:16px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      line-height:1.75;
+      color:#0f172a;
+      white-space:pre-wrap;
+    }
+
+    .recommendation.empty,
+    .path-empty,
+    .template-box.empty{
+      color:#94a3b8;
+    }
+
+    .path-box{
+      min-height:160px;
+      border-radius:18px;
+      padding:16px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+    }
+
+    .path-item{
+      padding:12px 14px;
+      border-radius:16px;
+      background:#fff;
+      border:1px solid #e2e8f0;
+      margin-bottom:10px;
+    }
+    
+    .path-item{
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.path-item:hover{
+  transform:translateY(-2px);
+  background:#ffffff;
+  box-shadow:0 10px 24px rgba(15,23,42,.08);
+}
+
+    .path-item:last-child{margin-bottom:0}
+
+    .step-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:6px 12px;
+  border-radius:999px;
+  background:#eef4ff;
+  color:#2563eb;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  margin-left:2px; /* slight left align to match question */
+  animation:stepBadgePop .35s ease;
+}
+
+.path-q{
+  font-size:12px;
+  color:#64748b;
+  margin-bottom:6px;
+  font-weight:700;
+}
+
+.path-a{
+  font-size:14px;
+  font-weight:800;
+  color:#111827;
+  padding-left:2px;
+}
+
+.path-item-enter{
+  opacity:0;
+  transform:translateY(10px);
+  animation:pathItemFadeUp .35s ease forwards;
+}
+
+@keyframes pathItemFadeUp{
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes stepBadgePop{
+  from{
+    opacity:0;
+    transform:translateY(4px) scale(.96);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .metric{
+      border-radius:18px;
+      padding:14px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+    }
+
+    .metric-label{
+      display:block;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:#64748b;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    .metric-value{
+      display:block;
+      font-size:24px;
+      font-weight:900;
+      color:#111827;
+      line-height:1.1;
+      word-break:break-word;
+    }
+
+    .template-stack{
+      display:grid;
+      gap:14px;
+    }
+
+    .template-card{
+      border:1px solid #dbe4f0;
+      border-radius:20px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow:var(--shadow-card);
+    }
+
+    .template-card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:16px 16px 14px;
+      border-bottom:1px solid #edf2f7;
+    }
+
+    .template-title-wrap{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .template-icon{
+      width:44px;
+      height:44px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg, rgba(77,20,140,.10), rgba(255,102,0,.10));
+      color:#4d148c;
+      flex:0 0 auto;
+      font-size:17px;
+    }
+
+    .template-title{
+      font-size:15px;
+      font-weight:900;
+      color:#111827;
+      line-height:1.25;
+    }
+
+    .template-sub{
+      margin-top:4px;
+      font-size:12px;
+      color:#64748b;
+      line-height:1.5;
+    }
+
+    .template-actions{
+      display:flex;
+      gap:8px;
+    }
+
+    .template-icon-btn{
+      width:38px;
+      height:38px;
+      border:none;
+      border-radius:12px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      cursor:pointer;
+      color:#0f172a;
+      transition:.18s ease;
+    }
+
+    .template-icon-btn:hover{
+      transform:translateY(-1px);
+      background:#fff;
+    }
+
+    .template-body{
+      padding:16px;
+    }
+
+    .template-box{
+      min-height:120px;
+      border-radius:16px;
+      background:#f8fafc;
+      border:1px solid #e2e8f0;
+      padding:14px;
+      color:#111827;
+      line-height:1.7;
+      white-space:pre-wrap;
+      font-size:13px;
+    }
+
+    .template-foot{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:0 16px 16px;
+      flex-wrap:wrap;
+    }
+
+    .template-tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:800;
+      color:#64748b;
+    }
+
+    .template-copy{
+      border:none;
+      cursor:pointer;
+      border-radius:12px;
+      padding:10px 14px;
+      background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%);
+      color:#fff;
+      font-weight:800;
+      transition:.22s ease;
+    }
+
+    .template-copy:hover{
+      transform:translateY(-1px);
+    }
+
+    .template-copy.copied{
+      background:linear-gradient(135deg,#16a34a,#15803d);
+    }
+
+    .note-card{
+      border-radius:18px;
+      background:linear-gradient(135deg,#f8fafc,#ffffff);
+      border:1px solid #e2e8f0;
+      padding:14px 16px;
+      color:#64748b;
+      line-height:1.7;
+      font-size:13px;
+    }
+
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,.54);
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:1001;
+      backdrop-filter:blur(10px);
+    }
+
+    .modal-content{
+      width:min(100%, 640px);
+      background:#fff;
+      border-radius:26px;
+      border:1px solid rgba(219,228,240,.9);
+      box-shadow:var(--shadow-xl);
+      padding:22px;
+    }
+
+    .modal-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      font-size:20px;
+      font-weight:900;
+      color:#111827;
+      margin-bottom:16px;
+    }
+
+    .modal-close{
+      cursor:pointer;
+      font-size:24px;
+      color:#94a3b8;
+      line-height:1;
+    }
+
+    .modal-close:hover{ color:#111827; }
+
+    input, textarea{
+      width:100%;
+      border:none;
+      outline:none;
+      margin-top:12px;
+      border-radius:16px;
+      background:#f8fafc;
+      box-shadow:inset 0 0 0 1px rgba(148,163,184,.18);
+      padding:14px 16px;
+      color:#0f172a;
+      font-size:14px;
+      transition:.18s ease;
+      font-family:inherit;
+    }
+
+    input:focus, textarea:focus{
+      background:#fff;
+      box-shadow:inset 0 0 0 2px rgba(77,20,140,.16), 0 0 0 5px rgba(77,20,140,.06);
+    }
+
+    textarea{
+      min-height:120px;
+      resize:vertical;
+    }
+
+    .rating-container{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      margin-top:12px;
+    }
+
+    .rating-star{
+      cursor:pointer;
+      font-size:28px;
+      color:#cbd5e1;
+      transition:color .2s, transform .2s;
+    }
+
+    .rating-star:hover{ transform:scale(1.12); }
+    .rating-star.selected{ color:#ff6600; }
+
+    .comment-modal-footer{
+      display:flex;
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:flex-start;
+      gap:14px;
+      margin-top:16px;
+    }
+
+    #feedbackMessage{
+      display:none;
+      margin-top:12px;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .link-text{
+      color:#4d148c;
+      cursor:pointer;
+      text-decoration:none;
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .link-text:hover{ text-decoration:underline; }
+
+    .comment-list-item{
+      padding:14px 0;
+      border-bottom:1px solid rgba(148,163,184,.18);
+    }
+
+    .comment-list-item:last-child{ border-bottom:none; }
+
+    #commentsList .stars{
+      color:#ff6600;
+      font-size:18px;
+      margin-bottom:6px;
+      display:block;
+    }
+
+    footer{
+      background:#0b1525;
+      border-top:1px solid rgba(255,255,255,.08);
+      color:#fff;
+      margin-top:10px;
+    }
+
+    .footer-inner{
+      width:min(calc(100% - 32px), var(--max));
+      margin:0 auto;
+      padding:18px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .footer-left strong{
+      display:block;
+      font-size:14px;
+      margin-bottom:4px;
+    }
+
+    .footer-left span,
+    .footer-right{
+      color:rgba(255,255,255,.68);
+      font-size:12px;
+      line-height:1.6;
+    }
+
+    @media (max-width:1450px){
+      .app-frame{
+        grid-template-columns:minmax(0,1fr) 340px 360px;
+      }
+    }
+
+    @media (max-width:1220px){
+      .app-frame{
+        grid-template-columns:1fr;
+      }
+      .side-panel,
+      .template-panel{
+        padding:0 18px 18px;
+      }
+    }
+
+    @media (max-width:1100px){
+      .topbar-inner{
+        min-height:auto;
+        padding:14px 0;
+        align-items:flex-start;
+      }
+      .brand-wrap{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:14px;
+      }
+    }
+
+    @media (max-width:760px){
+      .topbar-inner,
+      .footer-inner,
+      .app-shell{
+        width:min(calc(100% - 20px), var(--max));
+      }
+      .app-shell{margin:16px auto}
+      .app-frame{min-height:100vh;border-radius:24px}
+      .main{padding:18px}
+      .topbar{position:static}
+      .main-topbar{flex-direction:column;align-items:flex-start}
+      .question-text{font-size:28px}
+      .choices{grid-template-columns:1fr}
+      .summary-grid{grid-template-columns:1fr}
+      .decision-footer{flex-direction:column;align-items:flex-start}
+      .actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
+      .clock-pill{flex:1 1 220px}
+      .icon-btn{width:46px;height:46px;border-radius:14px}
+      #timeCalendarPopup{right:10px;top:86px}
+      .modal{padding:14px}
+      .modal-content{padding:20px;border-radius:22px}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand-wrap">
+          <a href="index.html" class="brand">
+            <div class="brand-meta">
+              <span class="brand-kicker">Internal Platform</span>
+              <span class="brand-title">Decision Support System</span>
+            </div>
+          </a>
+
+          <nav class="nav-tabs">
+            <a href="index.html" class="tab">Home</a>
+            <a href="case-directory.html" class="tab">Case Directory</a>
+            <a href="ebs-response-template.html" class="tab">EBS Response</a>
+            <a href="volume-application.html" class="tab">Volume Application</a>
+          </nav>
+        </div>
+
+        <div class="actions">
+          <button id="clockBtn" class="clock-pill" type="button">
+            <i class="fa-regular fa-clock"></i>
+            <div class="clock-label">
+              <span class="clock-small">Manila time</span>
+              <span id="clockText">--:-- --</span>
+            </div>
+          </button>
+
+          <button class="icon-btn" id="commentIcon" type="button" title="Feedback">
+            <i class="fa-solid fa-comment-dots"></i>
+          </button>
+
+          <button class="icon-btn" id="helpIcon" type="button" title="Get Help">
+            <i class="fa-solid fa-circle-question"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="timeCalendarPopup">
+      <div class="popup-time" id="popupTime">--:--:-- --</div>
+      <div class="popup-date" id="popupDate">Loading date…</div>
+
+      <div class="calendar-header">
+        <span id="prevMonth">‹</span>
+        <div class="calendar-title" id="monthYear"></div>
+        <span id="nextMonth">›</span>
+      </div>
+
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+
+    <div class="app-shell">
+      <div class="app-frame">
+        <main class="main">
+          <div class="main-topbar">
+            <div>
+              <h1>Billing Dispute General Guide</h1>
+            </div>
+            <div class="main-status">
+              <div class="pill primary" id="statusPill"><i class="fa-solid fa-bolt"></i> Ready</div>
+            </div>
+          </div>
+
+          <div class="workspace">
+            <section class="progress-card">
+              <div class="progress-head">
+                <div class="progress-title">Progress</div>
+                <div class="progress-status" id="progressText">Not started</div>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            </section>
+
+            <section class="stage-area">
+              <div class="stage-card" id="stageCard"></div>
+            </section>
+          </div>
+        </main>
+
+        <aside class="side-panel">
+          <div class="summary-card">
+            <div class="summary-head"><i class="fa-solid fa-list-check"></i> Selected Path</div>
+            <div id="pathBox" class="path-box path-empty">No steps selected yet. The full path will appear here as the user moves through the guide.</div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-head"><i class="fa-solid fa-lightbulb"></i> Recommended Action</div>
+            <div class="recommendation empty" id="recommendationBox">No recommendation yet. Follow the flow to reach the final instruction.</div>
+          </div>
+
+          <div class="summary-card">
+            <div class="summary-head"><i class="fa-solid fa-chart-simple"></i> Quick Snapshot</div>
+            <div class="summary-grid">
+              <div class="metric">
+                <span class="metric-label">Steps</span>
+                <span class="metric-value" id="metricSteps">0</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Last Answer</span>
+                <span class="metric-value" id="metricAnswer">—</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="template-panel">
+          <div class="summary-card">
+            <div class="summary-head"><i class="fa-solid fa-file-lines"></i> Suggested Templates</div>
+
+            <div class="template-stack">
+              <div class="template-card">
+                <div class="template-card-head">
+                  <div class="template-title-wrap">
+                    <div class="template-icon"><i class="fa-solid fa-comment-dots"></i></div>
+                    <div>
+                      <div class="template-title">Suggested Comment</div>
+                      <div class="template-sub">Internal case note</div>
+                    </div>
+                  </div>
+
+                  <div class="template-actions">
+                    <button class="template-icon-btn" type="button" onclick="attemptEdit('comment')" title="Edit">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="template-body">
+                  <div id="suggestedComment" class="template-box empty">No template yet. Complete the flow first.</div>
+                </div>
+
+                <div class="template-foot">
+                  <span class="template-tag"><i class="fa-solid fa-file-lines"></i> Case comment</span>
+                  <button class="template-copy" type="button" onclick="copyTemplateText('suggestedComment', this)">Copy</button>
+                </div>
+              </div>
+
+              <div class="template-card">
+                <div class="template-card-head">
+                  <div class="template-title-wrap">
+                    <div class="template-icon"><i class="fa-solid fa-code"></i></div>
+                    <div>
+                      <div class="template-title">Suggested Corr Code Note</div>
+                      <div class="template-sub">Correction code guidance</div>
+                    </div>
+                  </div>
+
+                  <div class="template-actions">
+                    <button class="template-icon-btn" type="button" onclick="attemptEdit('corr')" title="Edit">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="template-body">
+                  <div id="suggestedCorrCode" class="template-box empty">No template yet. Complete the flow first.</div>
+                </div>
+
+                <div class="template-foot">
+                  <span class="template-tag"><i class="fa-solid fa-hashtag"></i> Corr code</span>
+                  <button class="template-copy" type="button" onclick="copyTemplateText('suggestedCorrCode', this)">Copy</button>
+                </div>
+              </div>
+
+              <div class="template-card">
+                <div class="template-card-head">
+                  <div class="template-title-wrap">
+                    <div class="template-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <div>
+                      <div class="template-title">Suggested Email</div>
+                      <div class="template-sub">Customer response draft</div>
+                    </div>
+                  </div>
+
+                  <div class="template-actions">
+                    <button class="template-icon-btn" type="button" onclick="attemptEdit('email')" title="Edit">
+                      <i class="fa-solid fa-pen"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="template-body">
+                  <div id="suggestedEmail" class="template-box empty">No template yet. Complete the flow first.</div>
+                </div>
+
+                <div class="template-foot">
+                  <span class="template-tag"><i class="fa-solid fa-paper-plane"></i> Email</span>
+                  <button class="template-copy" type="button" onclick="copyTemplateText('suggestedEmail', this)">Copy</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="note-card" style="margin-top:14px;">
+              Note: These are suggested templates. Personalized emails or comments are always more appreciated.
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      Get Help
+      <span class="modal-close" onclick="closeHelp()">×</span>
+    </div>
+
+    <p style="margin-top:0; color:#475569; line-height:1.75;">
+      Welcome. This page helps you quickly find the correct guide for the case you are handling. Use the sections below to know where to start and what to do next.
+    </p>
+
+    <div style="display:grid; gap:14px; margin:18px 0 20px;">
+      <div style="padding:16px; border-radius:18px; background:#f8fafc; box-shadow:inset 0 0 0 1px rgba(148,163,184,.16);">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div style="width:42px; height:42px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg, rgba(77,20,140,.10), rgba(255,102,0,.10)); color:#4d148c; flex-shrink:0;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <div>
+            <strong style="display:block; color:#0f172a; margin-bottom:6px; font-size:15px;">1. Search for the issue or request</strong>
+            <span style="color:#475569; font-size:14px; line-height:1.7;">Use the search bar on the main page to type keywords such as dispute type, surcharge, account update, correction code, service level, or document request.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:16px; border-radius:18px; background:#f8fafc; box-shadow:inset 0 0 0 1px rgba(148,163,184,.16);">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div style="width:42px; height:42px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg, rgba(77,20,140,.10), rgba(255,102,0,.10)); color:#4d148c; flex-shrink:0;">
+            <i class="fa-solid fa-folder-open"></i>
+          </div>
+          <div>
+            <strong style="display:block; color:#0f172a; margin-bottom:6px; font-size:15px;">2. Open the guide that matches your case</strong>
+            <span style="color:#475569; font-size:14px; line-height:1.7;">Review the card title and short description, then open the guide that best matches the customer's concern or required action.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:16px; border-radius:18px; background:#f8fafc; box-shadow:inset 0 0 0 1px rgba(148,163,184,.16);">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div style="width:42px; height:42px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg, rgba(77,20,140,.10), rgba(255,102,0,.10)); color:#4d148c; flex-shrink:0;">
+            <i class="fa-solid fa-route"></i>
+          </div>
+          <div>
+            <strong style="display:block; color:#0f172a; margin-bottom:6px; font-size:15px;">3. Follow the guide step by step</strong>
+            <span style="color:#475569; font-size:14px; line-height:1.7;">Answer each part carefully and follow the process flow until you reach the correct action, decision, or next handling step.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:16px; border-radius:18px; background:#f8fafc; box-shadow:inset 0 0 0 1px rgba(148,163,184,.16);">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div style="width:42px; height:42px; border-radius:14px; display:grid; place-items:center; background:linear-gradient(135deg, rgba(77,20,140,.10), rgba(255,102,0,.10)); color:#4d148c; flex-shrink:0;">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <strong style="display:block; color:#0f172a; margin-bottom:6px; font-size:15px;">4. Use the result to complete the case correctly</strong>
+            <span style="color:#475569; font-size:14px; line-height:1.7;">Apply the correct disposition, update, correction, validation, or communication based on the guide result.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:18px; border-radius:20px; background:linear-gradient(135deg, #f5f3ff, #fff7ed); border:1px solid rgba(148,163,184,.14); margin-bottom:18px;">
+      <strong style="display:block; color:#0f172a; margin-bottom:10px; font-size:15px;">Quick tips</strong>
+      <ul style="margin:0; padding-left:18px; color:#475569; line-height:1.8; font-size:14px;">
+        <li>Use specific keywords when searching so you can find the right guide faster.</li>
+        <li>If more than one guide looks similar, open the one with the description that best matches the request.</li>
+        <li>Use the feedback button if you notice a missing step, unclear logic, or something that needs improvement.</li>
+        <li>Use the clock in the header if you need to check Manila time while working.</li>
+      </ul>
+    </div>
+
+    <div style="padding:16px 18px; border-radius:18px; background:#0f172a; color:#fff;">
+      <strong style="display:block; margin-bottom:6px; font-size:15px;">Need more support?</strong>
+      <span style="display:block; color:rgba(255,255,255,.76); line-height:1.7; font-size:14px;">If the case still does not match any guide or you are unsure which path to take, contact your team lead or EBS Operations support for clarification.</span>
+    </div>
+  </div>
+</div>
+
 <style>
-:root{
-  --bg:#f4f7fb;
-  --card:#ffffff;
-  --muted:#64748b;
-  --accent:#4d148c;
-  --accent-2:#ff6600;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+/*style for the feedback modal and disregard old styles*/
+.feedback-modal{
+  width:min(100%, 560px);
+  background:#ffffff;
+  border-radius:24px;
+  padding:26px 24px 22px;
+  box-shadow:0 30px 70px rgba(15,23,42,.24);
+  border:1px solid rgba(226,232,240,.9);
+  position:relative;
+}
+
+.feedback-title{
+  font-size:18px;
+  font-weight:800;
   color:#0f172a;
+  margin-bottom:22px;
 }
-*{box-sizing:border-box}
-body{margin:0;background:linear-gradient(180deg,var(--bg),#eef6ff);display:flex;flex-direction:column;min-height:100vh;}
-header, footer{background:var(--accent);color:white;padding:16px 28px;}
-header h1, footer p{margin:0;font-weight:600;}
-.container{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 420px;gap:20px;align-items:start;padding:28px 0;flex:1}
-.card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 8px 28px rgba(2,6,23,0.06);overflow:hidden}
-h1{margin:0;font-size:22px;color:var(--accent)}
-p.lead{margin:6px 0 14px;color:var(--muted);font-size:13px}
-.progress-container{display:flex;align-items:center;gap:10px;margin:14px 0}
-.progress-bar{flex:1;height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
-.progress-fill{height:100%;width:0%;background:var(--accent);transition:width .3s}
-.progress-text{font-size:13px;color:var(--muted)}
-.node{padding:12px;border-radius:10px;border:1px solid rgba(3,7,18,0.05);background:linear-gradient(180deg,#ffffff,#fbfeff);margin:10px 0;min-height:64px}
-.choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.choice{padding:8px 12px;border-radius:999px;background:#eef8f7;border:1px solid rgba(4,20,20,0.03);cursor:pointer;font-weight:600}
-.choice:hover{background:#e0f2fe}
-.choice.active{background:var(--accent);color:white}
-.path{margin-top:12px;padding:10px;border-radius:10px;background:#f8fafc;border:1px dashed rgba(3,7,18,0.04);font-size:13px}
-.path strong{color:var(--accent)}
-.result{margin-top:12px;padding:12px;border-radius:10px;background:#e6fbfb;border-left:4px solid var(--accent-2);animation:fadeIn 0.4s ease-in;min-height:56px;position:relative}
-.note{margin-top:6px;font-size:13px;color:var(--muted);font-style:italic}
-.controls{display:flex;gap:8px;margin-top:12px}
-button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:9px;cursor:pointer;font-weight:600}
-button.secondary{background:#fff;color:var(--accent);border:1px solid #ccc}
-.output-card{margin-top:16px;padding:14px;border-radius:10px;background:#ffffff;box-shadow:0 4px 12px rgba(0,0,0,0.05);animation:fadeIn 0.45s ease-in;position:relative}
-.output-header{font-weight:700;color:var(--accent);margin-bottom:8px ;color:#000 !important;display:flex;justify-content:space-between;align-items:center;}
-.output-box{
-  padding:10px;
-  border-left:4px solid var(--accent-2);
+
+.feedback-close{
+  position:absolute;
+  top:20px;
+  right:20px;
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:14px;
+  background:#f1f5f9;
+  color:#64748b;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+  box-shadow:inset 0 0 0 1px rgba(148,163,184,.18);
+}
+
+.feedback-close:hover{
+  background:#e2e8f0;
+  color:#334155;
+}
+
+.feedback-stars{
+  justify-content:center;
+  gap:14px;
+  margin:8px 0 22px;
+}
+
+.feedback-stars .rating-star{
+  font-size:30px; /* 👈 bigger */
+  color:#cbd5e1;  /* 👈 default gray (IMPORTANT) */
+  transition:transform .18s ease, color .18s ease;
+  cursor:pointer;
+}
+
+.rating-star.selected{
+  color:#f97316;
+}
+
+.feedback-stars .rating-star:hover{
+  transform:scale(1.12);
+}
+
+.feedback-modal input,
+.feedback-modal textarea{
+  width:100%;
+  border:none;
+  outline:none;
+  border-radius:16px;
   background:#f8fafc;
-  border-radius:8px;
-  white-space:pre-wrap;
-   font-size:11px; 
-}
-.copy-btn{background:var(--accent);color:white;border:none;padding:6px 10px;margin-top:10px;border-radius:6px;cursor:pointer;font-size:13px}
-.copy-btn:hover{opacity:.85}
-.extra-note{margin-top:8px;font-size:13px;color:var(--muted);font-style:italic}
-.edit-icon{cursor:pointer;font-size:14px;color:var(--accent);margin-left:8px}
-.edit-icon:hover{text-decoration:underline}
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:1000}
-.modal-content{background:white;padding:20px;border-radius:10px;min-width:300px;text-align:center}
-textarea{resize:none}
-@keyframes fadeIn {from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@media(max-width:1200px){.container{grid-template-columns:1fr}}
-
-/* ---------- MODAL STYLES ------------------ */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.45);
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
+  box-shadow:inset 0 0 0 1px rgba(203,213,225,.9);
+  padding:14px 16px;
+  color:#0f172a;
+  font-size:14px;
+  font-family:inherit;
 }
 
-.modal-content {
-  background: #fff;
-  padding: 25px 30px;
-  border-radius: 12px;
-  min-width: 500px;
-  max-width: 600px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.2);
-  text-align: center;
-  position: relative;
-  font-family: Inter, sans-serif;
+.feedback-modal input{
+  margin-top:0;
+  margin-bottom:12px;
+  height:46px;
 }
 
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--accent);
+.feedback-modal textarea{
+  margin-top:0;
+  min-height:128px;
+  resize:vertical;
+  margin-bottom:18px;
 }
 
-.modal-content input[type="password"], 
-.modal-content textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
-  margin-top: 10px;
-  font-family: Inter, sans-serif;
+.feedback-modal input::placeholder,
+.feedback-modal textarea::placeholder{
+  color:#94a3b8;
 }
 
-.modal-content textarea {
-  min-height: 120px;
-  resize: vertical;
+.feedback-modal input:focus,
+.feedback-modal textarea:focus{
+  background:#fff;
+  box-shadow:inset 0 0 0 2px rgba(99,102,241,.14);
 }
 
-.modal-content button {
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  margin-left: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+.feedback-send-btn{
+  width:100%;
+  min-height:48px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(90deg, #5b21b6 0%, #6d28d9 100%);
+  color:#fff;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  box-shadow:0 12px 28px rgba(109,40,217,.28);
+  margin-bottom:14px;
 }
 
-.modal-content button:hover {
-  opacity: 0.9;
+.feedback-send-btn:hover{
+  transform:translateY(-1px);
 }
 
-.modal-content .save-btn {
-  background-color: var(--accent);
-  color: #fff;
+.feedback-link{
+  display:inline-block;
+  color:#5b21b6;
+  font-size:15px;
+  font-weight:700;
+  cursor:pointer;
 }
 
-.modal-content .cancel-btn {
-  background-color: #e5e7eb;
-  color: #111827;
+.feedback-link:hover{
+  text-decoration:underline;
 }
 
-@media(max-width:500px){
-  .modal-content { width: 90%; min-width: unset; padding:20px; }
-}
-/* ---------- LOGO ANIMATION ---------- */
-@keyframes logoFlyIn {
-  0% { opacity: 0; transform: translateX(-50px) scale(0.8); }
-  100% { opacity: 1; transform: translateX(0) scale(1); }
-}
-
-header img {
-  opacity: 0; /* start hidden */
-  animation: logoFlyIn 1s ease-out forwards;
-}
-
-/* ---------- CARD FADE & SLIDE UP ---------- */
-@keyframes cardFadeIn {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-.card {
-  opacity: 0; /* start hidden */
-  transform: translateY(20px);
-}
-
-/* ---------- OPTIONAL SWOOSH BEHIND HEADER ---------- */
-header {
-  position: relative;
-  overflow: hidden;
-  z-index: 1;
-}
-
-header::after {
-  content: "";
-  position: absolute;
-  top: 0; left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
-  transform: skewX(-20deg);
-  animation: sweep 1s ease-out forwards;
-  z-index: 0;
-  opacity: 0.2;
-}
-
-@keyframes sweep {
-  0% { left: -100%; }
-  100% { left: 100%; }
+#feedbackMessage{
+  display:none;
+  margin-top:12px;
+  font-size:14px;
+  font-weight:700;
 }
 
 
 </style>
-</head>
-<body>
 
-
-<!-- this is the header codes that can be used to other guides -->
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<header>
-  <div style="display:flex;align-items:center;gap:40px;">
-    <a href="index.html">
-      <img src="fedex.png" alt="FedEx Logo">
-    </a>
-    <nav class="nav-tabs">
-      <a href="index.html" class="tab active">Home</a>
-      <a href="case-directory.html" class="tab">Case Directory</a>
-      <a href="ebs-response-template.html" class="tab">EBS Response</a>
-      <a href="volume-application.html" class="tab">Volume Application</a>  
-    </nav>
-  </div>
-  
-    <div class="header-icons">
-    <div id="clockBtn">
-      <i class="fa-regular fa-clock"></i>
-      <span id="clockText">--:-- PM</span>
-    </div>
-    <i class="header-icon fa-solid fa-comment-dots" id="commentIcon" title="Feedback"></i>
-    <i class="header-icon fa-solid fa-circle-question" id="helpIcon" title="Get Help"></i>
-  </div>
-  
-</header>
-
-<!-- HELP Modal -->
-<div id="helpModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      Get Help <span class="modal-close" onclick="closeHelp()">×</span>
-    </div>
-    <p>Welcome to the Fedex Queues Decision Guide! This tool is designed to help you quickly access the right guides for handling different queues and processes in FedEx.</p>
-    <ul>
-      <li><strong>Navigate the Menu:</strong> Click any card to open the corresponding guide, such as Billing Disputes, Pricing, OVC claims, Rebill, or Reweigh cases.</li>
-      <li><strong>Use the Clock & Calendar:</strong> Click the clock at the top-right to see the current time and calendar for scheduling or reference.</li>
-      <li><strong>Provide Feedback:</strong> Use the comment icon to rate the tool or leave suggestions. Your feedback helps us improve the tool.</li>
-      <li><strong>Quick Tips:</strong> Each guide includes step-by-step instructions and decision trees to make handling cases faster and more accurate.</li>
-    </ul>
-    <p>If you encounter any issues or need additional support, please reach out to your team lead or EBS Operations support.</p>
-  </div>
-</div>
-
-<!-- COMMENT MODALS -->
 <div id="commentModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      How do you rate the tool? <span class="modal-close" onclick="closeComment()">×</span>
-    </div>
-    <div class="rating-container">
+  <div class="feedback-modal" onclick="event.stopPropagation()">
+    <button class="feedback-close" onclick="closeComment()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <div class="feedback-title">How do you rate the tool?</div>
+
+    <div class="rating-container feedback-stars">
       <i class="fa-solid fa-star rating-star" data-value="1"></i>
       <i class="fa-solid fa-star rating-star" data-value="2"></i>
       <i class="fa-solid fa-star rating-star" data-value="3"></i>
       <i class="fa-solid fa-star rating-star" data-value="4"></i>
       <i class="fa-solid fa-star rating-star" data-value="5"></i>
     </div>
+
     <input type="text" id="commentName" placeholder="Your Name (optional)">
     <textarea id="commentText" placeholder="Enter your comment..."></textarea>
-    <div class="comment-modal-footer">
-      <button class="btn" onclick="sendComment()">Send</button>
-      <span class="link-text" onclick="showAllComments()">View all comments & ratings</span>
+
+    <button class="feedback-send-btn" onclick="sendComment()">
+      <span>Send feedback</span>
+      <i class="fa-solid fa-paper-plane"></i>
+    </button>
+
+    <span class="feedback-link" onclick="showAllComments()">View all comments & ratings</span>
+
+    <div id="feedbackMessage"></div>
+  </div>
+</div>
+
+        <div id="feedbackMessage"></div>
+      </div>
     </div>
-  </div>
-</div>
 
-<div id="allCommentsModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      All Ratings & Comments <span class="modal-close" onclick="closeAllComments()">×</span>
+    <div id="allCommentsModal" class="modal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          All Ratings & Comments
+          <span class="modal-close" onclick="closeAllComments()">×</span>
+        </div>
+        <div id="commentsList"></div>
+      </div>
     </div>
-    <div id="commentsList"></div>
+
+    <div id="passwordModal" class="modal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          Enter Password to Edit
+          <span class="modal-close" onclick="closePasswordModal()">×</span>
+        </div>
+        <input type="password" id="adminPassword" placeholder="Password">
+        <div class="decision-actions" style="justify-content:flex-end; margin-top:18px;">
+          <button class="app-btn primary" onclick="checkPassword()">Continue</button>
+          <button class="app-btn secondary" onclick="closePasswordModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="editModal" class="modal">
+      <div class="modal-content" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span id="modalTitle">Edit</span>
+          <span class="modal-close" onclick="closeEditModal()">×</span>
+        </div>
+        <textarea id="editTextarea"></textarea>
+        <div class="decision-actions" style="justify-content:flex-end; margin-top:18px;">
+          <button class="app-btn primary" onclick="saveEdit()">Save</button>
+          <button class="app-btn secondary" onclick="closeEditModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-inner">
+        <div class="footer-left">
+          <strong>© 2025 EBS Operations</strong>
+          <span>Premium main page experience for faster guide access and cleaner navigation.</span>
+        </div>
+        <div class="footer-right">
+          “Your feedback is important to us. Please feel free to email us with any comments or questions.” — Jules
+        </div>
+      </div>
+    </footer>
   </div>
-</div>
 
-<!-- TIME & CALENDAR POPUP -->
-<div id="timeCalendarPopup">
-
-  <div class="popup-time" id="popupTime"></div>
-  <div class="popup-date" id="popupDate"></div>
-
-  <div class="calendar-header">
-    <span id="prevMonth">‹</span>
-    <div id="monthYear" class="calendar-title"></div>
-    <span id="nextMonth">›</span>
-  </div>
-
-  <div class="calendar-grid" id="calendarGrid"></div>
-
-</div>
-
-<script>
-/* =========================
-   CALENDAR LOGIC
-========================= */
-
-function updateClock(){
-  const now = new Date();
-
-  // HEADER TIME (Hour + Minute only)
-  const headerTime = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true
-  }).format(now);
-
-  // POPUP TIME (Hour + Minute + Second)
-  const popupTime = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila",
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true
-  }).format(now);
-
-  const popupDate = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila",
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  }).format(now);
-
-  // Update header
-  document.getElementById("clockText").textContent = headerTime;
-
-  // Update popup
-  document.getElementById("popupTime").textContent = popupTime;
-  document.getElementById("popupDate").textContent = popupDate;
-}
-// START CLOCK
-updateClock();
-setInterval(updateClock, 1000);
-
-
-const clockBtn = document.getElementById("clockBtn");
-const calendarPopup = document.getElementById("timeCalendarPopup");
-const calendarGrid = document.getElementById("calendarGrid");
-const monthYear = document.getElementById("monthYear");
-
-let currentDate = new Date();
-
-clockBtn.onclick = function(e){
-  e.stopPropagation();
-  calendarPopup.style.display =
-    calendarPopup.style.display === "block" ? "none" : "block";
-  renderCalendar(currentDate);
-};
-
-document.addEventListener("click", function(){
-  calendarPopup.style.display = "none";
-});
-
-document.getElementById("prevMonth").onclick = function(e){
-  e.stopPropagation();
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar(currentDate);
-};
-
-document.getElementById("nextMonth").onclick = function(e){
-  e.stopPropagation();
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar(currentDate);
-};
-
-function renderCalendar(date){
-  calendarGrid.innerHTML = "";
-
-  const year = date.getFullYear();
-  const month = date.getMonth();
-
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  monthYear.textContent =
-    date.toLocaleString("en-PH", { month: "long", year: "numeric" });
-
-  const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  dayNames.forEach(d=>{
-    const el = document.createElement("div");
-    el.className="day-name";
-    el.textContent=d;
-    calendarGrid.appendChild(el);
-  });
-
-  for(let i=0;i<firstDay;i++){
-    const empty=document.createElement("div");
-    calendarGrid.appendChild(empty);
-  }
-
- const today = new Date(
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "numeric",
-    day: "numeric"
-  }).format(new Date())
-);
-
-  for(let d=1; d<=daysInMonth; d++){
-    const day=document.createElement("div");
-    day.className="day";
-    day.textContent=d;
-
-    if(
-      d===today.getDate() &&
-      month===today.getMonth() &&
-      year===today.getFullYear()
-    ){
-      day.classList.add("today");
+  <script>
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey:"AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+        authDomain:"bdgg-database.firebaseapp.com",
+        projectId:"bdgg-database",
+        storageBucket:"bdgg-database.appspot.com",
+        messagingSenderId:"43574975434",
+        appId:"1:43574975434:web:4c79e581267fdfcc6ccd33"
+      });
     }
 
-    calendarGrid.appendChild(day);
-  }
-}
-/* =========================
-   MODALS
-========================= */
+    const db = firebase.firestore();
 
-document.getElementById("helpIcon").onclick = () =>
-  document.getElementById("helpModal").style.display = "flex";
+    const TEMPLATE_COLLECTION = "billing_dispute_general_template";
+    const FEEDBACK_COLLECTION = "feedback";
+    const MAX_STEPS = 8;
 
-document.getElementById("commentIcon").onclick = () => {
-  clearCommentForm();
-  document.getElementById("commentModal").style.display = "flex";
-};
+    const els = {
+      clockBtn: document.getElementById("clockBtn"),
+      clockText: document.getElementById("clockText"),
+      popupTime: document.getElementById("popupTime"),
+      popupDate: document.getElementById("popupDate"),
+      calendarPopup: document.getElementById("timeCalendarPopup"),
+      calendarGrid: document.getElementById("calendarGrid"),
+      monthYear: document.getElementById("monthYear"),
 
-function closeHelp(){document.getElementById("helpModal").style.display="none";}
-function closeComment(){document.getElementById("commentModal").style.display="none";}
-function closeAllComments(){document.getElementById("allCommentsModal").style.display="none";}
+      stageCard: document.getElementById("stageCard"),
+      progressFill: document.getElementById("progressFill"),
+      progressText: document.getElementById("progressText"),
+      recommendationBox: document.getElementById("recommendationBox"),
+      pathBox: document.getElementById("pathBox"),
+      metricSteps: document.getElementById("metricSteps"),
+      metricAnswer: document.getElementById("metricAnswer"),
+      statusPill: document.getElementById("statusPill"),
 
+      suggestedComment: document.getElementById("suggestedComment"),
+      suggestedCorrCode: document.getElementById("suggestedCorrCode"),
+      suggestedEmail: document.getElementById("suggestedEmail"),
 
-/* =========================
-   FEEDBACK SYSTEM
-========================= */
+      passwordModal: document.getElementById("passwordModal"),
+      editModal: document.getElementById("editModal"),
+      adminPassword: document.getElementById("adminPassword"),
+      editTextarea: document.getElementById("editTextarea"),
+      modalTitle: document.getElementById("modalTitle"),
 
-let selectedRating = 0;
+      helpModal: document.getElementById("helpModal"),
+      commentModal: document.getElementById("commentModal"),
+      allCommentsModal: document.getElementById("allCommentsModal"),
+      commentsList: document.getElementById("commentsList"),
+      commentName: document.getElementById("commentName"),
+      commentText: document.getElementById("commentText"),
+      feedbackMessage: document.getElementById("feedbackMessage")
+    };
 
-document.querySelectorAll('.rating-star').forEach(star=>{
-  star.onclick=function(){
-    selectedRating=parseInt(this.dataset.value);
-    document.querySelectorAll('.rating-star').forEach(s=>
-      s.classList.toggle('selected', parseInt(s.dataset.value)<=selectedRating)
-    );
-  };
+    let currentDate = new Date();
+    let selectedRating = 0;
+    let path = [];
+    let historyStack = [];
+    let currentFinalRecommendation = "";
+    let currentEditType = "";
+    let currentKey = "start";
+    const templateCache = {};
+
+    const NODES = {
+      start: {
+        text: "What is the shipment billing term?",
+        help: "Choose the billing setup shown on the BOL so the guide can route you to the correct dispute handling path.",
+        choices: [
+          { label: "Prepaid", next: "prepaid", icon: "fa-solid fa-truck-fast", desc: "Shipment is billed prepaid." },
+          { label: "Collect", next: "collect", icon: "fa-solid fa-hand-holding-dollar", desc: "Shipment is billed collect." },
+          { label: "No Terms", next: "noterms", icon: "fa-solid fa-file-circle-question", desc: "No billing terms are clearly shown." },
+          { label: "Third Party", next: "third_party_root", icon: "fa-solid fa-building-user", desc: "Shipment is billed to a third party." }
+        ]
+      },
+
+      prepaid: {
+        text: "Is there an Account No. noted on BOL?",
+        help: "Check whether an account number is written on the BOL for the prepaid shipment.",
+        choices: [
+          { label: "Yes", next: "prepaid_account_yes", icon: "fa-solid fa-circle-check", desc: "An account number is present on the BOL." },
+          { label: "No", action: "Bill the pro to the Shipper per Terms noted on BOL.", icon: "fa-solid fa-circle-xmark", desc: "No account number is noted." }
+        ]
+      },
+
+      prepaid_account_yes: {
+        text: "Is the account no. related to?",
+        help: "Identify whether the account belongs to the shipper, consignee, or a true third party.",
+        choices: [
+          { label: "Shipper", next: "prepaid_shipper_account_type", icon: "fa-solid fa-warehouse", desc: "Account is related to the shipper." },
+          { label: "Consignee", next: "prepaid_consignee_initial_billed", icon: "fa-solid fa-location-dot", desc: "Account is related to the consignee." },
+          { label: "True 3rd Party", next: "prepaid_true3pty_initial_billed", icon: "fa-solid fa-building", desc: "Account belongs to a true third party." }
+        ]
+      },
+
+      prepaid_shipper_account_type: {
+        text: "Is it a billing or shipping account?",
+        help: "Determine the type of account related to the shipper.",
+        choices: [
+          { label: "Shipping account", next: "prepaid_shipper_shipping_addr_check", icon: "fa-solid fa-box", desc: "Use the shipping account path." },
+          { label: "Billing account", next: "prepaid_shipper_billing_account", icon: "fa-solid fa-file-invoice-dollar", desc: "Use the billing account path." }
+        ]
+      },
+
+      prepaid_shipper_shipping_addr_check: {
+        text: "Is the shipping account address same as the shipper?",
+        help: "Compare the shipper address against the shipping account address.",
+        choices: [
+          { label: "Yes", action: "Update the shipper code using the account number noted on the BOL.", icon: "fa-solid fa-circle-check", desc: "Address matches the shipper." },
+          { label: "No", action: "Look for a shipping account of shipper that has ABT matching the address of the account number noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL.", icon: "fa-solid fa-magnifying-glass", desc: "Address does not match." }
+        ]
+      },
+
+      prepaid_shipper_billing_account: {
+        text: "Billing account handling",
+        help: "Follow the shipper billing account handling rule.",
+        choices: [
+          { label: "Continue", action: "Look for another shipping address of shipper that has ABT matching the billing account number noted on BOL.", note: "NOTE: If no shipping account with ABT is found, manually add the billing account.", icon: "fa-solid fa-arrow-right", desc: "Proceed to billing account handling." }
+        ]
+      },
+
+      prepaid_consignee_initial_billed: {
+        text: "Who was initially billed on the pro?",
+        help: "Confirm whether the pro was billed to the shipper per terms or to the account number on the BOL.",
+        choices: [
+          { label: "Shipper – per Terms on BOL", next: "prepaid_consignee_shipper_dispute", icon: "fa-solid fa-file-signature", desc: "Pro was billed to shipper per BOL terms." },
+          { label: "Account no. per BOL", action: "If the disputing party is the Account no. owner and the request is to bill it to the Shipper, proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL.", icon: "fa-solid fa-credit-card", desc: "Pro was billed to the account number on the BOL." }
+        ]
+      },
+
+      prepaid_consignee_shipper_dispute: {
+        text: "Who is the disputing party?",
+        help: "Identify who is disputing the prepaid consignee billing.",
+        choices: [
+          { label: "Shipper", next: "prepaid_consignee_rebill_check", icon: "fa-solid fa-warehouse", desc: "The shipper is disputing." },
+          { label: "Account no. owner", next: "prepaid_consignee_owner_billable_check", icon: "fa-solid fa-user", desc: "The account owner is disputing." }
+        ]
+      },
+
+      prepaid_consignee_rebill_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Check if the BOL clearly supports billing the account.",
+        choices: [
+          { label: "Yes", next: "prepaid_consignee_billable_check", icon: "fa-solid fa-circle-check", desc: "The BOL clearly supports the billing instruction." },
+          { label: "No", action: "Terms will trump and LOA will be needed to update to the random account no. listed on the BOL.", icon: "fa-solid fa-circle-xmark", desc: "The BOL does not clearly support the instruction." }
+        ]
+      },
+
+      prepaid_consignee_billable_check: {
+        text: "Is the account number billable(active and a BT account)?",
+        help: "Check whether the account is active and a valid BT account.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account number per BOL.(Update the terms if neccessary. Example: Update to Collect if the account is related to the Consignee. Check if the account is ABT of the Consignee)", note: "NOTE: If the account number has the same name and address of the Consignee(shipping account), use the account and update the Consignee Section then change the terms to Collect.", icon: "fa-solid fa-circle-check", desc: "Account is billable." },
+          { label: "No", action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct)", icon: "fa-solid fa-circle-xmark", desc: "Account is not billable." }
+        ]
+      },
+
+      prepaid_consignee_owner_billable_check: {
+        text: "Is the account number billable(active and a BT account)?",
+        help: "Use this when the account owner is the disputing party.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account number per BOL.", note: "NOTE: If the account number has the same name and address of the Consignee(shipping account), use the account and update the Consignee Section then change the terms to Collect.", icon: "fa-solid fa-circle-check", desc: "Account is billable." },
+          { label: "No", action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct with no ABT)", note: "NOTE: If it's a shipping account with an ABT, bill it to the ABT of the Shipping account.", icon: "fa-solid fa-circle-xmark", desc: "Account is not billable." }
+        ]
+      },
+
+      prepaid_true3pty_initial_billed: {
+        text: "Who was initially billed on the pro?",
+        help: "Check how the prepaid true 3rd party shipment was originally billed.",
+        choices: [
+          { label: "Shipper – per Terms on BOL", next: "prepaid_true3pty_shipper_dispute", icon: "fa-solid fa-file-signature", desc: "Pro was billed to shipper per terms." },
+          { label: "Account no. per BOL", action: "If the disputing party is the Account no. owner and the request is to bill it to the Shipper, proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL.", icon: "fa-solid fa-credit-card", desc: "Pro was billed to the account number per BOL." }
+        ]
+      },
+
+      prepaid_true3pty_shipper_dispute: {
+        text: "Who is the disputing party?",
+        help: "Identify the disputing party for prepaid true 3rd party handling.",
+        choices: [
+          { label: "Shipper", next: "prepaid_true3pty_rebill_check", icon: "fa-solid fa-warehouse", desc: "The shipper is disputing." },
+          { label: "Account no. owner", next: "prepaid_true3pty_owner_check", icon: "fa-solid fa-user", desc: "The account owner is disputing." }
+        ]
+      },
+
+      prepaid_true3pty_rebill_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Confirm whether the BOL clearly supports billing the account.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. in attempt of payment.", icon: "fa-solid fa-circle-check", desc: "Instruction is clear on the BOL." },
+          { label: "No", action: "Terms will trump and LOA will be needed.", icon: "fa-solid fa-circle-xmark", desc: "Instruction is not clearly shown." }
+        ]
+      },
+
+      prepaid_true3pty_owner_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Use this when the account owner is disputing.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. per BOL.", icon: "fa-solid fa-circle-check", desc: "Instruction is clear." },
+          { label: "No", action: "This will be considered rebill per LOA with Correction Fee.", icon: "fa-solid fa-circle-xmark", desc: "Instruction is not clear." }
+        ]
+      },
+
+      collect: {
+        text: "Is there an Account No. noted on BOL?",
+        help: "Check whether an account number is noted for the collect shipment.",
+        choices: [
+          { label: "Yes", next: "collect_account_yes", icon: "fa-solid fa-circle-check", desc: "An account number is present on the BOL." },
+          { label: "No", action: "Bill the Pro to the Consignee per Terms noted on BOL.", icon: "fa-solid fa-circle-xmark", desc: "No account number is noted." }
+        ]
+      },
+
+      collect_account_yes: {
+        text: "Is the account no. related to?",
+        help: "Identify who the account number belongs to for collect billing.",
+        choices: [
+          { label: "Consignee", next: "collect_consignee_account_type", icon: "fa-solid fa-location-dot", desc: "Account is related to the consignee." },
+          { label: "Shipper", next: "collect_shipper_account_path", icon: "fa-solid fa-warehouse", desc: "Account is related to the shipper." },
+          { label: "True 3rd Party", next: "collect_true3pty_path", icon: "fa-solid fa-building", desc: "Account is related to a true third party." }
+        ]
+      },
+
+      collect_consignee_account_type: {
+        text: "Is it a billing or shipping account?",
+        help: "Determine the type of consignee account.",
+        choices: [
+          { label: "Shipping account", next: "collect_consignee_shipping_addr_check", icon: "fa-solid fa-box", desc: "Use shipping account path." },
+          { label: "Billing account", next: "collect_consignee_billing_account", icon: "fa-solid fa-file-invoice-dollar", desc: "Use billing account path." }
+        ]
+      },
+
+      collect_consignee_shipping_addr_check: {
+        text: "Is the shipping account address same as the Consignee?",
+        help: "Compare the consignee address against the shipping account address.",
+        choices: [
+          { label: "Yes", action: "Update the Consignee code using the account number noted on the BOL.", icon: "fa-solid fa-circle-check", desc: "Address matches the consignee." },
+          { label: "No", action: "Look for a shipping account of Consignee that has ABT matching the address of the account no. noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL.", icon: "fa-solid fa-magnifying-glass", desc: "Address does not match." }
+        ]
+      },
+
+      collect_consignee_billing_account: {
+        text: "Billing account handling",
+        help: "Follow the collect consignee billing account handling rule.",
+        choices: [
+          { label: "Continue", action: "Look for another shipping address of Consignee that has ABT matching the billing account number noted on BOL.", note: "NOTE: If no shipping account with ABT is found, manually add the billing account.", icon: "fa-solid fa-arrow-right", desc: "Proceed to billing account handling." }
+        ]
+      },
+
+      collect_shipper_account_path: {
+        text: "Who was initially billed on the pro?",
+        help: "Check how the collect/shipper-related pro was originally billed.",
+        choices: [
+          { label: "Collect – per Terms on BOL", next: "collect_shipper_initial_collect", icon: "fa-solid fa-file-signature", desc: "The pro was billed collect per BOL terms." },
+          { label: "Account no. per BOL", next: "collect_shipper_account_billed", icon: "fa-solid fa-credit-card", desc: "The pro was billed to the account number on the BOL." }
+        ]
+      },
+
+      collect_shipper_initial_collect: {
+        text: "Who is the disputing party?",
+        help: "Identify the disputing party for collect shipper handling.",
+        choices: [
+          { label: "Consignee", next: "collect_shipper_rebill_check", icon: "fa-solid fa-location-dot", desc: "The consignee is disputing." },
+          { label: "Account no. owner", next: "collect_shipper_owner_check", icon: "fa-solid fa-user", desc: "The account owner is disputing." }
+        ]
+      },
+
+      collect_shipper_rebill_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Confirm whether the BOL clearly supports billing the account.",
+        choices: [
+          { label: "Yes", next: "collect_shipper_billable_check", icon: "fa-solid fa-circle-check", desc: "Instruction is clear." },
+          { label: "No", action: "Terms will trump and LOA will be needed.", icon: "fa-solid fa-circle-xmark", desc: "Instruction is not clear." }
+        ]
+      },
+
+      collect_shipper_owner_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Use this when the account owner is disputing.",
+        choices: [
+          { label: "Yes", next: "collect_shipper_billable_check", icon: "fa-solid fa-circle-check", desc: "Instruction is clear." },
+          { label: "No", action: "This will be considered rebill per LOA with Correction Fee.", icon: "fa-solid fa-circle-xmark", desc: "Instruction is not clear." }
+        ]
+      },
+
+      collect_shipper_billable_check: {
+        text: "Is the account no. billable (active and a BT account)?",
+        help: "Verify if the account is active and billable.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. per BOL. Update the terms if necessary.", note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), update the Shipper section and change Terms to Prepaid.", icon: "fa-solid fa-circle-check", desc: "Account is billable." },
+          { label: "No", action: "Search for a valid BT account that can be billed. If none, advise the customer that the account cannot be billed.", icon: "fa-solid fa-circle-xmark", desc: "Account is not billable." }
+        ]
+      },
+
+      collect_shipper_account_billed: {
+        text: "Account no. per BOL handling",
+        help: "Follow this rule when the pro was already billed to the account number per BOL.",
+        choices: [
+          { label: "Continue", action: "If the disputing party is the Account no. owner and the request is to bill the Consignee, proceed and rebill it to Collect per Terms noted on BOL. If Collect was billed and disputed before, bill Shipper per RVSL.", icon: "fa-solid fa-arrow-right", desc: "Continue with the account-billed handling." }
+        ]
+      },
+
+      collect_true3pty_path: {
+        text: "Who was initially billed on the pro?",
+        help: "Use the true 3rd party collect route based on original billing.",
+        choices: [
+          { label: "Collect – per Terms on BOL", next: "collect_true3pty_terms_check", icon: "fa-solid fa-file-signature", desc: "The pro was billed collect per terms." },
+          { label: "Account no. per BOL", action: "If the disputing party is the Account no. owner and the request is to bill it to Collect per Terms noted on BOL, proceed accordingly. Consider this as Debtor update per RVSL.", icon: "fa-solid fa-credit-card", desc: "The pro was billed to the account number per BOL." }
+        ]
+      },
+
+      collect_true3pty_terms_check: {
+        text: "Who is the disputing party?",
+        help: "Identify who is disputing the collect true 3rd party billing.",
+        choices: [
+          { label: "Consignee", next: "collect_true3pty_rebill_check", icon: "fa-solid fa-location-dot", desc: "The consignee is disputing." },
+          { label: "Account no. owner", next: "collect_true3pty_owner_check", icon: "fa-solid fa-user", desc: "The account owner is disputing." }
+        ]
+      },
+
+      collect_true3pty_rebill_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Confirm whether the billing instruction is clearly shown on the BOL.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. in attempt of payment.", icon: "fa-solid fa-circle-check", desc: "Instruction is clear." },
+          { label: "No", action: "Terms will trump and LOA will be needed.", icon: "fa-solid fa-circle-xmark", desc: "Instruction is not clear." }
+        ]
+      },
+
+      collect_true3pty_owner_check: {
+        text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
+        help: "Use this when the account owner is disputing.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. per BOL.", icon: "fa-solid fa-circle-check", desc: "Instruction is clear." },
+          { label: "No", action: "This will be considered rebill per LOA with Correction Fee.", icon: "fa-solid fa-circle-xmark", desc: "Instruction is not clear." }
+        ]
+      },
+
+      noterms: {
+        text: "Is there an Account No. noted on BOL?",
+        help: "Use this branch when no billing terms are clearly shown on the BOL.",
+        choices: [
+          { label: "Yes", next: "noterms_account_yes", icon: "fa-solid fa-circle-check", desc: "An account number is present." },
+          { label: "No", next: "noterms_no_account", icon: "fa-solid fa-circle-xmark", desc: "No account number is present." }
+        ]
+      },
+
+      noterms_account_yes: {
+        text: "Is the account no. related to?",
+        help: "Identify the related party for the account number.",
+        choices: [
+          { label: "Shipper", next: "prepaid_shipper_account_type", icon: "fa-solid fa-warehouse", desc: "Account is related to the shipper." },
+          { label: "Consignee", next: "noterms_consignee_account_type", icon: "fa-solid fa-location-dot", desc: "Account is related to the consignee." },
+          { label: "True 3rd Party", action: "Bill it to the account no. with Prepaid as Terms.", icon: "fa-solid fa-building", desc: "Account is related to a true third party." }
+        ]
+      },
+
+      noterms_consignee_account_type: {
+        text: "Is it a billing or shipping account?",
+        help: "Determine the type of consignee account.",
+        choices: [
+          { label: "Shipping account", next: "noterms_consignee_shipping_addr_check", icon: "fa-solid fa-box", desc: "Use shipping account path." },
+          { label: "Billing account", next: "noterms_consignee_billing_account", icon: "fa-solid fa-file-invoice-dollar", desc: "Use billing account path." }
+        ]
+      },
+
+      noterms_consignee_shipping_addr_check: {
+        text: "Is the shipping account address same as the Consignee?",
+        help: "Compare the consignee address against the shipping account address.",
+        choices: [
+          { label: "Yes", action: "Update the Consignee code using the account number noted on the BOL.", icon: "fa-solid fa-circle-check", desc: "Address matches the consignee." },
+          { label: "No", action: "Look for a shipping account of Consignee that has ABT matching the address of the account no. noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL.", icon: "fa-solid fa-magnifying-glass", desc: "Address does not match." }
+        ]
+      },
+
+      noterms_consignee_billing_account: {
+        text: "Billing account handling",
+        help: "Follow the no-terms consignee billing account rule.",
+        choices: [
+          { label: "Continue", action: "Look for another shipping address of Consignee that has ABT matching the billing account number noted on BOL.", note: "NOTE: If no shipping account with ABT is found, manually add the billing account.", icon: "fa-solid fa-arrow-right", desc: "Proceed with billing account handling." }
+        ]
+      },
+
+      noterms_no_account: {
+        text: "Is the shipment originating in the US or Canada?",
+        help: "Default billing depends on the origin when no terms and no account are shown.",
+        choices: [
+          { label: "US", action: "Bill it Prepaid per default billing.", icon: "fa-solid fa-flag-usa", desc: "Shipment originated in the US." },
+          { label: "Canada", action: "Bill it Collect per default billing.", icon: "fa-solid fa-flag", desc: "Shipment originated in Canada." }
+        ]
+      },
+
+      third_party_root: {
+        text: "Is there an Account No. noted on the BOL?",
+        help: "Use the third-party branch when the billing is intended for a third party.",
+        choices: [
+          { label: "Yes", next: "tp_account_yes", icon: "fa-solid fa-circle-check", desc: "An account number is noted on the BOL." },
+          { label: "No", action: "Cannot bill Third Party. No account number noted on the BOL. Billing remains per original terms.", icon: "fa-solid fa-circle-xmark", desc: "No account number is noted." }
+        ]
+      },
+
+      tp_account_yes: {
+        text: "Is the account no. information (Name and Address) same as the BT information noted on the BOL?",
+        help: "Compare the account information against the BT information on the BOL.",
+        choices: [
+          { label: "Yes", next: "tp_bt_match_yes", icon: "fa-solid fa-circle-check", desc: "The information matches." },
+          { label: "No", next: "tp_bt_match_no", icon: "fa-solid fa-circle-xmark", desc: "The information does not match." }
+        ]
+      },
+
+      tp_bt_match_yes: {
+        text: "Is the account no. billable (active and a BT account)?",
+        help: "Verify whether the account is active and a valid BT account.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. per BOL(Update the terms if necessary Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee)", note: "Note: If account no. has the same name and address of the Shipper(shipping account), use the account and update the Shipper Section then change the Terms to Prepaid. Follow the same rule of related to the Consignee.", icon: "fa-solid fa-circle-check", desc: "Account is billable." },
+          { label: "No", action: "Search for a Valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).", note: "NOTE: If it is a Shipping account with an ABT, bill it to the ABT of the shipping account.", icon: "fa-solid fa-circle-xmark", desc: "Account is not billable." }
+        ]
+      },
+
+      tp_bt_match_no: {
+        text: "Who was initially billed on the Pro?",
+        help: "Choose whether the pro was billed to the account number or BT information.",
+        choices: [
+          { label: "Account No.", next: "tp_initial_account_no", icon: "fa-solid fa-credit-card", desc: "The pro was initially billed to the account number." },
+          { label: "BT Information", next: "tp_initial_bt_info", icon: "fa-solid fa-file-lines", desc: "The pro was initially billed to the BT information." }
+        ]
+      },
+
+      tp_initial_account_no: {
+        text: "Who is the disputing party?",
+        help: "Identify who is requesting the change from the account-no.-billed scenario.",
+        choices: [
+          { label: "Account No. owner requesting to bill a different BT info noted on the BOL", next: "tp_account_owner_bt_request", icon: "fa-solid fa-user", desc: "Account owner wants billing moved to different BT info on BOL." },
+          { label: "Owner of the BT information requesting to bill to their account", next: "tp_bt_owner_account_request", icon: "fa-solid fa-building-user", desc: "BT owner wants the bill moved to their account." }
+        ]
+      },
+
+      tp_account_owner_bt_request: {
+        text: "Is there a valid account no. available and billable that matches the BT information?",
+        help: "Check if there is a valid billable account that matches the BT info.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling to the valid BT account that matches the BT information noted on the BOL.", icon: "fa-solid fa-circle-check", desc: "A matching valid account is available." },
+          { label: "No", action: "Advise the customer that no valid billable account matching the BT information is available. LOA may be needed depending on the request.", icon: "fa-solid fa-circle-xmark", desc: "No matching valid account is available." }
+        ]
+      },
+
+      tp_bt_owner_account_request: {
+        text: "Is there a clear instruction on the BOL to bill to the BT information or account?",
+        help: "Use the BOL instruction to decide whether the requested rebill is supported.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling to the BT owner account per BOL instruction.", icon: "fa-solid fa-circle-check", desc: "The BOL clearly supports the billing." },
+          { label: "No", action: "This will be considered rebill per LOA with Correction Fee.", icon: "fa-solid fa-circle-xmark", desc: "The BOL does not clearly support the request." }
+        ]
+      },
+
+      tp_initial_bt_info: {
+        text: "Who is the disputing party?",
+        help: "Identify the disputing party when the pro was initially billed to BT information.",
+        choices: [
+          { label: "Owner of BT information", next: "tp_bt_owner_dispute", icon: "fa-solid fa-building-user", desc: "The BT information owner is disputing." },
+          { label: "Account No. owner", next: "tp_account_owner_dispute", icon: "fa-solid fa-user", desc: "The account owner is disputing." }
+        ]
+      },
+
+      tp_bt_owner_dispute: {
+        text: "Is there a valid account number that matches the BT information and is billable?",
+        help: "Check if a valid matching BT account exists.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the valid account number that matches the BT information.", icon: "fa-solid fa-circle-check", desc: "Valid matching BT account exists." },
+          { label: "No", action: "Advise the customer that no valid matching BT account can be billed.", icon: "fa-solid fa-circle-xmark", desc: "No valid matching BT account exists." }
+        ]
+      },
+
+      tp_account_owner_dispute: {
+        text: "Is there a clear instruction on the BOL to bill the account no. or place it in the BT section?",
+        help: "Use the BOL instruction to determine whether the dispute can be rebilled.",
+        choices: [
+          { label: "Yes", action: "Proceed with rebilling the account no. per BOL.", icon: "fa-solid fa-circle-check", desc: "The BOL clearly supports the account billing." },
+          { label: "No", action: "This will be considered rebill per LOA with Correction Fee.", icon: "fa-solid fa-circle-xmark", desc: "The BOL does not clearly support the account billing." }
+        ]
+      }
+    };
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function slugify(str){
+      return String(str || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_");
+    }
+
+    function getDocId(recommendation, type){
+      return `${slugify(recommendation)}_${type}`;
+    }
+
+    function updateClock(){
+      const now = new Date();
+
+      const headerTime = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true
+      }).format(now);
+
+      const popupTime = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+      }).format(now);
+
+      const popupDate = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Manila",
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      }).format(now);
+
+      els.clockText.textContent = headerTime;
+      els.popupTime.textContent = popupTime;
+      els.popupDate.textContent = popupDate;
+    }
+
+    function renderCalendar(date){
+      els.calendarGrid.innerHTML = "";
+
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      els.monthYear.textContent = date.toLocaleString("en-PH", {
+        month: "long",
+        year: "numeric"
+      });
+
+      const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      dayNames.forEach(d => {
+        const el = document.createElement("div");
+        el.className = "day-name";
+        el.textContent = d;
+        els.calendarGrid.appendChild(el);
+      });
+
+      for(let i = 0; i < firstDay; i++){
+        const blank = document.createElement("div");
+        els.calendarGrid.appendChild(blank);
+      }
+
+      const nowManila = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Manila" }));
+
+      for(let d = 1; d <= daysInMonth; d++){
+        const day = document.createElement("div");
+        day.className = "day";
+        day.textContent = d;
+
+        if(
+          d === nowManila.getDate() &&
+          month === nowManila.getMonth() &&
+          year === nowManila.getFullYear()
+        ){
+          day.classList.add("today");
+        }
+
+        els.calendarGrid.appendChild(day);
+      }
+    }
+
+    els.clockBtn.onclick = function(e){
+      e.stopPropagation();
+      els.calendarPopup.style.display =
+        els.calendarPopup.style.display === "block" ? "none" : "block";
+      renderCalendar(currentDate);
+    };
+
+    document.addEventListener("click", function(e){
+      if(!els.calendarPopup.contains(e.target) && e.target !== els.clockBtn && !els.clockBtn.contains(e.target)){
+        els.calendarPopup.style.display = "none";
+      }
+    });
+
+    document.getElementById("prevMonth").onclick = function(e){
+      e.stopPropagation();
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar(currentDate);
+    };
+
+    document.getElementById("nextMonth").onclick = function(e){
+      e.stopPropagation();
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar(currentDate);
+    };
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    document.getElementById("helpIcon").onclick = () => els.helpModal.style.display = "flex";
+    document.getElementById("commentIcon").onclick = () => {
+      clearCommentForm();
+      els.commentModal.style.display = "flex";
+    };
+
+    function closeHelp(){ els.helpModal.style.display = "none"; }
+    function closeComment(){ els.commentModal.style.display = "none"; }
+    function closeAllComments(){ els.allCommentsModal.style.display = "none"; }
+    function closePasswordModal(){ els.passwordModal.style.display = "none"; }
+    function closeEditModal(){ els.editModal.style.display = "none"; }
+
+  document.querySelectorAll(".rating-star").forEach(star => {
+  star.addEventListener("click", function(){
+    selectedRating = Number(this.dataset.value);
+
+    // clear all
+    document.querySelectorAll(".rating-star").forEach(s => {
+      s.classList.remove("selected");
+    });
+
+    // fill up to selected
+    document.querySelectorAll(".rating-star").forEach(s => {
+      if(Number(s.dataset.value) <= selectedRating){
+        s.classList.add("selected");
+      }
+    });
+  });
 });
 
+    async function sendComment(){
+      const name = els.commentName.value.trim();
+      const comment = els.commentText.value.trim();
 
-function sendComment(){
-  const name = document.getElementById('commentName').value.trim();
-  const comment = document.getElementById('commentText').value.trim();
+      if(!selectedRating){
+        alert("Please select a rating.");
+        return;
+      }
 
-  if(selectedRating===0){
-    alert("Select a rating.");
+      try {
+        await db.collection(FEEDBACK_COLLECTION).add({
+          name: name || "Anonymous",
+          comment,
+          rating: selectedRating,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        els.feedbackMessage.style.display = "block";
+        els.feedbackMessage.style.color = "#16a34a";
+        els.feedbackMessage.textContent = "Feedback sent successfully.";
+
+        els.commentName.value = "";
+        els.commentText.value = "";
+        selectedRating = 0;
+        document.querySelectorAll(".rating-star").forEach(s => s.classList.remove("selected"));
+
+        setTimeout(() => {
+          els.feedbackMessage.style.display = "none";
+          els.feedbackMessage.textContent = "";
+          closeComment();
+        }, 1200);
+      } catch (error) {
+        els.feedbackMessage.style.display = "block";
+        els.feedbackMessage.style.color = "#ef4444";
+        els.feedbackMessage.textContent = "Unable to send feedback. Please try again.";
+      }
+    }
+
+    async function showAllComments(){
+      try{
+        const snap = await db.collection(FEEDBACK_COLLECTION).orderBy("createdAt","desc").get();
+        els.commentsList.innerHTML = "";
+
+        if(snap.empty){
+          els.commentsList.innerHTML = `<p style="color:#64748b;">No comments yet.</p>`;
+        } else {
+          snap.forEach(doc => {
+            const d = doc.data();
+            const item = document.createElement("div");
+            item.className = "comment-list-item";
+            item.innerHTML = `
+              <span class="stars">${"★".repeat(d.rating || 0)}${"☆".repeat(5 - (d.rating || 0))}</span>
+              <strong style="display:block; color:#0f172a; margin-bottom:4px;">${escapeHtml(d.name || "Anonymous")}</strong>
+              <div style="color:#475569; line-height:1.7;">${escapeHtml(d.comment || "")}</div>
+            `;
+            els.commentsList.appendChild(item);
+          });
+        }
+
+        closeComment();
+        els.allCommentsModal.style.display = "flex";
+      } catch(err){
+        alert("Unable to load comments right now.");
+      }
+    }
+
+    function clearCommentForm(){
+      selectedRating = 0;
+      els.commentName.value = "";
+      els.commentText.value = "";
+      document.querySelectorAll(".rating-star").forEach(s => s.classList.remove("selected"));
+      els.feedbackMessage.style.display = "none";
+      els.feedbackMessage.textContent = "";
+    }
+
+    function getDefaultTemplates(){
+      return { comment:"", corr:"", email:"" };
+    }
+
+    function setTemplateValue(el, text){
+      el.textContent = text || "";
+      el.classList.toggle("empty", !text);
+    }
+
+    async function loadTemplatesForRecommendation(recommendation){
+      if(!recommendation){
+        setTemplateValue(els.suggestedComment, "");
+        setTemplateValue(els.suggestedCorrCode, "");
+        setTemplateValue(els.suggestedEmail, "");
+        return;
+      }
+
+      const defaults = getDefaultTemplates();
+
+      const ids = {
+        comment: getDocId(recommendation, "comment"),
+        corr: getDocId(recommendation, "corr"),
+        email: getDocId(recommendation, "email")
+      };
+
+      try{
+        const [commentDoc, corrDoc, emailDoc] = await Promise.all([
+          db.collection(TEMPLATE_COLLECTION).doc(ids.comment).get(),
+          db.collection(TEMPLATE_COLLECTION).doc(ids.corr).get(),
+          db.collection(TEMPLATE_COLLECTION).doc(ids.email).get()
+        ]);
+
+        const finalComment = commentDoc.exists ? (commentDoc.data().text || defaults.comment) : defaults.comment;
+        const finalCorr = corrDoc.exists ? (corrDoc.data().text || defaults.corr) : defaults.corr;
+        const finalEmail = emailDoc.exists ? (emailDoc.data().text || defaults.email) : defaults.email;
+
+        templateCache[ids.comment] = finalComment;
+        templateCache[ids.corr] = finalCorr;
+        templateCache[ids.email] = finalEmail;
+
+        setTemplateValue(els.suggestedComment, finalComment);
+        setTemplateValue(els.suggestedCorrCode, finalCorr);
+        setTemplateValue(els.suggestedEmail, finalEmail);
+      } catch(err){
+        setTemplateValue(els.suggestedComment, defaults.comment);
+        setTemplateValue(els.suggestedCorrCode, defaults.corr);
+        setTemplateValue(els.suggestedEmail, defaults.email);
+      }
+    }
+
+    function setCopiedState(btn, originalText){
+      btn.classList.add("copied");
+      btn.textContent = "Copied";
+      clearTimeout(btn._copiedTimer);
+      btn._copiedTimer = setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.textContent = originalText;
+      }, 1400);
+    }
+
+    async function copyTemplateText(targetId, btn){
+      const target = document.getElementById(targetId);
+      const value = target.innerText.trim();
+      if(!value || target.classList.contains("empty")) return;
+
+      try{
+        await navigator.clipboard.writeText(value);
+        const original = btn.textContent;
+        setCopiedState(btn, original);
+      } catch {
+        alert("Unable to copy text.");
+      }
+    }
+
+    function attemptEdit(type){
+      if(!currentFinalRecommendation){
+        alert("Reach a final recommendation first before editing templates.");
+        return;
+      }
+      currentEditType = type;
+      els.adminPassword.value = "";
+      els.passwordModal.style.display = "flex";
+    }
+
+    function checkPassword(){
+      if(els.adminPassword.value === "admin"){
+        closePasswordModal();
+        openEditModal();
+      } else {
+        alert("Incorrect password");
+      }
+    }
+
+    function openEditModal(){
+      const map = {
+        comment: "suggestedComment",
+        email: "suggestedEmail",
+        corr: "suggestedCorrCode"
+      };
+
+      els.editTextarea.value = document.getElementById(map[currentEditType]).innerText;
+      els.modalTitle.textContent = `Edit ${currentEditType.toUpperCase()}`;
+      els.editModal.style.display = "flex";
+    }
+
+    async function saveEdit(){
+      const val = els.editTextarea.value.trim();
+
+      if(!val){
+        alert("Cannot save empty text.");
+        return;
+      }
+
+      const docId = getDocId(currentFinalRecommendation, currentEditType);
+
+      try{
+        await db.collection(TEMPLATE_COLLECTION).doc(docId).set({
+          text: val,
+          type: currentEditType,
+          recommendation: currentFinalRecommendation,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        templateCache[docId] = val;
+
+        if(currentEditType === "comment") setTemplateValue(els.suggestedComment, val);
+        if(currentEditType === "email") setTemplateValue(els.suggestedEmail, val);
+        if(currentEditType === "corr") setTemplateValue(els.suggestedCorrCode, val);
+
+        closeEditModal();
+        alert("Saved!");
+      } catch(err){
+        alert("Unable to save right now.");
+      }
+    }
+
+    function getPercent(isFinal){
+      if(isFinal) return 100;
+      if(path.length === 0) return 0;
+      return Math.min(Math.round((path.length / MAX_STEPS) * 100), 95);
+    }
+
+    function updateMeta(isFinal){
+      const pct = getPercent(isFinal);
+      const lastAnswer = path.length ? path[path.length - 1].answer : "—";
+      const progressLabel = isFinal ? "Recommendation ready" : path.length ? `Step ${path.length}` : "Not started";
+
+      els.progressFill.style.width = pct + "%";
+      els.progressText.textContent = progressLabel;
+      els.metricSteps.textContent = String(path.length);
+      els.metricAnswer.textContent = lastAnswer;
+      els.statusPill.innerHTML = `<i class="fa-solid fa-bolt"></i> ${isFinal ? "Completed" : path.length ? "In Progress" : "Ready"}`;
+    }
+
+function updatePath(){
+  if(!path.length){
+    els.pathBox.className = "path-box path-empty";
+    els.pathBox.textContent = "No steps selected yet. The full path will appear here as the user moves through the guide.";
     return;
   }
 
-  db.collection("feedback").add({
-    rating:selectedRating,
-    name:name||"Anonymous",
-    comment:comment,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).then(()=>{
-    alert("Saved!");
-    clearCommentForm();
-  }).catch(()=>alert("Save failed."));
-}
+  els.pathBox.className = "path-box";
+  els.pathBox.innerHTML = path.map((step, index) => `
+    <div class="path-item path-item-enter" 
+         style="animation-delay:${index * 0.06}s;"
+         data-step-index="${index}">
 
+      <div class="step-badge">STEP ${index + 1}</div>
+      <div class="path-q">${escapeHtml(step.question)}</div>
+      <div class="path-a">→ ${escapeHtml(step.answer)}</div>
+    </div>
+  `).join("");
 
-function clearCommentForm(){
-  selectedRating=0;
-  document.getElementById('commentName').value="";
-  document.getElementById('commentText').value="";
-  document.querySelectorAll('.rating-star').forEach(s=>s.classList.remove('selected'));
-}
-
-
-let unsubscribeListener=null;
-
-function showAllComments(){
-  const listEl=document.getElementById('commentsList');
-  listEl.innerHTML="Loading…";
-
-  if(unsubscribeListener) unsubscribeListener();
-
-  unsubscribeListener=db.collection("feedback")
-    .orderBy("createdAt","desc")
-    .onSnapshot(snap=>{
-      listEl.innerHTML="";
-      if(snap.empty){
-        listEl.innerHTML="<p>No feedback yet.</p>";
-      }
-      snap.forEach(doc=>{
-        const d=doc.data();
-        const div=document.createElement('div');
-        div.className="comment-list-item";
-        div.innerHTML=`
-          <div class="stars">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</div>
-          <strong>${d.name}</strong>
-          <p>${d.comment}</p>
-        `;
-        listEl.appendChild(div);
-      });
-      document.getElementById('allCommentsModal').style.display='flex';
+  // 🔥 CLICK HANDLER
+  document.querySelectorAll(".path-item").forEach(el => {
+    el.addEventListener("click", () => {
+      const index = Number(el.dataset.stepIndex);
+      goToStep(index);
     });
-}
-</script>
-
-<style>
-/* =========================
-   PROFESSIONAL MODALS
-========================= */
-/* MODALS */
-.modal {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.4);
-  justify-content:center;
-  align-items:center;
-  padding:20px;
-  z-index:1000;
-}
-.modal-content {
-  background:white;
-  border-radius:10px;
-  padding:24px;
-  width:100%;
-  max-width:500px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.2);
-}
-.modal-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-size:20px;
-  font-weight:700;
-  margin-bottom:12px;
-}
-.modal-close {
-  font-size:22px;
-  cursor:pointer;
-  color:var(--muted);
-}
-.modal-close:hover {color:var(--accent);}
-
-/* STAR RATING */
-.rating-container{display:flex;justify-content:center;gap:10px;margin-top:12px;}
-.rating-star{cursor:pointer;font-size:28px;color:#ccc;transition:color .2s,transform .2s;}
-.rating-star:hover{transform:scale(1.3);}
-.rating-star.selected{color:var(--accent-dark);}
-
-/* COMMENTS */
-.comment-list-item{padding:12px 0;border-bottom:1px solid #eee;}
-.comment-list-item .stars{color:var(--accent-dark);font-size:18px;margin-bottom:6px;}
-.comment-list-item:last-child{border:none;}
-input,textarea{width:100%;padding:8px;margin-top:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;}
-textarea{resize:none;min-height:80px;}
-
-/* TIME CALENDAR */
-#timeCalendarPopup {
-  display:none;
-  position:absolute;
-  top:60px; right:20px;
-  background:white;
-  border-radius:8px;
-  box-shadow:0 8px 24px rgba(0,0,0,0.25);
-  padding:16px;
-  width:310px;
-  z-index:900;
-}
-#timeCalendarPopup h3 {
-  margin:0;text-align:center;font-size:18px;color:var(--accent-dark);
-  margin-bottom:8px;
-}
-.calendar-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#f0f0f0;
-  padding:8px;
-  border-radius:6px;
-}
-.calendar-header span{cursor:pointer;color:var(--accent-dark);font-weight:600;}
-.calendar-title{font-weight:700;}
-.calendar-grid{
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  gap:4px;
-  margin-top:8px;
-}
-.calendar-grid .day-name{text-align:center;font-size:12px;font-weight:700;color:var(--muted);}
-.calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
-.calendar-grid .today{background:var(--accent);color:white;font-weight:700;}
-.calendar-grid .day:hover{background:#f0f0f0;}
-
-/* COMMENT LINK */
-.link-text{
-  color:var(--accent-dark);
-  cursor:pointer;
-  text-decoration:underline;
-  font-size:14px;
-  margin-top:10px;
-  display:block;
-}
-
-/* STAR RATING COLORS */
-.rating-container {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-.rating-star {
-  cursor: pointer;
-  font-size: 28px;
-  color: #ccc; /* default grey */
-  transition: color .2s, transform .2s;
-}
-
-.rating-star:hover {
-  transform: scale(1.3);
-}
-
-.rating-star.selected {
-  color: #FF6600; /* FedEx orange */
-}
-
-/* footer alignment */
-.comment-modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-}
-
-.link-text {
-  color: var(--accent-dark);
-  cursor: pointer;
-  text-decoration: underline;
-  font-size: 14px;
-}
-
-/* COMMENT LIST STAR COLORS */
-#commentsList .stars {
-  color: #FF6600; /* FedEx orange */
-  font-size: 18px;
-  margin-bottom: 6px;
-  display: block;
-}
-
-/* ---------- HEADER ---------- */
-header{
-  background:var(--accent);
-  color:white;
-  padding:16px 28px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  position:relative;
-  overflow:hidden;
-  z-index:1;
-}
-header img{height:40px; animation:logoFlyIn 1s ease-out forwards; opacity:0;}
-.nav-tabs{display:flex; gap:30px;}
-.tab{color:white; text-decoration:none; font-weight:600; font-size:16px; position:relative; padding:6px 0; transition: opacity 0.2s;}
-.tab:hover{opacity:0.8;}
-.tab.active::after{content:"";position:absolute;left:0;bottom:-6px;width:100%;height:3px;background:#ff6600;border-radius:3px;}
-
-.header-icons{display:flex;align-items:center;gap:20px;}
-#clockBtn{cursor:pointer; display:flex; align-items:center; gap:6px; font-size:18px; font-weight:600; color:white; position:relative;}
-#clockBtn:hover{transform:scale(1.1);}
-.header-icon{font-size:24px;color:white;cursor:pointer;transition:color .2s,transform .2s;}
-.header-icon:hover{transform:scale(1.3);}
-.header-icon.active{color:var(--accent-dark);}
-
-/* ---------- HEADER ANIMATIONS ---------- */
-@keyframes logoFlyIn {0%{opacity:0;transform:translateX(-50px) scale(0.8);}100%{opacity:1;transform:translateX(0) scale(1);}}
-header::after{
-  content:"";
-  position:absolute; top:0; left:-100%;
-  width:100%; height:100%;
-  background: linear-gradient(120deg, #4d148c, #ff6600, #4d148c);
-  transform:skewX(-20deg);
-  animation:sweep 1s ease-out forwards;
-  z-index:0;
-  opacity:0.2;
-}
-@keyframes sweep{0%{left:-100%;}100%{left:100%;}}
-
-/*pop up time style*/
-/* POPUP TIME STYLE (Windows-like) */
-.popup-time{
-  font-size:34px;
-  font-weight:600;
-  text-align:left;
-  margin-bottom:4px;
-  color:#111;
-}
-
-#timeCalendarPopup {
-  background:white;}
-
-.popup-date{
-  font-size:14px;
-  color:#555;
-  margin-bottom:14px;
-  text-align:left;
-}
-</style>
-
-<!-- this is the end header codes that can be used to other guides -->
-
-<div class="container">
-  <!-- Left: Flow -->
-  <div class="card">
-      <h1>Billing Dispute General Guide</h1>
-      <p class="lead">Follow the flow below to determine the recommended billing action.</p>
-      <div class="progress-container">
-        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-        <div id="progressText" class="progress-text">Step 1 of ?</div>
-      </div>
-      <div id="flowArea" class="node"></div>
-      <div class="controls">
-        <button id="goBackBtn" class="secondary" style="display:none;">← Go Back</button>
-        <button id="startOverBtn" class="secondary" style="display:none;">Start Over</button>
-      </div>
-    </div>
-
-    <!-- Middle: Path & Recommendation -->
-    <div class="card">
-      <div class="node">
-        <strong>Selected Path</strong>
-        <div id="selectedPath" class="path">No steps selected yet.</div>
-      </div>
-      <div class="node">
-        <strong>Recommended Action</strong>
-        <div id="recommendation" class="result">No recommendation yet.</div>
-      </div>
-    </div>
-
-    <!-- Right: Suggested Comment & Email -->
-    <div class="card" id="suggestedPanel" style="display:none;">
-      <div class="output-card" id="commentCard">
-        <div class="output-header">
-          Suggested Comment
-          <span class="edit-icon" onclick="attemptEdit('comment')" title="Do you want to update the Comment?">✏️</span>
-        </div>
-        <div id="suggestedComment" class="output-box"></div>
-      </div>
-      
-      <div class="output-card" id="corrCard">
-        <div class="output-header">
-          Possible CORR CODE
-          <span class="edit-icon" onclick="attemptEdit('corr')">✏️</span>
-        </div>
-        <div id="suggestedCorrCode" class="output-box"></div>
-      </div>
-      
-      <div class="output-card" id="emailCard">
-        <div class="output-header">
-          Suggested Email
-          <span class="edit-icon" onclick="attemptEdit('email')" title="Do you want to update the Email?">✏️</span>
-        </div>
-        <div id="suggestedEmail" class="output-box"></div>
-        <button class="copy-btn" id="copyEmailBtn">📋 Copy</button>
-      </div>
-      <div id="generalNote" class="note">Note: These are suggested templates. Personalized emails or comments are always more appreciated.</div>
-    </div>
-</div>
-
-<!-- Password Modal -->
-<div id="passwordModal" class="modal">
-  <div class="modal-content">
-    <h3>Enter Password to Edit</h3>
-    <input type="password" id="adminPassword" placeholder="Password">
-    <div style="margin-top:18px;">
-      <button class="save-btn" onclick="checkPassword()">Submit</button>
-      <button class="cancel-btn" onclick="closePasswordModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Modal -->
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <h3 id="modalTitle">Edit</h3>
-    <textarea id="editTextarea"></textarea>
-    <div style="margin-top:18px;text-align:right;">
-      <button class="save-btn" onclick="saveEdit()">Save</button>
-      <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<footer style="display:flex;align-items:center;justify-content:space-between;">
-  <p>© 2025 EBS Operations</p>
-  <div style="display:flex;align-items:center;gap:10px;">
-    <span style="font-size:12px;color:white;">
-      "Your feedback is important to us. Please feel free to email us with any comments or questions." -Jules
-    </span>
-  </div>
-</footer>
-
-<!-- Firebase compat CDN -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-<script>
-/* ---------- FIREBASE (compat) INIT ---------- */
-const firebaseConfig = {
-  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
-  authDomain: "bdgg-database.firebaseapp.com",
-  projectId: "bdgg-database",
-  storageBucket: "bdgg-database.firebasestorage.app",
-  messagingSenderId: "43574975434",
-  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-/* ---------- Decision Tree Data (full) ---------- */
-const NODES = {
-
-  /* ================= PREPAID ================= */
-
-  prepaid: {
-    text: "Is there an Account No. noted on BOL?",
-    choices: [
-      { label: "Yes", next: "prepaid_account_yes" },
-      { label: "No", action: "Bill the pro to the Shipper per Terms noted on BOL." }
-    ]
-  },
-
-  prepaid_account_yes: {
-    text: "Is the account no. related to?",
-    choices: [
-      { label: "Shipper", next: "prepaid_shipper_account_type" },
-      { label: "Consignee", next: "prepaid_consignee_initial_billed" },
-      { label: "True 3rd Party", next: "prepaid_true3pty_initial_billed" }
-    ]
-  },
-
-  /* ---- PREPAID | SHIPPER ---- */
-
-  prepaid_shipper_account_type: {
-    text: "Is it a billing or shipping account?",
-    choices: [
-      { label: "Shipping account", next: "prepaid_shipper_shipping_addr_check" },
-      { label: "Billing account", next: "prepaid_shipper_billing_account" }
-    ]
-  },
-
-  prepaid_shipper_shipping_addr_check: {
-    text: "Is the shipping account address same as the shipper?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Update the shipper code using the account number noted on the BOL."
-      },
-      {
-        label: "No",
-        action: "Look for a shipping account of shipper that has ABT matching the address of the account number noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL."
-      }
-    ]
-  },
-
-  prepaid_shipper_billing_account: {
-    text: "Billing account handling",
-    choices: [
-      {
-        label: "Continue",
-        action: "Look for another shipping address of shipper that has ABT matching the billing account number noted on BOL.",
-        note: "NOTE: If no shipping account with ABT is found, manually add the billing account."
-      }
-    ]
-  },
-
-  /* ---- PREPAID | CONSIGNEE ---- */
-
-  prepaid_consignee_initial_billed: {
-    text: "Who was initially billed on the pro?",
-    choices: [
-      { label: "Shipper – per Terms on BOL", next: "prepaid_consignee_shipper_dispute" },
-      {
-        label: "Account no. per BOL",
-        action: "If the disputing party is the Account no. owner and the request is to bill it to the Shipper, proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL."
-      }
-    ]
-  },
-
-  prepaid_consignee_shipper_dispute: {
-    text: "Who is the disputing party?",
-    choices: [
-      { label: "Shipper", next: "prepaid_consignee_rebill_check" },
-      { label: "Account no. owner", next: "prepaid_consignee_owner_check" }
-    ]
-  },
-
-  prepaid_consignee_rebill_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", next: "prepaid_consignee_billable_check" },
-      {
-        label: "No",
-        action: "Terms will trump and LOA will be needed to update to the random account no. listed on the BOL."
-      }
-    ]
-  },
-
-  prepaid_consignee_owner_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", next: "prepaid_consignee_owner_check" },
-      {
-        label: "No",
-        action: "Since the request came from the Account no. owner, this will be considered rebill per LOA with Correction Fee."
-      }
-    ]
-  },
-
-  prepaid_consignee_billable_check: {
-    text: "Is the account number billable(active and a BT account)?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the account number per BOL.(Update the terms if neccessary. Example: Update to Collect if the account is related to the Consignee. Check if the account is ABT of the Consignee)",
-      note: "NOTE: If the account number has the same name and address of the Consignee(shipping account), use the account and update the Consignee Section then change the terms to Collect."},
-      
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct)"
-      }
-    ]
-  },
-
-  prepaid_consignee_owner_check: {
-    text: "Is the account number billable(active and a BT account)?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the account number per BOL.",
-      note: "NOTE: If the account number has the same name and address of the Consignee(shipping account), use the account and update the Consignee Section then change the terms to Collect."},
-      
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If no available account, advise the customer that the account cannot be billed since it's inactive or not a valid BT account(assuming that it's a Shipping acct with no ABT)",
-        note: "NOTE: If it's a shipping account with an ABT, bill it to the ABT of the Shipping account."
-      }
-    ]
-  },
-
- 
- 
-
-  /* ---- PREPAID | TRUE 3RD PARTY ---- */
-
-  prepaid_true3pty_initial_billed: {
-    text: "Who was initially billed on the pro?",
-    choices: [
-      { label: "Shipper – per Terms on BOL", next: "prepaid_true3pty_shipper_dispute" },
-      {
-        label: "Account no. per BOL",
-        action: "If the disputing party is the Account no. owner and the request is to bill it to the Shipper, proceed and rebill it to the Shipper per Terms noted on BOL. Consider this as Debtor update per RVSL."
-      }
-    ]
-  },
-
-  prepaid_true3pty_shipper_dispute: {
-    text: "Who is the disputing party?",
-    choices: [
-      { label: "Shipper", next: "prepaid_true3pty_rebill_check" },
-      { label: "Account no. owner", next: "prepaid_true3pty_owner_check" }
-    ]
-  },
-
-  prepaid_true3pty_rebill_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the account no. in attempt of payment." },
-      {
-        label: "No",
-        action: "Terms will trump and LOA will be needed."
-      }
-    ]
-  },
-
-  prepaid_true3pty_owner_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the account no. per BOL." },
-      {
-        label: "No",
-        action: "This will be considered rebill per LOA with Correction Fee."
-      }
-    ]
-  },
-
-  /* ================= COLLECT ================= */
-
-  collect: {
-    text: "Is there an Account No. noted on BOL?",
-    choices: [
-      { label: "Yes", next: "collect_account_yes" },
-      { label: "No", action: "Bill the Pro to the Consignee per Terms noted on BOL." }
-    ]
-  },
-
-  collect_account_yes: {
-    text: "Is the account no. related to?",
-    choices: [
-      { label: "Consignee", next: "collect_consignee_account_type" },
-      { label: "Shipper", next: "collect_shipper_account_path" },
-      { label: "True 3rd Party", next: "collect_true3pty_path" }
-    ]
-  },
-
-  /* ---- COLLECT | CONSIGNEE ---- */
-
-  collect_consignee_account_type: {
-    text: "Is it a billing or shipping account?",
-    choices: [
-      { label: "Shipping account", next: "collect_consignee_shipping_addr_check" },
-      { label: "Billing account", next: "collect_consignee_billing_account" }
-    ]
-  },
-
-  collect_consignee_shipping_addr_check: {
-    text: "Is the shipping account address same as the Consignee?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Update the Consignee code using the account number noted on the BOL."
-      },
-      {
-        label: "No",
-        action: "Look for a shipping account of Consignee that has ABT matching the address of the account no. noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL."
-      }
-    ]
-  },
-
-  collect_consignee_billing_account: {
-    text: "Billing account handling",
-    choices: [
-      {
-        label: "Continue",
-        action: "Look for another shipping address of Consignee that has ABT matching the billing account number noted on BOL.",
-        note: "NOTE: If no shipping account with ABT is found, manually add the billing account."
-      }
-    ]
-  },
-
-  /* ---- COLLECT | SHIPPER ---- */
-
-  collect_shipper_account_path: {
-    text: "Who was initially billed on the pro?",
-    choices: [
-      { label: "Collect – per Terms on BOL", next: "collect_shipper_initial_collect" },
-      { label: "Account no. per BOL", next: "collect_shipper_account_billed" }
-    ]
-  },
-
-  collect_shipper_initial_collect: {
-    text: "Who is the disputing party?",
-    choices: [
-      { label: "Consignee", next: "collect_shipper_rebill_check" },
-      { label: "Account no. owner", next: "collect_shipper_owner_check" }
-    ]
-  },
-
-  collect_shipper_rebill_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", next: "collect_shipper_billable_check" },
-      {
-        label: "No",
-        action: "Terms will trump and LOA will be needed."
-      }
-    ]
-  },
-
-  collect_shipper_owner_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", next: "collect_shipper_billable_check" },
-      {
-        label: "No",
-        action: "This will be considered rebill per LOA with Correction Fee."
-      }
-    ]
-  },
-
-  collect_shipper_billable_check: {
-    text: "Is the account no. billable (active and a BT account)?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Proceed with rebilling the account no. per BOL. Update the terms if necessary.",
-        note: "NOTE: If account no. has the same name and address of the Shipper (shipping account), update the Shipper section and change Terms to Prepaid."
-      },
-      {
-        label: "No",
-        action: "Search for a valid BT account that can be billed. If none, advise the customer that the account cannot be billed."
-      }
-    ]
-  },
-
-  collect_shipper_account_billed: {
-    text: "Account no. per BOL handling",
-    choices: [
-      {
-        label: "Continue",
-        action: "If the disputing party is the Account no. owner and the request is to bill the Consignee, proceed and rebill it to Collect per Terms noted on BOL. If Collect was billed and disputed before, bill Shipper per RVSL."
-      }
-    ]
-  },
-
-  /* ---- COLLECT | TRUE 3RD PARTY ---- */
-
-  collect_true3pty_path: {
-    text: "Who was initially billed on the pro?",
-    choices: [
-      { label: "Collect – per Terms on BOL", next: "collect_true3pty_collect_billed" },
-      { label: "Account no. per BOL", next: "collect_true3pty_account_billed" }
-    ]
-  },
-
-  collect_true3pty_collect_billed: {
-    text: "Who is the disputing party?",
-    choices: [
-      { label: "Consignee", next: "collect_true3pty_rebill_check" },
-      { label: "Account no. owner", next: "collect_true3pty_owner_check" }
-    ]
-  },
-
-  collect_true3pty_rebill_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the account no. in attempt of payment." },
-      {
-        label: "No",
-        action: "Terms will trump and LOA will be needed."
-      }
-    ]
-  },
-
-  collect_true3pty_owner_check: {
-    text: "Is there a clear instruction on the BOL to bill the account or is it placed on the BT section of the BOL?",
-    choices: [
-      { label: "Yes", action: "Proceed with rebilling the account no. per BOL." },
-      {
-        label: "No",
-        action: "This will be considered rebill per LOA with Correction Fee."
-      }
-    ]
-  },
-
-  collect_true3pty_account_billed: {
-    text: "Account no. per BOL handling",
-    choices: [
-      {
-        label: "Continue",
-        action: "If the disputing party is the Account no. owner and request is to bill it to Collect, proceed and rebill it to the Consignee per Terms noted on BOL. If Collect was billed and disputed before, bill Shipper per RVSL."
-      }
-    ]
-  },
-
-  /* ================= NO TERMS ================= */
-
-  noterms: {
-    text: "Is there an Account No. noted on BOL?",
-    choices: [
-      { label: "Yes", next: "noterms_account_yes" },
-      { label: "No", next: "noterms_no_account" }
-    ]
-  },
-
-  noterms_account_yes: {
-    text: "Is the account no. related to?",
-    choices: [
-      { label: "Shipper", next: "prepaid_shipper_account_type" },
-      { label: "Consignee", next: "noterms_consignee_account_type" },
-      { label: "True 3rd Party", action: "Bill it to the account no. with Prepaid as Terms." }
-    ]
-  },
-
-  noterms_consignee_account_type: {
-    text: "Is it a billing or shipping account?",
-    choices: [
-      { label: "Shipping account", next: "noterms_consignee_shipping_addr_check" },
-      { label: "Billing account", next: "noterms_consignee_billing_account" }
-    ]
-  },
-
-  noterms_consignee_shipping_addr_check: {
-    text: "Is the shipping account address same as the Consignee?",
-    choices: [
-      {
-        label: "Yes",
-        action: "Update the Consignee code using the account number noted on the BOL."
-      },
-      {
-        label: "No",
-        action: "Look for a shipping account of Consignee that has ABT matching the address of the account no. noted on BOL. If none, look for a billing account using the address of the account no. noted on BOL."
-      }
-    ]
-  },
-
-  noterms_consignee_billing_account: {
-    text: "Billing account handling",
-    choices: [
-      {
-        label: "Continue",
-        action: "Look for another shipping address of Consignee that has ABT matching the billing account number noted on BOL.",
-        note: "NOTE: If no shipping account with ABT is found, manually add the billing account."
-      }
-    ]
-  },
-
-  noterms_no_account: {
-    text: "Is the shipment originating in the US or Canada?",
-    choices: [
-      { label: "US", action: "Bill it Prepaid per default billing." },
-      { label: "Canada", action: "Bill it Collect per default billing." }
-    ]
-  },
-  
-/* ================= THIRD PARTY ================= */
-
-third_party_root: {
-  text: "Is there an Account No. noted on the BOL?",
-  choices: [
-    { label: "Yes", next: "tp_account_yes" },
-    {
-      label: "No",
-      action: "Cannot bill Third Party. No account number noted on the BOL. Billing remains per original terms."
-    }
-  ]
-},
-
-tp_account_yes: {
-  text: "Is the account no. information (Name and Address) same as the BT information noted on the BOL?",
-  choices: [
-    { label: "Yes", next: "tp_bt_match_yes" },
-    { label: "No", next: "tp_bt_match_no" }
-  ]
-},
-
-tp_bt_match_yes: {
-  text: "Is the account no. billable (active and a BT account)?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Proceed with rebilling the account no. per BOL(Update the terms if necessary Example: Update to Prepaid if Account is related to the Shipper or True 3rd party. Collect if related to the Consignee. Check if account is ABT of the Shipper or Consignee)",note:"Note: If account no. has the same name and address of the Shipper(shipping account), use the account and update the Shipper Section then change the Terms to Prepaid. Follow the same rule of related to the Consignee."
-    },
-    {
-      label: "No",
-      action: "Search for a Valid BT account that can be billed. If no available account, advise the customer that account cannot be billed since it is inactive or not a valid BT account (assuming that it is a Shipping Account with no ABT).",note:"NOTE: If it is a Shipping account with an ABT, bill it to the ABT of the shipping account."
-    }
-  ]
-},
-
-tp_bt_match_no: {
-  text: "Who was initially billed on the Pro?",
-  choices: [
-    { label: "Account No.", next: "tp_initial_account_no" },
-    { label: "BT Information", next: "tp_initial_bt_info" }
-  ]
-},
-
-/* ---------- ACCOUNT NO. BRANCH ---------- */
-tp_initial_account_no: {
-  text: "Who is the disputing party?",
-  choices: [
-    { label: "Account No. owner requesting to bill a different BT info noted on the BOL", next: "tp_account_owner_bt_request" },
-    { label: "Owner of the BT information requesting to bill to their account", next: "tp_bt_owner_account_request" }
-  ]
-},
-
-tp_account_owner_bt_request: {
-  text: "Is there a valid account no. available and billable that matches the BT information?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Proceed and bill it to the BT information noted on the BOL. Update the terms if necessary (Prepaid if Shipper or True 3rd party, Collect if Consignee). Check if account is ABT of the Shipper or Consignee."
-    },
-    {
-      label: "No",
-      action: "Deny the request and advise that BT information cannot be billed. Ask for LOA and a valid account no. that can be billed."
-    }
-  ]
-},
-
-tp_bt_owner_account_request: {
-  text: "Is the BT account a good account?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Proceed with rebilling it to their account per BOL."
-    },
-    {
-      label: "No",
-      action: "Search for a valid BT or ask the customer for a valid BT account."
-    }
-  ]
-},
-
-
-/* ---------- BT INFORMATION BRANCH ---------- */
-tp_initial_bt_info: {
-  text: "Who is the disputing party?",
-  choices: [
-    { label: "Disputing party is the BT information requesting to bill it to the Account no.", next: "tp_bt_request_account" },
-    { label: "Disputing party is the Account no. requesting to bill it to their account", next: "tp_account_request_account" }
-  ]
-},
-
-tp_bt_request_account: {
-  text: "Is there a clear instruction on the BOL to bill the account, or is it placed on the BT section of the BOL?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Rebill the pro to the Shipper per RVSL due to conflicting information on the BOL. Do not update without an LOA from the accepting party."
-    },
-    {
-      label: "No",
-      action: "Deny the request and advise the customer that the account no. noted cannot be billed since there is no clear instruction on the BOL. LOA is needed in order to rebill the pro."
-    }
-  ]
-},
-
-tp_account_request_account: {
-  text: "Is there a clear instruction on the BOL to bill the account, or is it placed on the BT section of the BOL?",
-  choices: [
-    {
-      label: "Yes",
-      action: "Proceed with rebilling the Account no. per BOL."
-    },
-    {
-      label: "No",
-      action: "Proceed with rebilling the Account no. per LOA with Correction Fee."
-    }
-  ]
-}
-
-
-
-
-};
-
-
-/* ---------- Decision Tree Root ---------- */
-const TREE = {
-  id: "root",
-  text: "Is there a Term Noted on BOL?",
-  choices: [
-    { label: "Yes - Prepaid", next: "prepaid" },
-    { label: "Yes - Collect", next: "collect" },
-    { label: "Yes - Third Party", next: "third_party_root" },
-    { label: "No", next: "noterms" }
-  ]
-};
-
-
-/* ---------- UI Logic ---------- */
-let path=[]; 
-let historyStack=[];
-let currentFinalRecommendation = "";
-let currentEditType = "";
-
-function renderNode(nodeObj,nodeKey="root"){
-  const flowArea=document.getElementById("flowArea");
-  const goBackBtn=document.getElementById("goBackBtn");
-  const startOverBtn=document.getElementById("startOverBtn");
-  const progressFill=document.getElementById("progressFill");
-  const progressText=document.getElementById("progressText");
-  const suggestedPanel=document.getElementById("suggestedPanel");
-
-  flowArea.innerHTML="";
-  document.getElementById("recommendation").innerHTML="No recommendation yet.";
-  document.getElementById("suggestedComment").textContent="";
-  document.getElementById("suggestedEmail").textContent="";
-  document.getElementById("suggestedCorrCode").textContent="";
-  suggestedPanel.style.display="none";
-
-  if(nodeObj.choices){
-    const q=document.createElement("div");
-    q.innerHTML=`<strong>${nodeObj.text}</strong>`;
-    flowArea.appendChild(q);
-    const list=document.createElement("div"); list.className="choice-list";
-    nodeObj.choices.forEach(choice=>{
-      const btn=document.createElement("div");
-      btn.className="choice"; btn.textContent=choice.label;
-      btn.onclick=()=>{
-        historyStack.push({nodeKey,path:JSON.parse(JSON.stringify(path))});
-        path.push({question:nodeObj.text,answer:choice.label});
-        const nextNode=NODES[choice.next]||(choice.action?{action:choice.action,note:choice.note}:{});
-        if(nextNode.action) currentFinalRecommendation=nextNode.action;
-        renderNode(nextNode,choice.next);
-        updateSelectedPath();
-        if(nextNode.action) generateSuggestedCommentEmail(nextNode.action);
-      };
-      list.appendChild(btn);
-    });
-    flowArea.appendChild(list);
-  } else if(nodeObj.action){
-    document.getElementById("recommendation").innerHTML=`<strong>${nodeObj.action.replace(/\n/g,'<br>')}</strong>${nodeObj.note?`<div class="note">${nodeObj.note}</div>`:''}`;
-    currentFinalRecommendation = nodeObj.action;
-    suggestedPanel.style.display="block";
-    generateSuggestedCommentEmail(nodeObj.action);
-  }
-
-  goBackBtn.style.display=historyStack.length?"inline-block":"none";
-  startOverBtn.style.display=path.length?"inline-block":"none";
-  
-  const stepNum = path.length + 1;
-  progressFill.style.width = Math.min(stepNum * 20, 100) + "%"; 
-  progressText.textContent = `Step ${stepNum}`;
-}
-
-function updateSelectedPath(){
-  const el=document.getElementById("selectedPath");
-  el.innerHTML=path.map((p,idx)=>`<strong>Step ${idx+1}:</strong> ${escapeHtml(p.question)} → <strong><em>${escapeHtml(p.answer)}</em></strong>`).join("<br>");
-}
-
-function escapeHtml(text){const div=document.createElement('div');div.textContent=text;return div.innerHTML;}
-document.getElementById("goBackBtn").onclick=()=>{if(historyStack.length){const last=historyStack.pop();path=last.path;renderNode(NODES[last.nodeKey],last.nodeKey);updateSelectedPath();}}; 
-document.getElementById("startOverBtn").onclick=()=>{path=[];historyStack=[];renderNode(TREE,"root");updateSelectedPath();};
-window.onload=()=>{renderNode(TREE,"root");};
-
-/* ---------- Suggested Comment, Email & CORR CODE ---------- */
-function docIdFromText(text){return encodeURIComponent(text);}
-async function generateSuggestedCommentEmail(recommendation){
-  const commentEl = document.getElementById("suggestedComment");
-  const emailEl = document.getElementById("suggestedEmail");
-  const corrEl = document.getElementById("suggestedCorrCode");
-  const suggestedPanel = document.getElementById("suggestedPanel");
-
-  commentEl.textContent = ""; 
-  emailEl.textContent = ""; 
-  corrEl.textContent = "";
-  suggestedPanel.style.display = "block";
-
-  const id = docIdFromText(recommendation);
-
-  const loadField = async (col, el)=>{
-    try{
-      const doc = await db.collection(col).doc(id).get();
-      if(doc.exists && doc.data().text){
-        el.textContent = doc.data().text;
-      }
-    } catch(err){
-      console.error(`Error loading ${col}:`, err);
-    }
-  };
-
-  await loadField("comments", commentEl);
-  await loadField("emails", emailEl);
-  await loadField("corr", corrEl);
-}
-
-/* ---------- Admin Edit Logic ---------- */
-function attemptEdit(type){currentEditType=type;document.getElementById("adminPassword").value="";document.getElementById("passwordModal").style.display="flex";}
-function closePasswordModal(){document.getElementById("passwordModal").style.display="none";}
-function checkPassword(){if(document.getElementById("adminPassword").value==="admin"){closePasswordModal();openEditModal();}else{alert("Incorrect password!");}}
-function openEditModal(){
-  document.getElementById("editTextarea").value=document.getElementById(currentEditType==="comment"?"suggestedComment":currentEditType==="email"?"suggestedEmail":"suggestedCorrCode").textContent;
-  document.getElementById("modalTitle").textContent=`Edit ${currentEditType.toUpperCase()}`;
-  document.getElementById("editModal").style.display="flex";
-}
-function closeEditModal(){document.getElementById("editModal").style.display="none";}
-async function saveEdit(){
-  const newVal = document.getElementById("editTextarea").value;
-
-  // Update UI immediately
-  document.getElementById(
-    currentEditType === "comment"
-      ? "suggestedComment"
-      : currentEditType === "email"
-      ? "suggestedEmail"
-      : "suggestedCorrCode"
-  ).textContent = newVal;
-
-  const id = docIdFromText(currentFinalRecommendation);
-
-  const collectionMap = {
-    comment: "comments",
-    email: "emails",
-    corr: "corr"
-  };
-
-  try {
-    await db
-      .collection(collectionMap[currentEditType])
-      .doc(id)
-      .set({
-        text: newVal,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-    // ✅ CONFIRMATION
-    alert("✅ Successfully saved to Firestore.");
-
-    closeEditModal();
-
-  } catch (error) {
-    console.error("Firestore save failed:", error);
-    alert("❌ Save failed. Please try again.");
-  }
-}
-
-/* ---------- Copy Button ---------- */
-document.getElementById("copyEmailBtn").onclick=()=>{
-  const val=document.getElementById("suggestedEmail").textContent;
-  navigator.clipboard.writeText(val).then(()=>alert("Copied!"));
-};
-
-// ---------- STAGGERED CARD FADE-IN ----------
-window.addEventListener('load', () => {
-  const cards = document.querySelectorAll('.card');
-  cards.forEach((card, i) => {
-    card.style.animation = `cardFadeIn 0.6s ease-out forwards`;
-    card.style.animationDelay = `${1 + i * 0.15}s`; // starts after logo (1s)
   });
+}
 
-  // Make sure logo is visible after its animation
-  const logo = document.querySelector('header img');
-  logo.style.opacity = 1;
-});
+function goToStep(index){
+  const target = historyStack[index];
 
-</script>
+  if(!target) return;
+
+  // trim path + history
+  path = path.slice(0, index);
+  historyStack = historyStack.slice(0, index);
+
+  updatePath();
+  renderNode(target.key);
+}
+
+    function updateRecommendation(text, isFinal){
+      els.recommendationBox.textContent = text || "No recommendation yet. Follow the flow to reach the final instruction.";
+      els.recommendationBox.classList.toggle("empty", !text);
+
+      currentFinalRecommendation = isFinal ? text : "";
+
+      if(isFinal){
+        loadTemplatesForRecommendation(text);
+      } else {
+        setTemplateValue(els.suggestedComment, "");
+        setTemplateValue(els.suggestedCorrCode, "");
+        setTemplateValue(els.suggestedEmail, "");
+      }
+    }
+
+    function renderFinal(node){
+      currentKey = "__final__";
+      const finalText = node.action || node.text || "";
+      const finalNote = node.note || "";
+
+      updateRecommendation(finalText, true);
+      updateMeta(true);
+
+      const footerStepText = `Completed after ${path.length} step${path.length > 1 ? "s" : ""}`;
+
+      els.stageCard.innerHTML = `
+        <div class="stage-top">
+          <div class="badge"><i class="fa-solid fa-check-circle"></i> Final Recommendation</div>
+          <div class="badge alt"><i class="fa-solid fa-sparkles"></i> Billing Dispute</div>
+        </div>
+
+        <div class="final-card">
+          <div class="final-badge"><i class="fa-solid fa-circle-check"></i> Recommendation Ready</div>
+          <div class="final-title">Recommended Action</div>
+          <div class="final-text">${escapeHtml(finalText)}</div>
+          ${finalNote ? `<div class="final-note">${escapeHtml(finalNote)}</div>` : ""}
+
+          <div class="final-actions">
+            <button class="app-btn secondary" id="inlineBack">Go Back</button>
+            <button class="app-btn primary" id="inlineRestart">Start Over</button>
+          </div>
+        </div>
+
+        <div class="decision-footer">
+          <div class="decision-footer-left">
+            <div class="footer-label">Decision Guide</div>
+            <div class="footer-value">${footerStepText}</div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById("inlineBack").onclick = goBack;
+      document.getElementById("inlineRestart").onclick = restart;
+    }
+
+    function renderNode(key){
+      currentKey = key;
+      const node = NODES[key];
+
+      if(!node){
+        updateRecommendation("", false);
+        updateMeta(false);
+        els.stageCard.innerHTML = `
+          <div class="stage-top">
+            <div class="badge"><i class="fa-solid fa-triangle-exclamation"></i> Missing Node</div>
+          </div>
+          <div class="question-wrap">
+            <div class="question-card">
+              <div class="question-text" style="font-size:28px;">Node not found: ${escapeHtml(key)}</div>
+              <p class="question-help">Check the node key in your decision tree.</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if(node.action || (!node.choices || node.choices.length === 0)){
+        renderFinal(node);
+        return;
+      }
+
+      updateRecommendation("", false);
+      updateMeta(false);
+
+      const choices = (node.choices || []).map(choice => `
+        <button class="choice" type="button"
+          data-type="${choice.action ? "final" : "next"}"
+          data-next="${escapeHtml(choice.next || "")}"
+          data-label="${escapeHtml(choice.label || "")}"
+          data-action="${escapeHtml(choice.action || "")}"
+          data-note="${escapeHtml(choice.note || "")}">
+          <div class="choice-icon"><i class="${escapeHtml(choice.icon || "fa-solid fa-circle-dot")}"></i></div>
+          <div class="choice-body">
+            <div class="choice-title">${escapeHtml(choice.label || "")}</div>
+            <div class="choice-desc">${escapeHtml(choice.desc || "")}</div>
+          </div>
+        </button>
+      `).join("");
+
+      const nextStep = path.length + 1;
+const footerStepText = `Next → Step ${nextStep}`;
+
+      els.stageCard.innerHTML = `
+        <div class="stage-top">
+          <div class="badge"><i class="fa-solid fa-route"></i> Billing Dispute Flow</div>
+          <div class="badge alt"><i class="fa-solid fa-layer-group"></i> Interactive Guide</div>
+        </div>
+
+        <div class="question-wrap">
+          <div class="question-card">
+            <div class="question-label"><i class="fa-solid fa-circle-question"></i> Current Decision</div>
+            <h2 class="question-text">${escapeHtml(node.text || "")}</h2>
+            ${node.help ? `<p class="question-help">${escapeHtml(node.help)}</p>` : ""}
+          </div>
+
+          <div class="choices">${choices}</div>
+        </div>
+
+        <div class="decision-footer">
+          <div class="decision-footer-left">
+            <div class="footer-label">Decision Guide</div>
+            <div class="footer-value">${footerStepText}</div>
+          </div>
+
+          <div class="decision-actions">
+            <button class="app-btn secondary" id="inlineBack" ${historyStack.length ? "" : 'style="display:none;"'}>Go Back</button>
+            <button class="app-btn primary" id="inlineRestart" ${path.length ? "" : 'style="display:none;"'}>Start Over</button>
+          </div>
+        </div>
+      `;
+
+      const inlineBack = document.getElementById("inlineBack");
+      const inlineRestart = document.getElementById("inlineRestart");
+
+      if(inlineBack) inlineBack.onclick = goBack;
+      if(inlineRestart) inlineRestart.onclick = restart;
+
+      els.stageCard.querySelectorAll(".choice").forEach(btn => {
+        btn.addEventListener("click", () => {
+          els.stageCard.querySelectorAll(".choice").forEach(el => el.classList.remove("selected"));
+          btn.classList.add("selected");
+
+          const type = btn.dataset.type;
+          const next = btn.dataset.next;
+          const label = btn.dataset.label;
+          const action = btn.dataset.action;
+          const note = btn.dataset.note;
+
+          historyStack.push({
+            key: currentKey,
+            path: JSON.parse(JSON.stringify(path))
+          });
+
+          path.push({
+            question: node.text,
+            answer: label
+          });
+
+          updatePath();
+          updateMeta(false);
+
+          setTimeout(() => {
+            if(type === "final"){
+              renderFinal({ action, note });
+            } else {
+              renderNode(next);
+            }
+          }, 120);
+        });
+      });
+    }
+
+    function goBack(){
+      if(!historyStack.length) return;
+      const prev = historyStack.pop();
+      path = prev.path || [];
+      updatePath();
+
+      if(prev.key === "__final__"){
+        renderNode("start");
+      } else {
+        renderNode(prev.key);
+      }
+    }
+
+    function restart(){
+      path = [];
+      historyStack = [];
+      currentFinalRecommendation = "";
+      currentEditType = "";
+      setTemplateValue(els.suggestedComment, "");
+      setTemplateValue(els.suggestedCorrCode, "");
+      setTemplateValue(els.suggestedEmail, "");
+      updatePath();
+      updateRecommendation("", false);
+      renderNode("start");
+    }
+
+    updatePath();
+    updateRecommendation("", false);
+    updateMeta(false);
+    renderNode("start");
+  </script>
 </body>
 </html>
-
-
