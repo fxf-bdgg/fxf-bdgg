@@ -1248,6 +1248,40 @@ mark.search-highlight{
       color:#fff;
       box-shadow:none;
     }
+    
+    .timezone-picker{
+  display:grid;
+  gap:8px;
+  margin-bottom:16px;
+}
+
+.timezone-picker label{
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.timezone-picker select{
+  width:100%;
+  min-height:48px;
+  border:none;
+  outline:none;
+  border-radius:16px;
+  background:#f8fafc;
+  padding:0 14px;
+  font-size:14px;
+  font-weight:700;
+  color:#0f172a;
+  box-shadow:inset 0 0 0 1px rgba(148,163,184,.18);
+  cursor:pointer;
+}
+
+.timezone-picker select:focus{
+  background:#fff;
+  box-shadow:inset 0 0 0 2px rgba(77,20,140,.16), 0 0 0 5px rgba(77,20,140,.06);
+}
 
     @keyframes cardFadeIn{
       from{ opacity:0; transform:translateY(22px); }
@@ -1309,13 +1343,13 @@ mark.search-highlight{
         </div>
 
         <div class="actions">
-          <button id="clockBtn" class="clock-pill" type="button">
-            <i class="fa-regular fa-clock"></i>
-            <div class="clock-label">
-              <span class="clock-small">Manila time</span>
-              <span id="clockText">--:-- PM</span>
-            </div>
-          </button>
+<button class="clock-pill" id="clockBtn" type="button">
+  <i class="fa-regular fa-clock"></i>
+  <div class="clock-label">
+    <span class="clock-small" id="clockZoneLabel">Local Time</span>
+    <span id="clockText">--:--</span>
+  </div>
+</button>
 
           <button class="icon-btn" id="commentIcon" type="button" title="Feedback">
             <i class="fa-solid fa-comment-dots"></i>
@@ -1332,13 +1366,19 @@ mark.search-highlight{
       <div class="popup-time" id="popupTime"></div>
       <div class="popup-date" id="popupDate"></div>
 
+
       <div class="calendar-header">
         <span id="prevMonth">‹</span>
         <div id="monthYear" class="calendar-title"></div>
         <span id="nextMonth">›</span>
       </div>
-
+      
+     
       <div class="calendar-grid" id="calendarGrid"></div>
+      
+      <button id="openTimeSettings" class="btn" style="margin-top:14px;">
+  <i class="fa-solid fa-gear"></i> Date & Time Settings
+</button>
     </div>
 
     <main>
@@ -1806,39 +1846,7 @@ mark.search-highlight{
     Covers Add, Edit, and Delete reference flows including correction steps and Demand Invoice handling.
   </p>
 </div>      
-      
-<!-- REFERENCE NUMBER GUIDE -->
-<div class="card" data-category="billing">
 
-  <div class="card-top">
-    <div class="badge">
-      <i class="fa-solid fa-network-wired"></i>
-      Billing
-    </div>
-
-    <div class="guide-icon">
-      <i class="fa-solid fa-network-wired"></i>
-    </div>
-  </div>
-
-  <h1>TPHI Guide</h1>
-
-  <p class="lead">
-    Account matching and correction process using TPHI. Includes BOL validation, AEM account checking, and CORR ACCR handling.
-  </p>
-
-  <a href="tphi-guide.html" class="btn">
-    Open TPHI Guide
-    <i class="fa-solid fa-arrow-right"></i>
-  </a>
-
-  <p class="small">
-    Use this guide when handling TEMP-SYS match-charge account corrections and validation scenarios.
-  </p>
-
-</div>
-
-      
 </div>
         </div>
       </section>
@@ -1974,6 +1982,43 @@ mark.search-highlight{
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
+ <div class="modal" id="timeSettingsModal">
+  <div class="modal-content">
+    
+    <div class="modal-header">
+      <span>Date & Time Settings</span>
+      <div class="modal-close" id="closeTimeSettings">
+        <i class="fa-solid fa-xmark"></i>
+      </div>
+    </div>
+
+    <p>Select your preferred time zone. This will update the clock across the system.</p>
+
+    <div class="timezone-picker">
+      <label>Select Time Zone</label>
+      <select id="timezoneSelectSettings">
+        <option value="Asia/Manila">Philippines — Asia/Manila</option>
+        <option value="Asia/Kolkata">India — Asia/Kolkata</option>
+        <option value="America/New_York">US Eastern</option>
+        <option value="America/Chicago">US Central</option>
+        <option value="America/Denver">US Mountain</option>
+        <option value="America/Los_Angeles">US Pacific</option>
+        <option value="Europe/London">UK — London</option>
+        <option value="Europe/Paris">Europe — Paris</option>
+        <option value="Asia/Dubai">UAE — Dubai</option>
+        <option value="Asia/Singapore">Singapore</option>
+        <option value="Asia/Tokyo">Japan</option>
+        <option value="Australia/Sydney">Australia</option>
+      </select>
+    </div>
+
+    <button id="saveTimeSettings" class="btn" style="margin-top:16px;">
+      Save Changes
+    </button>
+
+  </div>
+</div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
@@ -1987,126 +2032,165 @@ mark.search-highlight{
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function updateClock(){
-      const now = new Date();
+   const DEFAULT_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Manila";
+  let selectedTimeZone = localStorage.getItem("bdToolsTimeZone") || DEFAULT_TIMEZONE;
 
-      const headerTime = new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true
-      }).format(now);
+  const clockBtn = document.getElementById("clockBtn");
+  const calendarPopup = document.getElementById("timeCalendarPopup");
+  const calendarGrid = document.getElementById("calendarGrid");
+  const monthYear = document.getElementById("monthYear");
+  const timezoneSelect = document.getElementById("timezoneSelect");
+  const clockZoneLabel = document.getElementById("clockZoneLabel");
 
-      const popupTime = new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        hour: "numeric",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-      }).format(now);
+  let currentDate = new Date();
 
-      const popupDate = new Intl.DateTimeFormat("en-US", {
-        timeZone: "Asia/Manila",
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-      }).format(now);
+  function formatZoneLabel(zone){
+    const parts = zone.split("/");
+    return parts[parts.length - 1].replace(/_/g, " ");
+  }
 
-      document.getElementById("clockText").textContent = headerTime;
-      document.getElementById("popupTime").textContent = popupTime;
-      document.getElementById("popupDate").textContent = popupDate;
-    }
+  function getDatePartsInTimeZone(date, timeZone){
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric"
+    }).formatToParts(date);
 
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    const clockBtn = document.getElementById("clockBtn");
-    const calendarPopup = document.getElementById("timeCalendarPopup");
-    const calendarGrid = document.getElementById("calendarGrid");
-    const monthYear = document.getElementById("monthYear");
-    let currentDate = new Date();
-
-    clockBtn.onclick = function(e){
-      e.stopPropagation();
-      calendarPopup.style.display = calendarPopup.style.display === "block" ? "none" : "block";
-      renderCalendar(currentDate);
-    };
-
-    document.addEventListener("click", function(){
-      calendarPopup.style.display = "none";
+    const map = {};
+    parts.forEach(part => {
+      if (part.type !== "literal") map[part.type] = part.value;
     });
 
-    calendarPopup.addEventListener("click", function(e){
-      e.stopPropagation();
+    return {
+      year: Number(map.year),
+      month: Number(map.month),
+      day: Number(map.day)
+    };
+  }
+
+  function updateClock(){
+    const now = new Date();
+
+    const headerTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: selectedTimeZone,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }).format(now);
+
+    const popupTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: selectedTimeZone,
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true
+    }).format(now);
+
+    const popupDate = new Intl.DateTimeFormat("en-US", {
+      timeZone: selectedTimeZone,
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    }).format(now);
+
+    document.getElementById("clockText").textContent = headerTime;
+    document.getElementById("popupTime").textContent = popupTime;
+    document.getElementById("popupDate").textContent = popupDate;
+    clockZoneLabel.textContent = formatZoneLabel(selectedTimeZone);
+  }
+
+  function renderCalendar(date){
+    calendarGrid.innerHTML = "";
+
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    monthYear.textContent = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      year: "numeric"
+    }).format(new Date(year, month, 1));
+
+    const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    dayNames.forEach(day => {
+      const dayName = document.createElement("div");
+      dayName.className = "day-name";
+      dayName.textContent = day;
+      calendarGrid.appendChild(dayName);
     });
 
-    document.getElementById("prevMonth").onclick = function(e){
-      e.stopPropagation();
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      renderCalendar(currentDate);
-    };
-
-    document.getElementById("nextMonth").onclick = function(e){
-      e.stopPropagation();
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      renderCalendar(currentDate);
-    };
-
-    function renderCalendar(date){
-      calendarGrid.innerHTML = "";
-
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      monthYear.textContent = date.toLocaleString("en-PH", { month: "long", year: "numeric" });
-
-      const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      dayNames.forEach(d => {
-        const el = document.createElement("div");
-        el.className = "day-name";
-        el.textContent = d;
-        calendarGrid.appendChild(el);
-      });
-
-      for(let i = 0; i < firstDay; i++){
-        const empty = document.createElement("div");
-        calendarGrid.appendChild(empty);
-      }
-
-      const today = new Date(
-        new Intl.DateTimeFormat("en-US", {
-          timeZone: "Asia/Manila",
-          year: "numeric",
-          month: "numeric",
-          day: "numeric"
-        }).format(new Date())
-      );
-
-      for(let d = 1; d <= daysInMonth; d++){
-        const day = document.createElement("div");
-        day.className = "day";
-        day.textContent = d;
-
-        if(
-          d === today.getDate() &&
-          month === today.getMonth() &&
-          year === today.getFullYear()
-        ){
-          day.classList.add("today");
-        }
-
-        calendarGrid.appendChild(day);
-      }
+    for(let i = 0; i < firstDay; i++){
+      const empty = document.createElement("div");
+      empty.className = "day";
+      empty.style.visibility = "hidden";
+      calendarGrid.appendChild(empty);
     }
 
-    document.getElementById("helpIcon").onclick = (e) => {
-      document.getElementById("helpModal").style.display = "flex";
-      e.stopPropagation();
-    };
+    const tzToday = getDatePartsInTimeZone(new Date(), selectedTimeZone);
 
+    for(let day = 1; day <= daysInMonth; day++){
+      const dayEl = document.createElement("div");
+      dayEl.className = "day";
+      dayEl.textContent = day;
+
+      if (
+        year === tzToday.year &&
+        month === (tzToday.month - 1) &&
+        day === tzToday.day
+      ){
+        dayEl.classList.add("today");
+      }
+
+      calendarGrid.appendChild(dayEl);
+    }
+  }
+
+  if (timezoneSelect) {
+    timezoneSelect.value = selectedTimeZone;
+
+    timezoneSelect.addEventListener("change", function(){
+      selectedTimeZone = this.value;
+      localStorage.setItem("bdToolsTimeZone", selectedTimeZone);
+      updateClock();
+      renderCalendar(currentDate);
+    });
+  }
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  clockBtn.onclick = function(e){
+    e.stopPropagation();
+    calendarPopup.style.display = calendarPopup.style.display === "block" ? "none" : "block";
+    renderCalendar(currentDate);
+  };
+
+  document.addEventListener("click", function(){
+    calendarPopup.style.display = "none";
+  });
+
+  calendarPopup.addEventListener("click", function(e){
+    e.stopPropagation();
+  });
+
+  document.getElementById("prevMonth").onclick = function(e){
+    e.stopPropagation();
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar(currentDate);
+  };
+
+  document.getElementById("nextMonth").onclick = function(e){
+    e.stopPropagation();
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar(currentDate);
+  };
+  
+  
+  
     function closeHelp(){
       document.getElementById("helpModal").style.display = "none";
     }
@@ -2373,6 +2457,45 @@ function resetCards(shouldScroll = false) {
   }
 }
 
+
+const timeSettingsModal = document.getElementById("timeSettingsModal");
+const openTimeSettings = document.getElementById("openTimeSettings");
+const closeTimeSettings = document.getElementById("closeTimeSettings");
+const timezoneSelectSettings = document.getElementById("timezoneSelectSettings");
+const saveTimeSettings = document.getElementById("saveTimeSettings");
+
+// Open modal
+openTimeSettings.onclick = () => {
+  timeSettingsModal.style.display = "flex";
+  timezoneSelectSettings.value = selectedTimeZone;
+};
+
+// Close modal
+closeTimeSettings.onclick = () => {
+  timeSettingsModal.style.display = "none";
+};
+
+// Save timezone
+saveTimeSettings.onclick = () => {
+  selectedTimeZone = timezoneSelectSettings.value;
+
+  // Save permanently
+  localStorage.setItem("bdToolsTimeZone", selectedTimeZone);
+
+  // Update UI instantly
+  updateClock();
+
+  // Close modal
+  timeSettingsModal.style.display = "none";
+};
+
+// Load saved timezone on page load
+const savedTZ = localStorage.getItem("bdToolsTimeZone");
+if(savedTZ){
+  selectedTimeZone = savedTZ;
+}
+
   </script>
+ 
 </body>
 </html>
