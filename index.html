@@ -1770,7 +1770,7 @@
   <script src="assets/js/header-loader.js"></script>
   <script src="assets/js/header.js"></script>
 
-  <script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
   authDomain: "bdgg-database.firebaseapp.com",
@@ -1805,22 +1805,6 @@ ratingStars.forEach(star => {
   });
 });
 
-/* =========================
-   ✅ NEW AUTO FOCUS FUNCTION
-========================= */
-function focusGuideSearch() {
-  const input = document.getElementById("guideSearch");
-  if (!input) return;
-
-  requestAnimationFrame(() => {
-    input.focus({ preventScroll: true });
-    input.setSelectionRange(input.value.length, input.value.length);
-  });
-}
-
-/* =========================
-   MODALS
-========================= */
 function openComment() {
   document.getElementById("commentModal").style.display = "flex";
 }
@@ -1841,9 +1825,6 @@ function closeAllComments() {
   }
 }
 
-/* =========================
-   FEEDBACK
-========================= */
 async function sendComment() {
   const name = document.getElementById("commentName").value.trim();
   const comment = document.getElementById("commentText").value.trim();
@@ -1928,14 +1909,15 @@ window.addEventListener("click", (e) => {
   if (e.target === allCommentsModal) closeAllComments();
 });
 
-/* =========================
-   SEARCH
-========================= */
 function scrollToGuideResults() {
-  const target = document.getElementById("guideResultsSection");
+  const target = document.getElementById("guideLibrarySection");
   if (!target) return;
+
   const y = target.getBoundingClientRect().top + window.pageYOffset - 110;
-  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+  window.scrollTo({
+    top: Math.max(0, y),
+    behavior: "smooth"
+  });
 }
 
 function highlightCard(card, keywords) {
@@ -1988,8 +1970,10 @@ function filterGuides(shouldScroll = false) {
 
   if (matches.length > 0) {
     resultsCount.style.display = "block";
+    resultsCount.innerHTML = `<span><i class="fa-solid fa-magnifying-glass"></i> Showing ${matches.length} matching guide${matches.length > 1 ? "s" : ""}</span>`;
   } else {
     resultsCount.style.display = "none";
+    resultsCount.innerHTML = "";
   }
 
   matches.forEach(card => {
@@ -2002,13 +1986,15 @@ function filterGuides(shouldScroll = false) {
     container.appendChild(card);
   });
 
-  if (shouldScroll) scrollToGuideResults();
+  if (shouldScroll && query) {
+    scrollToGuideResults();
+  }
 }
 
 function clearSearch() {
   const input = document.getElementById("guideSearch");
   input.value = "";
-  filterGuides(true);
+  filterGuides(false);
   input.focus();
 }
 
@@ -2022,20 +2008,6 @@ function filterByCategory(category, button) {
   if (button) button.classList.add("active");
   filterGuides(true);
 }
-
-/* =========================
-   ✅ AUTO FOCUS ON LOAD
-========================= */
-window.addEventListener("load", () => {
-  focusGuideSearch();
-});
-
-/* =========================
-   ✅ AUTO FOCUS AFTER HEADER LOAD
-========================= */
-document.addEventListener("headerLoaded", () => {
-  focusGuideSearch();
-});
 </script>
 </body>
 </html>
