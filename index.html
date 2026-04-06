@@ -1771,237 +1771,271 @@
   <script src="assets/js/header.js"></script>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
-      authDomain: "bdgg-database.firebaseapp.com",
-      projectId: "bdgg-database",
-      storageBucket: "bdgg-database.appspot.com",
-      messagingSenderId: "43574975434",
-      appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+  authDomain: "bdgg-database.firebaseapp.com",
+  projectId: "bdgg-database",
+  storageBucket: "bdgg-database.appspot.com",
+  messagingSenderId: "43574975434",
+  appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    let selectedRating = 0;
-    let commentsUnsubscribe = null;
-    let activeCategory = "all";
+let selectedRating = 0;
+let commentsUnsubscribe = null;
+let activeCategory = "all";
 
-    const container = document.getElementById("guideContainer");
-    const cards = Array.from(container.querySelectorAll(".card"));
-    const originalOrder = [...cards];
+const container = document.getElementById("guideContainer");
+const cards = Array.from(container.querySelectorAll(".card"));
+const originalOrder = [...cards];
 
-    cards.forEach(card => {
-      card.dataset.originalHtml = card.innerHTML;
+cards.forEach(card => {
+  card.dataset.originalHtml = card.innerHTML;
+});
+
+const ratingStars = document.querySelectorAll(".rating-star");
+ratingStars.forEach(star => {
+  star.addEventListener("click", () => {
+    selectedRating = Number(star.dataset.value);
+    ratingStars.forEach(s => {
+      s.classList.toggle("selected", Number(s.dataset.value) <= selectedRating);
+    });
+  });
+});
+
+/* =========================
+   ✅ NEW AUTO FOCUS FUNCTION
+========================= */
+function focusGuideSearch() {
+  const input = document.getElementById("guideSearch");
+  if (!input) return;
+
+  requestAnimationFrame(() => {
+    input.focus({ preventScroll: true });
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
+}
+
+/* =========================
+   MODALS
+========================= */
+function openComment() {
+  document.getElementById("commentModal").style.display = "flex";
+}
+
+function closeComment() {
+  document.getElementById("commentModal").style.display = "none";
+}
+
+function openHelp() {
+  alert("Use the guide library to search and open the guide that matches your case. If needed, contact your team lead or support.");
+}
+
+function closeAllComments() {
+  document.getElementById("allCommentsModal").style.display = "none";
+  if (commentsUnsubscribe) {
+    commentsUnsubscribe();
+    commentsUnsubscribe = null;
+  }
+}
+
+/* =========================
+   FEEDBACK
+========================= */
+async function sendComment() {
+  const name = document.getElementById("commentName").value.trim();
+  const comment = document.getElementById("commentText").value.trim();
+  const message = document.getElementById("feedbackMessage");
+
+  if (!selectedRating) {
+    message.style.display = "block";
+    message.style.color = "#ef4444";
+    message.textContent = "Please select a star rating first.";
+    return;
+  }
+
+  try {
+    await db.collection("feedback").add({
+      rating: selectedRating,
+      name: name || "",
+      comment: comment || "",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    const ratingStars = document.querySelectorAll(".rating-star");
-    ratingStars.forEach(star => {
-      star.addEventListener("click", () => {
-        selectedRating = Number(star.dataset.value);
-        ratingStars.forEach(s => {
-          s.classList.toggle("selected", Number(s.dataset.value) <= selectedRating);
-        });
-      });
-    });
+    message.style.display = "block";
+    message.style.color = "#16a34a";
+    message.textContent = "Thank you. Your feedback has been submitted.";
 
-    function openComment() {
-      document.getElementById("commentModal").style.display = "flex";
-    }
+    document.getElementById("commentName").value = "";
+    document.getElementById("commentText").value = "";
+    selectedRating = 0;
+    ratingStars.forEach(s => s.classList.remove("selected"));
 
-    function closeComment() {
-      document.getElementById("commentModal").style.display = "none";
-    }
+    setTimeout(() => {
+      message.style.display = "none";
+      closeComment();
+    }, 1200);
+  } catch (error) {
+    console.error(error);
+    message.style.display = "block";
+    message.style.color = "#ef4444";
+    message.textContent = "Something went wrong while sending feedback.";
+  }
+}
 
-    function openHelp() {
-      alert("Use the guide library to search and open the guide that matches your case. If needed, contact your team lead or support.");
-    }
+function showAllComments() {
+  document.getElementById("allCommentsModal").style.display = "flex";
+  const list = document.getElementById("commentsList");
+  list.innerHTML = "<p>Loading comments...</p>";
 
-    function closeAllComments() {
-      document.getElementById("allCommentsModal").style.display = "none";
-      if (commentsUnsubscribe) {
-        commentsUnsubscribe();
-        commentsUnsubscribe = null;
-      }
-    }
+  if (commentsUnsubscribe) commentsUnsubscribe();
 
-    async function sendComment() {
-      const name = document.getElementById("commentName").value.trim();
-      const comment = document.getElementById("commentText").value.trim();
-      const message = document.getElementById("feedbackMessage");
-
-      if (!selectedRating) {
-        message.style.display = "block";
-        message.style.color = "#ef4444";
-        message.textContent = "Please select a star rating first.";
+  commentsUnsubscribe = db.collection("feedback")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+      if (snapshot.empty) {
+        list.innerHTML = "<p>No comments yet.</p>";
         return;
       }
 
-      try {
-        await db.collection("feedback").add({
-          rating: selectedRating,
-          name: name || "",
-          comment: comment || "",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+      let html = "";
+      snapshot.forEach(doc => {
+        const item = doc.data();
+        const stars = "★".repeat(item.rating || 0) + "☆".repeat(5 - (item.rating || 0));
+        html += `
+          <div class="comment-list-item">
+            <span class="stars">${stars}</span>
+            <strong>${item.name || "Anonymous"}</strong>
+            <p style="margin:6px 0 0;">${item.comment || "No comment provided."}</p>
+          </div>
+        `;
+      });
 
-        message.style.display = "block";
-        message.style.color = "#16a34a";
-        message.textContent = "Thank you. Your feedback has been submitted.";
-
-        document.getElementById("commentName").value = "";
-        document.getElementById("commentText").value = "";
-        selectedRating = 0;
-        ratingStars.forEach(s => s.classList.remove("selected"));
-
-        setTimeout(() => {
-          message.style.display = "none";
-          closeComment();
-        }, 1200);
-      } catch (error) {
-        console.error(error);
-        message.style.display = "block";
-        message.style.color = "#ef4444";
-        message.textContent = "Something went wrong while sending feedback.";
-      }
-    }
-
-    function showAllComments() {
-      document.getElementById("allCommentsModal").style.display = "flex";
-      const list = document.getElementById("commentsList");
-      list.innerHTML = "<p>Loading comments...</p>";
-
-      if (commentsUnsubscribe) commentsUnsubscribe();
-
-      commentsUnsubscribe = db.collection("feedback")
-        .orderBy("createdAt", "desc")
-        .onSnapshot(snapshot => {
-          if (snapshot.empty) {
-            list.innerHTML = "<p>No comments yet.</p>";
-            return;
-          }
-
-          let html = "";
-          snapshot.forEach(doc => {
-            const item = doc.data();
-            const stars = "★".repeat(item.rating || 0) + "☆".repeat(5 - (item.rating || 0));
-            html += `
-              <div class="comment-list-item">
-                <span class="stars">${stars}</span>
-                <strong>${item.name || "Anonymous"}</strong>
-                <p style="margin:6px 0 0;">${item.comment || "No comment provided."}</p>
-              </div>
-            `;
-          });
-
-          list.innerHTML = html;
-        }, error => {
-          console.error(error);
-          list.innerHTML = "<p>Unable to load comments right now.</p>";
-        });
-    }
-
-    window.addEventListener("click", (e) => {
-      const commentModal = document.getElementById("commentModal");
-      const allCommentsModal = document.getElementById("allCommentsModal");
-
-      if (e.target === commentModal) closeComment();
-      if (e.target === allCommentsModal) closeAllComments();
+      list.innerHTML = html;
+    }, error => {
+      console.error(error);
+      list.innerHTML = "<p>Unable to load comments right now.</p>";
     });
+}
 
-    function scrollToGuideResults() {
-      const target = document.getElementById("guideResultsSection");
-      if (!target) return;
-      const y = target.getBoundingClientRect().top + window.pageYOffset - 110;
-      window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
-    }
+window.addEventListener("click", (e) => {
+  const commentModal = document.getElementById("commentModal");
+  const allCommentsModal = document.getElementById("allCommentsModal");
 
-    function highlightCard(card, keywords) {
-      const selectors = ["h1", ".lead", ".small"];
-      selectors.forEach(selector => {
-        card.querySelectorAll(selector).forEach(el => {
-          let html = el.textContent;
-          keywords.forEach(keyword => {
-            const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            const regex = new RegExp(`(${escaped})`, "gi");
-            html = html.replace(regex, '<mark class="search-highlight">$1</mark>');
-          });
-          el.innerHTML = html;
-        });
+  if (e.target === commentModal) closeComment();
+  if (e.target === allCommentsModal) closeAllComments();
+});
+
+/* =========================
+   SEARCH
+========================= */
+function scrollToGuideResults() {
+  const target = document.getElementById("guideResultsSection");
+  if (!target) return;
+  const y = target.getBoundingClientRect().top + window.pageYOffset - 110;
+  window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+}
+
+function highlightCard(card, keywords) {
+  const selectors = ["h1", ".lead", ".small"];
+  selectors.forEach(selector => {
+    card.querySelectorAll(selector).forEach(el => {
+      let html = el.textContent;
+      keywords.forEach(keyword => {
+        const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(`(${escaped})`, "gi");
+        html = html.replace(regex, '<mark class="search-highlight">$1</mark>');
       });
+      el.innerHTML = html;
+    });
+  });
+}
+
+function filterGuides(shouldScroll = false) {
+  const input = document.getElementById("guideSearch");
+  const query = input.value.trim().toLowerCase();
+  const keywords = query.split(/\s+/).filter(Boolean);
+  const clearBtn = document.getElementById("clearSearchBtn");
+  const noResults = document.getElementById("noResults");
+  const resultsCount = document.getElementById("resultsCount");
+
+  clearBtn.style.display = query ? "block" : "none";
+
+  container.innerHTML = "";
+
+  const matches = [];
+  const nonMatches = [];
+
+  originalOrder.forEach(card => {
+    card.innerHTML = card.dataset.originalHtml;
+
+    const cardText = card.textContent.toLowerCase();
+    const cardCategory = (card.dataset.category || "").toLowerCase();
+    const categoryPass = activeCategory === "all" || cardCategory.includes(activeCategory);
+    const textPass = !query || keywords.every(keyword => cardText.includes(keyword));
+
+    if (categoryPass && textPass) {
+      if (keywords.length) highlightCard(card, keywords);
+      matches.push(card);
+    } else {
+      nonMatches.push(card);
     }
+  });
 
-    function filterGuides(shouldScroll = false) {
-      const input = document.getElementById("guideSearch");
-      const query = input.value.trim().toLowerCase();
-      const keywords = query.split(/\s+/).filter(Boolean);
-      const clearBtn = document.getElementById("clearSearchBtn");
-      const noResults = document.getElementById("noResults");
-      const resultsCount = document.getElementById("resultsCount");
+  noResults.style.display = matches.length === 0 ? "block" : "none";
 
-      clearBtn.style.display = query ? "block" : "none";
+  if (matches.length > 0) {
+    resultsCount.style.display = "block";
+  } else {
+    resultsCount.style.display = "none";
+  }
 
-      container.innerHTML = "";
+  matches.forEach(card => {
+    card.style.display = "flex";
+    container.appendChild(card);
+  });
 
-      const matches = [];
-      const nonMatches = [];
+  nonMatches.forEach(card => {
+    card.style.display = "none";
+    container.appendChild(card);
+  });
 
-      originalOrder.forEach(card => {
-        card.innerHTML = card.dataset.originalHtml;
+  if (shouldScroll) scrollToGuideResults();
+}
 
-        const cardText = card.textContent.toLowerCase();
-        const cardCategory = (card.dataset.category || "").toLowerCase();
-        const categoryPass = activeCategory === "all" || cardCategory.includes(activeCategory);
-        const textPass = !query || keywords.every(keyword => cardText.includes(keyword));
+function clearSearch() {
+  const input = document.getElementById("guideSearch");
+  input.value = "";
+  filterGuides(true);
+  input.focus();
+}
 
-        if (categoryPass && textPass) {
-          if (keywords.length) highlightCard(card, keywords);
-          matches.push(card);
-        } else {
-          nonMatches.push(card);
-        }
-      });
+function filterByCategory(category, button) {
+  activeCategory = category;
 
-      noResults.style.display = matches.length === 0 ? "block" : "none";
+  document.querySelectorAll(".filter-chip").forEach(chip => {
+    chip.classList.remove("active");
+  });
 
-      if (matches.length > 0) {
-        resultsCount.style.display = "block";
-        resultsCount.innerHTML = `<span><i class="fa-solid fa-magnifying-glass"></i> Showing ${matches.length} matching guide${matches.length > 1 ? "s" : ""}</span>`;
-      } else {
-        resultsCount.style.display = "none";
-        resultsCount.innerHTML = "";
-      }
+  if (button) button.classList.add("active");
+  filterGuides(true);
+}
 
-      matches.forEach(card => {
-        card.style.display = "flex";
-        container.appendChild(card);
-      });
+/* =========================
+   ✅ AUTO FOCUS ON LOAD
+========================= */
+window.addEventListener("load", () => {
+  focusGuideSearch();
+});
 
-      nonMatches.forEach(card => {
-        card.style.display = "none";
-        container.appendChild(card);
-      });
-
-      if (shouldScroll) scrollToGuideResults();
-    }
-
-    function clearSearch() {
-      const input = document.getElementById("guideSearch");
-      input.value = "";
-      filterGuides(true);
-      input.focus();
-    }
-
-    function filterByCategory(category, button) {
-      activeCategory = category;
-
-      document.querySelectorAll(".filter-chip").forEach(chip => {
-        chip.classList.remove("active");
-      });
-
-      if (button) button.classList.add("active");
-      filterGuides(true);
-    }
-  </script>
+/* =========================
+   ✅ AUTO FOCUS AFTER HEADER LOAD
+========================= */
+document.addEventListener("headerLoaded", () => {
+  focusGuideSearch();
+});
+</script>
 </body>
 </html>
