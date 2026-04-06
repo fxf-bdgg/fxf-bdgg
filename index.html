@@ -1484,16 +1484,16 @@
     if (e.target === helpModal) closeHelp();
   });
 
-  function scrollToGuideResults() {
-    const target = document.getElementById("guideLibrarySection");
-    if (!target) return;
+function scrollToGuideResults() {
+  const searchBox = document.querySelector(".search-wrap");
+  if (!searchBox) return;
 
-    const y = target.getBoundingClientRect().top + window.pageYOffset - 150;
-    window.scrollTo({
-      top: Math.max(0, y),
-      behavior: "smooth"
-    });
-  }
+  const y = searchBox.getBoundingClientRect().top + window.pageYOffset - 20;
+  window.scrollTo({
+    top: Math.max(0, y),
+    behavior: "smooth"
+  });
+}
 
   function highlightCard(card, keywords) {
     const selectors = ["h1", ".lead", ".small"];
