@@ -1913,7 +1913,7 @@ function scrollToGuideResults() {
   const target = document.getElementById("guideLibrarySection");
   if (!target) return;
 
-  const y = target.getBoundingClientRect().top + window.pageYOffset - 110;
+  const y = target.getBoundingClientRect().top + window.pageYOffset - 150;
   window.scrollTo({
     top: Math.max(0, y),
     behavior: "smooth"
