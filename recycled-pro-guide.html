@@ -1346,18 +1346,20 @@
       ]
     },
 
-    click_history_icon: {
-      text: "Then you will click the History Icon.",
-      image: "recycled-pro-guide/history-icon.png",
-      choices: [
-        {
-          label: "Continue",
-          next: "freight_bill_variables",
-          icon: "fa-solid fa-arrow-right",
-          desc: "Open the Freight Bill Variables page."
-        }
-      ]
-    },
+click_history_icon: {
+  text: `Then you will click the History Icon 
+    <img src="recycled-pro-guide/history-icon.png"
+         style="height:18px; width:auto; margin-left:6px; vertical-align:middle;">
+  `,
+  choices: [
+    {
+      label: "Continue",
+      next: "freight_bill_variables",
+      icon: "fa-solid fa-arrow-right",
+      desc: "Open the Freight Bill Variables page."
+    }
+  ]
+},
 
     freight_bill_variables: {
       text: "This will take you to a Freight Bill Variables page and you will see that there is old dates listed that are years and years old.",
@@ -1755,27 +1757,28 @@
 
       const footerStepText = path.length ? `Currently on step ${path.length}` : "Ready to begin";
 
-      els.stageCard.innerHTML = `
-        <div class="stage-top">
-          <div class="badge"><i class="fa-solid fa-compass"></i> Guided Decision</div>
-          <div class="badge alt"><i class="fa-solid fa-layer-group"></i> ${path.length ? `Step ${path.length}` : "Start"}</div>
-        </div>
+els.stageCard.innerHTML = `
+  <div class="stage-top">
+    <div class="badge"><i class="fa-solid fa-compass"></i> Guided Decision</div>
+    <div class="badge alt"><i class="fa-solid fa-layer-group"></i> ${path.length ? `Step ${path.length}` : "Start"}</div>
+  </div>
 
-        <div class="question-wrap">
-          <div class="question-card">
-            <div class="question-label"><i class="fa-solid fa-circle-nodes"></i> Current Step</div>
-            <div class="question-text">${escapeHtml(nodeText)}</div>
-            ${nodeHelp ? `<div class="question-help">${escapeHtml(nodeHelp)}</div>` : ""}
-            ${nodeNote ? `<div class="note-card" style="margin-top:16px; white-space:pre-wrap;">${escapeHtml(nodeNote)}</div>` : ""}
-            ${nodeImage ? `
-    <div class="question-image" onclick="openImageModal('${String(nodeImage).replace(/'/g, "\\'")}')">
-      <img src="${escapeHtml(nodeImage)}" alt="Step image" loading="lazy">
+  <div class="question-wrap">
+    <div class="question-card">
+      <div class="question-label"><i class="fa-solid fa-circle-nodes"></i> Current Step</div>
+      <div class="question-text">${nodeText}</div>
+      ${nodeHelp ? `<div class="question-help">${escapeHtml(nodeHelp)}</div>` : ""}
+      ${nodeNote ? `<div class="note-card" style="margin-top:16px; white-space:pre-wrap;">${escapeHtml(nodeNote)}</div>` : ""}
+      ${nodeImage ? `
+        <div class="question-image" onclick="openImageModal('${String(nodeImage).replace(/'/g, "\\'")}')">
+          <img src="${escapeHtml(nodeImage)}" alt="Step image" loading="lazy">
+        </div>
+      ` : ""}
     </div>
-  ` : ""}
-          </div>
 
-          <div class="choices">${choicesHtml}</div>
-        </div>
+    <div class="choices">${choicesHtml}</div>
+  </div>
+
 
         <div class="decision-footer">
           <div class="decision-footer-left">
