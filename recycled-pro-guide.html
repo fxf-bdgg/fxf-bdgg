@@ -1629,7 +1629,7 @@ click_history_icon: {
       const html = path.map((item,index)=>`
         <div class="path-item">
           <div class="path-step">Step ${index + 1}</div>
-          <div class="path-question">${escapeHtml(item.question)}</div>
+          <div class="path-question">${item.question}</div>
           <div class="path-answer">→ ${escapeHtml(item.answer)}</div>
         </div>
       `).join("");
