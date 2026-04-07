@@ -1,3 +1,5 @@
+document.documentElement.classList.add("preload");
+
 document.addEventListener("DOMContentLoaded", async () => {
   const target = document.getElementById("site-header");
   if (!target) return;
@@ -6,14 +8,20 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     const response = await fetch(base + "header.html");
-    if (!response.ok) throw new Error(`Failed to load header.html: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Failed to load header.html: ${response.status}`);
+    }
 
     const html = await response.text();
     target.innerHTML = html;
 
-    target.querySelectorAll("[data-link]").forEach(link => {
+    target.querySelectorAll("[data-link]").forEach((link) => {
       const path = link.getAttribute("data-link");
       link.setAttribute("href", base + path);
+    });
+
+    requestAnimationFrame(() => {
+      target.classList.add("loaded");
     });
 
     document.dispatchEvent(new Event("headerLoaded"));
