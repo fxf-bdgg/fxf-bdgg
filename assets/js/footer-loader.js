@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!response.ok) throw new Error("Failed to load footer");
 
     target.innerHTML = await response.text();
+
+    requestAnimationFrame(() => {
+      target.classList.add("loaded");
+    });
   } catch (err) {
     console.error("Footer failed:", err);
   }
