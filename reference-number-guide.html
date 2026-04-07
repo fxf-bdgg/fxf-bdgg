@@ -976,6 +976,110 @@
 .main-topbar{
   align-items:flex-start; /* 🔥 important */
 }
+
+/*for edit/save comments,email and corr code modal*/
+.modal{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.45);
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  z-index:10000;
+}
+
+.modal-content{
+  background:#fff;
+  width:100%;
+  max-width:560px;
+  border-radius:22px;
+  padding:24px;
+  box-shadow:0 24px 60px rgba(15,23,42,.22);
+  border:1px solid #e2e8f0;
+  max-height:85vh;
+  overflow:auto;
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  font-size:20px;
+  font-weight:900;
+  margin-bottom:14px;
+  color:#0f172a;
+}
+
+.modal-close{
+  font-size:22px;
+  cursor:pointer;
+  color:#64748b;
+  line-height:1;
+}
+
+.modal-close:hover{
+  color:#4d148c;
+}
+
+#passwordModal input,
+#editModal textarea{
+  width:100%;
+  border:1px solid #dbe4f0;
+  border-radius:14px;
+  padding:12px 14px;
+  font-size:14px;
+  outline:none;
+  background:#fff;
+}
+
+#passwordModal input:focus,
+#editModal textarea:focus{
+  border-color:#c4b5fd;
+  box-shadow:0 0 0 4px rgba(109,40,217,.10);
+}
+
+#editModal textarea{
+  min-height:220px;
+  resize:vertical;
+}
+
+/*this is for n/n/ spacing*/
+.question-help{
+  margin:14px 0 0;
+  color:#64748b;
+  font-size:14px;
+  line-height:1.75;
+  max-width:760px;
+  white-space:pre-line;
+}
+
+.note-card{
+  margin-top:16px;
+  padding:18px 18px 18px 16px;
+  border-radius:18px;
+  background:linear-gradient(180deg,#fff7ed,#ffffff);
+  border-left:5px solid #f59e0b;
+  border:1px solid #fde68a;
+  box-shadow:0 10px 24px rgba(245,158,11,.12);
+  font-size:14px;
+  line-height:1.7;
+  color:#92400e;
+  white-space:pre-line;
+  position:relative;
+}
+
+.note-card::before{
+  content:"⚠ Reminder";
+  display:block;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#b45309;
+  margin-bottom:8px;
+}
   
 </style>
 </head>
@@ -1357,19 +1461,18 @@ const NODES = {
     ]
   },
 
-  add_step8: {
-    text: "Select the Auto Rater or F6.",
-    help: "Choose the Auto Rater or press F6 to continue the correction process.",
-    image: "reference-number-guide/add-step-8.png",
-    choices: [
-      {
-        label: "Continue",
-        next: "add_step9",
-        icon: "fa-solid fa-arrow-right",
-        desc: "Go to the next step."
-      }
-    ]
-  },
+add_step8: {
+  text: "DO NOT AUTO-RATE",
+  note: "DO NOT AUTO-RATE\n\nAuto-rating will override the manual changes made during the correction process. When this happens:\n\n• The reference updates (add/update/delete) may be removed\n• The changes will not push through in the system\n• The request may need to be redone, causing delays",
+  choices: [
+    {
+      label: "Continue",
+      next: "add_step9",
+      icon: "fa-solid fa-arrow-right",
+      desc: "Proceed after reviewing the reminder."
+    }
+  ]
+},
 
   add_step9: {
     text: "Enter the required comment.",
@@ -1501,19 +1604,18 @@ add_step10: {
     ]
   },
 
-  edit_step7: {
-    text: "Select the Auto Rater or F6.",
-    help: "Choose the Auto Rater or press F6 to continue.",
-    image: "reference-number-guide/edit-step-7.png",
-    choices: [
-      {
-        label: "Continue",
-        next: "edit_step8",
-        icon: "fa-solid fa-arrow-right",
-        desc: "Go to the next step."
-      }
-    ]
-  },
+edit_step7: {
+  text: "DO NOT AUTO-RATE",
+  note: "DO NOT AUTO-RATE\n\nAuto-rating will override the manual changes made during the correction process. When this happens:\n\n• The reference updates (add/update/delete) may be removed\n• The changes will not push through in the system\n• The request may need to be redone, causing delays",
+  choices: [
+    {
+      label: "Continue",
+      next: "edit_step8",
+      icon: "fa-solid fa-arrow-right",
+      desc: "Proceed after reviewing the reminder."
+    }
+  ]
+},
 
   edit_step8: {
     text: "Enter the required comment.",
@@ -1644,19 +1746,18 @@ edit_step9: {
     ]
   },
 
-  delete_step7: {
-    text: "Select the Auto Rater or F6.",
-    help: "Choose the Auto Rater or press F6 to continue.",
-    image: "reference-number-guide/delete-step-7.png",
-    choices: [
-      {
-        label: "Continue",
-        next: "delete_step8",
-        icon: "fa-solid fa-arrow-right",
-        desc: "Go to the next step."
-      }
-    ]
-  },
+delete_step7: {
+  text: "DO NOT AUTO-RATE",
+  note: "DO NOT AUTO-RATE\n\nAuto-rating will override the manual changes made during the correction process. When this happens:\n\n• The reference updates (add/update/delete) may be removed\n• The changes will not push through in the system\n• The request may need to be redone, causing delays",
+  choices: [
+    {
+      label: "Continue",
+      next: "delete_step8",
+      icon: "fa-solid fa-arrow-right",
+      desc: "Proceed after reviewing the reminder."
+    }
+  ]
+},
 
   delete_step8: {
     text: "Enter the required comment.",
