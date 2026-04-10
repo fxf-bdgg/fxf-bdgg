@@ -1440,7 +1440,7 @@ const NODES = {
     choices: [
       { label: "Negative balance", next: "billing_refund", icon: "fa-solid fa-rotate-left", desc: "Negative balance after correction." },
       { label: "High credit balance", next: "billing_escalate", icon: "fa-solid fa-triangle-exclamation", desc: "High credit balance after correction." },
-      { label: "Normal", next: "billing_close", icon: "fa-solid fa-circle-check", desc: "Normal balance after correction." },
+      { label: "No changes on the amount", next: "billing_close", icon: "fa-solid fa-circle-check", desc: "Normal balance after correction." },
       { label: "(PAUD only) Correct PRO per BOL", next: "billing_paud", icon: "fa-solid fa-file-circle-check", desc: "PAUD-only path." }
     ]
   },
@@ -1458,7 +1458,7 @@ const NODES = {
   },
 
   billing_close: {
-    text: "Normal — Close case",
+    text: "No changes on the amount. Respond to the customer accordingly after the correction.",
     help: "Final handling instruction reached.",
     choices: []
   },
