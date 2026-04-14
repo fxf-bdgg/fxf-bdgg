@@ -1539,8 +1539,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentKey = "start";
   const templateCache = {};
 
-//nodes here
-const NODES = {
+  //nodes here
+  const NODES = {
 
   start: {
     text: "Void and Write Off Guide",
@@ -2015,7 +2015,6 @@ const NODES = {
 };
 
 
-
   function escapeHtml(value){
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -2198,21 +2197,18 @@ const NODES = {
     }
   }
 
-function getPercent(isFinal){
-  if (isFinal) return 100;
+  function getPercent(isFinal){
+    if (isFinal) return 100;
 
-  // find current step index in path
-  const currentIndex = path.findIndex(item => item.nextKey === currentKey);
+    const currentIndex = path.findIndex(item => item.nextKey === currentKey);
 
-  if (currentIndex === -1) {
-    // fallback (start or unknown)
-    return path.length === 0 ? 0 : Math.min((path.length / MAX_STEPS) * 100, 95);
+    if (currentIndex === -1) {
+      return path.length === 0 ? 0 : Math.min((path.length / MAX_STEPS) * 100, 95);
+    }
+
+    const progress = ((currentIndex + 1) / MAX_STEPS) * 100;
+    return Math.min(Math.round(progress), 95);
   }
-
-  const progress = ((currentIndex + 1) / MAX_STEPS) * 100;
-
-  return Math.min(Math.round(progress), 95);
-}
 
   function updateMeta(isFinal){
     const pct = getPercent(isFinal);
@@ -2263,36 +2259,36 @@ function getPercent(isFinal){
     });
   }
 
-function jumpToPathStep(index){
-  if(index < 0 || index >= path.length) return;
+  function jumpToPathStep(index){
+    if(index < 0 || index >= path.length) return;
 
-  const target = path[index];
-  if(!target) return;
+    const target = path[index];
+    if(!target) return;
 
-  currentKey = target.nextKey; // 🔥 THIS FIX
+    currentKey = target.nextKey;
 
-  historyStack = [];
-  for(let i = 0; i < index; i++){
-    historyStack.push({
-      key: path[i].fromKey,
-      path: path.slice(0, i)
-    });
+    historyStack = [];
+    for(let i = 0; i < index; i++){
+      historyStack.push({
+        key: path[i].fromKey,
+        path: path.slice(0, i)
+      });
+    }
+
+    currentFinalRecommendation = "";
+
+    setTemplateValue(els.suggestedComment, "");
+    setTemplateValue(els.suggestedCorrCode, "");
+    setTemplateValue(els.suggestedEmail, "");
+
+    if(target.nextKey === "__final__" && target.finalNode){
+      renderFinal(target.finalNode);
+      return;
+    }
+
+    updateRecommendation("", false);
+    renderNode(target.nextKey);
   }
-
-  currentFinalRecommendation = "";
-
-  setTemplateValue(els.suggestedComment, "");
-  setTemplateValue(els.suggestedCorrCode, "");
-  setTemplateValue(els.suggestedEmail, "");
-
-  if(target.nextKey === "__final__" && target.finalNode){
-    renderFinal(target.finalNode);
-    return;
-  }
-
-  updateRecommendation("", false);
-  renderNode(target.nextKey);
-}
 
   function updateRecommendation(text, isFinal){
     if(!isFinal){
@@ -2546,52 +2542,50 @@ function jumpToPathStep(index){
   }
 
   function goBack(){
-  const currentPathIndex = path.findIndex(item =>
-    item.nextKey === currentKey ||
-    (currentKey === "__final__" && item.nextKey === "__final__")
-  );
+    const currentPathIndex = path.findIndex(item =>
+      item.nextKey === currentKey ||
+      (currentKey === "__final__" && item.nextKey === "__final__")
+    );
 
-  if(currentPathIndex === -1){
+    if(currentPathIndex === -1){
+      currentFinalRecommendation = "";
+      currentKey = "start";
+      setTemplateValue(els.suggestedComment, "");
+      setTemplateValue(els.suggestedCorrCode, "");
+      setTemplateValue(els.suggestedEmail, "");
+      updateRecommendation("", false);
+      renderNode("start");
+      return;
+    }
+
+    if(currentPathIndex === 0){
+      currentFinalRecommendation = "";
+      currentKey = "start";
+      setTemplateValue(els.suggestedComment, "");
+      setTemplateValue(els.suggestedCorrCode, "");
+      setTemplateValue(els.suggestedEmail, "");
+      updateRecommendation("", false);
+      renderNode("start");
+      return;
+    }
+
+    const previousStep = path[currentPathIndex - 1];
+
     currentFinalRecommendation = "";
-    currentKey = "start"; // 🔥 sync
+    currentKey = previousStep.nextKey;
+
     setTemplateValue(els.suggestedComment, "");
     setTemplateValue(els.suggestedCorrCode, "");
     setTemplateValue(els.suggestedEmail, "");
     updateRecommendation("", false);
-    renderNode("start");
-    return;
+
+    if(previousStep.nextKey === "__final__" && previousStep.finalNode){
+      renderFinal(previousStep.finalNode);
+      return;
+    }
+
+    renderNode(previousStep.nextKey);
   }
-
-  if(currentPathIndex === 0){
-    currentFinalRecommendation = "";
-    currentKey = "start"; // 🔥 sync
-    setTemplateValue(els.suggestedComment, "");
-    setTemplateValue(els.suggestedCorrCode, "");
-    setTemplateValue(els.suggestedEmail, "");
-    updateRecommendation("", false);
-    renderNode("start");
-    return;
-  }
-
-  const previousStep = path[currentPathIndex - 1];
-
-  currentFinalRecommendation = "";
-
-  // 🔥 CRITICAL FIX — sync current step
-  currentKey = previousStep.nextKey;
-
-  setTemplateValue(els.suggestedComment, "");
-  setTemplateValue(els.suggestedCorrCode, "");
-  setTemplateValue(els.suggestedEmail, "");
-  updateRecommendation("", false);
-
-  if(previousStep.nextKey === "__final__" && previousStep.finalNode){
-    renderFinal(previousStep.finalNode);
-    return;
-  }
-
-  renderNode(previousStep.nextKey);
-}
   
   function restart(){
     path = [];
@@ -2608,181 +2602,180 @@ function jumpToPathStep(index){
     renderNode("start");
   }
 
-  /* ===== HEADER MODAL FIX ===== */
+  /* ===== PAGE MODALS + FEEDBACK ONLY ===== */
 
-/* ===== HEADER MODAL FIX ===== */
+  function openModalAnimated(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
 
-function openModalAnimated(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-
-  modal.style.display = "flex";
-  modal.classList.remove("is-closing");
-
-  requestAnimationFrame(() => {
-    modal.classList.add("is-open");
-  });
-}
-
-function closeModalAnimated(id) {
-  const modal = document.getElementById(id);
-  if (!modal) return;
-
-  modal.classList.remove("is-open");
-  modal.classList.add("is-closing");
-
-  setTimeout(() => {
-    modal.style.display = "none";
+    modal.style.display = "flex";
     modal.classList.remove("is-closing");
-  }, 200);
-}
 
-function openComment(){ openModalAnimated("commentModal"); }
-function closeComment(){ closeModalAnimated("commentModal"); }
-
-function openHelp(){ openModalAnimated("helpModal"); }
-function closeHelp(){ closeModalAnimated("helpModal"); }
-
-function closeAllComments(){ closeModalAnimated("allCommentsModal"); }
-
-function initRatingStars() {
-  ratingStars = Array.from(document.querySelectorAll(".rating-star"));
-  if (!ratingStars.length) return;
-
-  ratingStars.forEach(star => {
-    star.onclick = function (e) {
-      e.stopPropagation();
-      selectedRating = Number(this.dataset.value || 0);
-
-      ratingStars.forEach(s => {
-        const val = Number(s.dataset.value || 0);
-        s.classList.toggle("selected", val <= selectedRating);
-      });
-    };
-  });
-}
-
-async function sendComment() {
-  const nameEl = document.getElementById("commentName");
-  const textEl = document.getElementById("commentText");
-  const feedbackMessage = document.getElementById("feedbackMessage");
-
-  const name = (nameEl?.value || "").trim();
-  const comment = (textEl?.value || "").trim();
-
-  if (!selectedRating) {
-    if (feedbackMessage) {
-      feedbackMessage.style.display = "block";
-      feedbackMessage.style.color = "#ef4444";
-      feedbackMessage.textContent = "Please select a rating first.";
-    }
-    return;
+    requestAnimationFrame(() => {
+      modal.classList.add("is-open");
+    });
   }
 
-  try {
-    await db.collection(FEEDBACK_COLLECTION).add({
-      name: name || "Anonymous",
-      comment,
-      rating: selectedRating,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+  function closeModalAnimated(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
 
-    if (feedbackMessage) {
-      feedbackMessage.style.display = "block";
-      feedbackMessage.style.color = "#16a34a";
-      feedbackMessage.textContent = "Feedback sent successfully.";
-    }
-
-    if (nameEl) nameEl.value = "";
-    if (textEl) textEl.value = "";
-
-    selectedRating = 0;
-    ratingStars.forEach(star => star.classList.remove("selected"));
+    modal.classList.remove("is-open");
+    modal.classList.add("is-closing");
 
     setTimeout(() => {
-      closeComment();
+      modal.style.display = "none";
+      modal.classList.remove("is-closing");
+    }, 200);
+  }
+
+  function openComment(){ openModalAnimated("commentModal"); }
+  function closeComment(){ closeModalAnimated("commentModal"); }
+
+  function openHelp(){ openModalAnimated("helpModal"); }
+  function closeHelp(){ closeModalAnimated("helpModal"); }
+
+  function closeAllComments(){ closeModalAnimated("allCommentsModal"); }
+
+  function initRatingStars() {
+    ratingStars = Array.from(document.querySelectorAll(".rating-star"));
+    if (!ratingStars.length) return;
+
+    ratingStars.forEach(star => {
+      star.onclick = function (e) {
+        e.stopPropagation();
+        selectedRating = Number(this.dataset.value || 0);
+
+        ratingStars.forEach(s => {
+          const val = Number(s.dataset.value || 0);
+          s.classList.toggle("selected", val <= selectedRating);
+        });
+      };
+    });
+  }
+
+  async function sendComment() {
+    const nameEl = document.getElementById("commentName");
+    const textEl = document.getElementById("commentText");
+    const feedbackMessage = document.getElementById("feedbackMessage");
+
+    const name = (nameEl?.value || "").trim();
+    const comment = (textEl?.value || "").trim();
+
+    if (!selectedRating) {
       if (feedbackMessage) {
-        feedbackMessage.style.display = "none";
-        feedbackMessage.textContent = "";
+        feedbackMessage.style.display = "block";
+        feedbackMessage.style.color = "#ef4444";
+        feedbackMessage.textContent = "Please select a rating first.";
       }
-    }, 900);
-  } catch (err) {
-    if (feedbackMessage) {
-      feedbackMessage.style.display = "block";
-      feedbackMessage.style.color = "#ef4444";
-      feedbackMessage.textContent = "Unable to send feedback right now.";
+      return;
+    }
+
+    try {
+      await db.collection(FEEDBACK_COLLECTION).add({
+        name: name || "Anonymous",
+        comment,
+        rating: selectedRating,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      if (feedbackMessage) {
+        feedbackMessage.style.display = "block";
+        feedbackMessage.style.color = "#16a34a";
+        feedbackMessage.textContent = "Feedback sent successfully.";
+      }
+
+      if (nameEl) nameEl.value = "";
+      if (textEl) textEl.value = "";
+
+      selectedRating = 0;
+      ratingStars.forEach(star => star.classList.remove("selected"));
+
+      setTimeout(() => {
+        closeComment();
+        if (feedbackMessage) {
+          feedbackMessage.style.display = "none";
+          feedbackMessage.textContent = "";
+        }
+      }, 900);
+    } catch (err) {
+      if (feedbackMessage) {
+        feedbackMessage.style.display = "block";
+        feedbackMessage.style.color = "#ef4444";
+        feedbackMessage.textContent = "Unable to send feedback right now.";
+      }
     }
   }
-}
 
-async function showAllComments() {
-  const commentsList = document.getElementById("commentsList");
-  if (!commentsList) return;
+  async function showAllComments() {
+    const commentsList = document.getElementById("commentsList");
+    if (!commentsList) return;
 
-  commentsList.innerHTML = `<p style="color:#64748b;">Loading comments...</p>`;
+    commentsList.innerHTML = `<p style="color:#64748b;">Loading comments...</p>`;
 
-  try {
-    const snap = await db
-      .collection(FEEDBACK_COLLECTION)
-      .orderBy("createdAt", "desc")
-      .get();
+    try {
+      const snap = await db
+        .collection(FEEDBACK_COLLECTION)
+        .orderBy("createdAt", "desc")
+        .get();
 
-    if (snap.empty) {
-      commentsList.innerHTML = `<p style="color:#64748b;">No comments and ratings yet.</p>`;
-    } else {
-      commentsList.innerHTML = snap.docs.map(doc => {
-        const data = doc.data() || {};
-        const rating = Number(data.rating || 0);
-        const filled = "★".repeat(Math.max(0, Math.min(5, rating)));
-        const empty = "☆".repeat(Math.max(0, 5 - rating));
+      if (snap.empty) {
+        commentsList.innerHTML = `<p style="color:#64748b;">No comments and ratings yet.</p>`;
+      } else {
+        commentsList.innerHTML = snap.docs.map(doc => {
+          const data = doc.data() || {};
+          const rating = Number(data.rating || 0);
+          const filled = "★".repeat(Math.max(0, Math.min(5, rating)));
+          const empty = "☆".repeat(Math.max(0, 5 - rating));
 
-        return `
-          <div style="padding:14px 0; border-bottom:1px solid #e2e8f0;">
-            <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:6px;">
-              <strong style="color:#0f172a;">${escapeHtml(data.name || "Anonymous")}</strong>
-              <span style="color:#ff6600; font-weight:800; white-space:nowrap;">${filled}${empty}</span>
+          return `
+            <div style="padding:14px 0; border-bottom:1px solid #e2e8f0;">
+              <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:6px;">
+                <strong style="color:#0f172a;">${escapeHtml(data.name || "Anonymous")}</strong>
+                <span style="color:#ff6600; font-weight:800; white-space:nowrap;">${filled}${empty}</span>
+              </div>
+              <div style="color:#475569; line-height:1.7;">${escapeHtml(data.comment || "")}</div>
             </div>
-            <div style="color:#475569; line-height:1.7;">${escapeHtml(data.comment || "")}</div>
-          </div>
-        `;
-      }).join("");
+          `;
+        }).join("");
+      }
+
+      openModalAnimated("allCommentsModal");
+    } catch (err) {
+      commentsList.innerHTML = `<p style="color:#ef4444;">Unable to load comments right now.</p>`;
+      openModalAnimated("allCommentsModal");
     }
-
-    openModalAnimated("allCommentsModal");
-  } catch (err) {
-    commentsList.innerHTML = `<p style="color:#ef4444;">Unable to load comments right now.</p>`;
-    openModalAnimated("allCommentsModal");
   }
-}
 
-window.attemptEdit = attemptEdit;
-window.closePasswordModal = closePasswordModal;
-window.closeEditModal = closeEditModal;
-window.checkPassword = checkPassword;
-window.saveEdit = saveEdit;
-window.copyTemplateText = copyTemplateText;
-window.goBack = goBack;
-window.restart = restart;
-window.openImageModal = openImageModal;
-window.closeImageModal = closeImageModal;
+  window.attemptEdit = attemptEdit;
+  window.closePasswordModal = closePasswordModal;
+  window.closeEditModal = closeEditModal;
+  window.checkPassword = checkPassword;
+  window.saveEdit = saveEdit;
+  window.copyTemplateText = copyTemplateText;
+  window.goBack = goBack;
+  window.restart = restart;
+  window.openImageModal = openImageModal;
+  window.closeImageModal = closeImageModal;
 
-window.openComment = openComment;
-window.closeComment = closeComment;
-window.openHelp = openHelp;
-window.closeHelp = closeHelp;
-window.showAllComments = showAllComments;
-window.closeAllComments = closeAllComments;
-window.sendComment = sendComment;
+  /* keep these for header.html buttons */
+  window.openComment = openComment;
+  window.closeComment = closeComment;
+  window.openHelp = openHelp;
+  window.closeHelp = closeHelp;
+  window.showAllComments = showAllComments;
+  window.closeAllComments = closeAllComments;
+  window.sendComment = sendComment;
 
-document.addEventListener("headerLoaded", () => {
-  initRatingStars();
-});
+  document.addEventListener("headerLoaded", () => {
+    initRatingStars();
+  });
 
-setTimeout(() => {
-  initRatingStars();
-}, 300);
+  setTimeout(() => {
+    initRatingStars();
+  }, 300);
 
-renderNode("start");
+  renderNode("start");
 });
 </script>
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
