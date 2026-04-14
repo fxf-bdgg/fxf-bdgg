@@ -597,13 +597,13 @@ body {
   min-height: 100vh;
 }
 
-.page {
+main {
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.55s ease, transform 0.55s ease;
 }
 
-body.page-ready .page {
+body.page-ready main {
   opacity: 1;
   transform: translateY(0);
 }
@@ -732,7 +732,7 @@ body.page-ready .page {
 }
 
 @media (prefers-reduced-motion: reduce) {
-.page,
+main,
 #site-header,
 #site-footer,
   .reveal,
