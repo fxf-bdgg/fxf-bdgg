@@ -88,42 +88,62 @@
   </div>
 </div>
 
-<div id="commentModal" class="modal">
+<div id="commentModal" class="modal" onclick="closeComment()">
   <div class="modal-content feedback-modal" onclick="event.stopPropagation()">
     <div class="modal-header feedback-header">
-      <span>How do you rate the tool?</span>
+      <div>
+        <span>Share Feedback</span>
+        <p class="feedback-subtitle">Help improve the guide experience with a quick rating and comment.</p>
+      </div>
       <span class="modal-close" onclick="closeComment()">×</span>
     </div>
 
-    <div class="rating-container">
-      <i class="fa-solid fa-star rating-star" data-value="1"></i>
-      <i class="fa-solid fa-star rating-star" data-value="2"></i>
-      <i class="fa-solid fa-star rating-star" data-value="3"></i>
-      <i class="fa-solid fa-star rating-star" data-value="4"></i>
-      <i class="fa-solid fa-star rating-star" data-value="5"></i>
+    <div class="feedback-top">
+      <div class="feedback-top-icon">
+        <i class="fa-solid fa-stars"></i>
+      </div>
+      <div class="feedback-top-copy">
+        <strong>How was your experience?</strong>
+        <span>Your input helps improve guides, templates, and overall usability.</span>
+      </div>
     </div>
 
-    <input type="text" id="commentName" placeholder="Your Name (optional)">
-    <textarea id="commentText" placeholder="Enter your comment..."></textarea>
-    <p id="feedbackMessage" style="display:none; margin-top:12px; font-size:14px; font-weight:700;"></p>
+    <div class="rating-wrap">
+      <div class="rating-label">Your rating</div>
+      <div class="rating-container">
+        <i class="fa-solid fa-star rating-star" data-value="1"></i>
+        <i class="fa-solid fa-star rating-star" data-value="2"></i>
+        <i class="fa-solid fa-star rating-star" data-value="3"></i>
+        <i class="fa-solid fa-star rating-star" data-value="4"></i>
+        <i class="fa-solid fa-star rating-star" data-value="5"></i>
+      </div>
+    </div>
+
+    <div class="feedback-fields">
+      <div class="field-block">
+        <label for="commentName">Name</label>
+        <input id="commentName" type="text" placeholder="Enter your name">
+      </div>
+
+      <div class="field-block">
+        <label for="commentText">Comment</label>
+        <textarea id="commentText" placeholder="Share your feedback or suggestion"></textarea>
+      </div>
+    </div>
+
+    <div id="feedbackMessage" class="feedback-message" style="display:none;"></div>
 
     <button class="btn feedback-submit-btn" onclick="sendComment()">
-      Send feedback <i class="fa-solid fa-paper-plane"></i>
+      <i class="fa-solid fa-paper-plane"></i>
+      Submit Feedback
     </button>
 
     <div class="feedback-bottom-link">
-      <span class="link-text" onclick="showAllComments()">View all comments & ratings</span>
+      <span class="view-comments-link" onclick="showAllComments()">
+        <i class="fa-regular fa-comments"></i>
+        View all comments & ratings
+      </span>
     </div>
-  </div>
-</div>
-
-<div id="allCommentsModal" class="modal">
-  <div class="modal-content" onclick="event.stopPropagation()">
-    <div class="modal-header">
-      All Ratings & Comments
-      <span class="modal-close" onclick="closeAllComments()">×</span>
-    </div>
-    <div id="commentsList"></div>
   </div>
 </div>
 
