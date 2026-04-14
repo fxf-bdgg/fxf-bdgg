@@ -817,3 +817,36 @@ body {
     margin: 96px auto 20px !important;
   }
 }
+
+/* ===== PREMIUM MODAL ANIMATION (ADD ONLY) ===== */
+
+.modal{
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+
+.modal.is-open{
+  opacity: 1;
+}
+
+.modal-content{
+  transform: translateY(14px) scale(.985);
+  opacity: 0;
+  transition:
+    transform .28s cubic-bezier(.2,.65,.2,1),
+    opacity .28s ease;
+}
+
+.modal.is-open .modal-content{
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.modal.is-closing{
+  opacity: 0;
+}
+
+.modal.is-closing .modal-content{
+  transform: translateY(10px) scale(.985);
+  opacity: 0;
+}
