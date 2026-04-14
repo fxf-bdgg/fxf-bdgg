@@ -4,6 +4,8 @@ let headerSelectedTimeZone =
   "Asia/Manila";
 
 let headerCurrentDate = new Date();
+let headerClockInterval = null;
+let headerEventsBound = false;
 
 function getZoneLabel(zone) {
   const zoneMap = {
@@ -254,10 +256,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* =========================
-   HEADER EVENTS
+   HEADER INIT
 ========================= */
 
-document.addEventListener("headerLoaded", () => {
+function initHeaderUI() {
   const clockBtn = document.getElementById("clockBtn");
   const calendarPopup = document.getElementById("timeCalendarPopup");
   const openTimeSettings = document.getElementById("openTimeSettings");
@@ -271,68 +273,78 @@ document.addEventListener("headerLoaded", () => {
   setHeaderActiveTab();
   updateHeaderClock();
   renderHeaderCalendar();
-  setInterval(updateHeaderClock, 1000);
+
+  if (headerClockInterval) clearInterval(headerClockInterval);
+  headerClockInterval = setInterval(updateHeaderClock, 1000);
+
+  if (!headerEventsBound) {
+    document.addEventListener("click", (e) => {
+      const liveCalendarPopup = document.getElementById("timeCalendarPopup");
+      const liveClockBtn = document.getElementById("clockBtn");
+
+      if (
+        liveCalendarPopup &&
+        liveCalendarPopup.style.display === "block" &&
+        !liveCalendarPopup.contains(e.target) &&
+        !liveClockBtn?.contains(e.target)
+      ) {
+        liveCalendarPopup.style.display = "none";
+      }
+
+      const liveTimeSettingsModal = document.getElementById("timeSettingsModal");
+      if (liveTimeSettingsModal && e.target === liveTimeSettingsModal) {
+        liveTimeSettingsModal.style.display = "none";
+      }
+    });
+
+    headerEventsBound = true;
+  }
 
   if (clockBtn && calendarPopup) {
-    clockBtn.addEventListener("click", (e) => {
+    clockBtn.onclick = (e) => {
       e.stopPropagation();
       calendarPopup.style.display =
         calendarPopup.style.display === "block" ? "none" : "block";
-    });
+    };
   }
 
-  document.addEventListener("click", (e) => {
-    if (
-      calendarPopup &&
-      !calendarPopup.contains(e.target) &&
-      !clockBtn?.contains(e.target)
-    ) {
-      calendarPopup.style.display = "none";
-    }
-  });
-
   if (openTimeSettings && timeSettingsModal && timezoneSelectSettings) {
-    openTimeSettings.addEventListener("click", () => {
+    openTimeSettings.onclick = () => {
       timeSettingsModal.style.display = "flex";
       timezoneSelectSettings.value = headerSelectedTimeZone;
-    });
+    };
   }
 
   if (closeTimeSettings && timeSettingsModal) {
-    closeTimeSettings.addEventListener("click", () => {
+    closeTimeSettings.onclick = () => {
       timeSettingsModal.style.display = "none";
-    });
+    };
   }
 
   if (saveTimeSettings && timezoneSelectSettings && timeSettingsModal) {
-    saveTimeSettings.addEventListener("click", () => {
+    saveTimeSettings.onclick = () => {
       headerSelectedTimeZone = timezoneSelectSettings.value;
       localStorage.setItem("bdToolsTimeZone", headerSelectedTimeZone);
+      headerCurrentDate = new Date();
       updateHeaderClock();
       renderHeaderCalendar();
       timeSettingsModal.style.display = "none";
-    });
+    };
   }
 
   if (prevMonth) {
-    prevMonth.addEventListener("click", () => {
+    prevMonth.onclick = () => {
       headerCurrentDate.setMonth(headerCurrentDate.getMonth() - 1);
       renderHeaderCalendar();
-    });
+    };
   }
 
   if (nextMonth) {
-    nextMonth.addEventListener("click", () => {
+    nextMonth.onclick = () => {
       headerCurrentDate.setMonth(headerCurrentDate.getMonth() + 1);
       renderHeaderCalendar();
-    });
+    };
   }
+}
 
-  if (timeSettingsModal) {
-    timeSettingsModal.addEventListener("click", (e) => {
-      if (e.target === timeSettingsModal) {
-        timeSettingsModal.style.display = "none";
-      }
-    });
-  }
-});
+document.addEventListener("headerLoaded", initHeaderUI);
