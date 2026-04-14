@@ -2014,242 +2014,244 @@ const NODES = {
 
 };
 
-    function escapeHtml(value){
-      return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#39;");
+
+
+  function escapeHtml(value){
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function normalizeId(str){
+    return String(str || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+  }
+
+  function getDocId(recommendation, type){
+    return `${type}__${normalizeId(recommendation)}`;
+  }
+
+  function getNodeText(node){
+    return node?.text || node?.question || "";
+  }
+
+  function getNodeHelp(node){
+    return node?.help || "";
+  }
+
+  function getNodeNote(node){
+    return node?.note || "";
+  }
+
+  function getNodeImage(node){
+    return node?.image || "";
+  }
+
+  function getNodeChoices(node){
+    return Array.isArray(node?.choices) ? node.choices : [];
+  }
+
+  function isFinalNode(node){
+    return !!node?.action || (!getNodeChoices(node).length && !node?.next);
+  }
+
+  function setTemplateValue(el, text){
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle("empty", !text);
+  }
+
+  async function loadTemplatesForRecommendation(recommendation){
+    if(!recommendation){
+      setTemplateValue(els.suggestedComment, "");
+      setTemplateValue(els.suggestedCorrCode, "");
+      setTemplateValue(els.suggestedEmail, "");
+      return;
     }
 
-    function normalizeId(str){
-      return String(str || "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "");
+    const ids = {
+      comment: getDocId(recommendation, "comment"),
+      corr: getDocId(recommendation, "corr"),
+      email: getDocId(recommendation, "email")
+    };
+
+    try{
+      const [commentDoc, corrDoc, emailDoc] = await Promise.all([
+        db.collection(TEMPLATE_COLLECTION).doc(ids.comment).get(),
+        db.collection(TEMPLATE_COLLECTION).doc(ids.corr).get(),
+        db.collection(TEMPLATE_COLLECTION).doc(ids.email).get()
+      ]);
+
+      const finalComment = commentDoc.exists ? (commentDoc.data().text || "") : "";
+      const finalCorr = corrDoc.exists ? (corrDoc.data().text || "") : "";
+      const finalEmail = emailDoc.exists ? (emailDoc.data().text || "") : "";
+
+      templateCache[ids.comment] = finalComment;
+      templateCache[ids.corr] = finalCorr;
+      templateCache[ids.email] = finalEmail;
+
+      setTemplateValue(els.suggestedComment, finalComment);
+      setTemplateValue(els.suggestedCorrCode, finalCorr);
+      setTemplateValue(els.suggestedEmail, finalEmail);
+    } catch(err){
+      setTemplateValue(els.suggestedComment, "");
+      setTemplateValue(els.suggestedCorrCode, "");
+      setTemplateValue(els.suggestedEmail, "");
+    }
+  }
+
+  function setCopiedState(btn, originalText){
+    btn.classList.add("copied");
+    btn.textContent = "Copied";
+    clearTimeout(btn._copiedTimer);
+    btn._copiedTimer = setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.textContent = originalText;
+    }, 1400);
+  }
+
+  async function copyTemplateText(targetId, btn){
+    const target = document.getElementById(targetId);
+    const value = target?.innerText.trim();
+    if(!value || target.classList.contains("empty")) return;
+
+    try{
+      await navigator.clipboard.writeText(value);
+      setCopiedState(btn, btn.textContent);
+    } catch {
+      alert("Unable to copy text.");
+    }
+  }
+
+  function attemptEdit(type){
+    if(!currentFinalRecommendation){
+      alert("Reach a final recommendation first before editing templates.");
+      return;
+    }
+    currentEditType = type;
+    els.adminPassword.value = "";
+    els.passwordModal.style.display = "flex";
+  }
+
+  function closePasswordModal(){
+    els.passwordModal.style.display = "none";
+  }
+
+  function closeEditModal(){
+    els.editModal.style.display = "none";
+  }
+
+  function checkPassword(){
+    if(els.adminPassword.value === "admin"){
+      closePasswordModal();
+      openEditModal();
+    } else {
+      alert("Incorrect password");
+    }
+  }
+
+  function openEditModal(){
+    const map = {
+      comment: "suggestedComment",
+      email: "suggestedEmail",
+      corr: "suggestedCorrCode"
+    };
+
+    els.editTextarea.value = document.getElementById(map[currentEditType]).innerText;
+    els.modalTitle.textContent = `Edit ${currentEditType.toUpperCase()}`;
+    els.editModal.style.display = "flex";
+  }
+
+  async function saveEdit(){
+    const val = els.editTextarea.value.trim();
+
+    if(!val){
+      alert("Cannot save empty text.");
+      return;
     }
 
-    function getDocId(recommendation, type){
-      return `${type}__${normalizeId(recommendation)}`;
-    }
+    const docId = getDocId(currentFinalRecommendation, currentEditType);
 
-    function getNodeText(node){
-      return node?.text || node?.question || "";
-    }
-
-    function getNodeHelp(node){
-      return node?.help || "";
-    }
-
-    function getNodeNote(node){
-      return node?.note || "";
-    }
-
-    function getNodeImage(node){
-      return node?.image || "";
-    }
-
-    function getNodeChoices(node){
-      return Array.isArray(node?.choices) ? node.choices : [];
-    }
-
-    function isFinalNode(node){
-      return !!node?.action || (!getNodeChoices(node).length && !node?.next);
-    }
-
-    function setTemplateValue(el, text){
-      if (!el) return;
-      el.textContent = text;
-      el.classList.toggle("empty", !text);
-    }
-
-    async function loadTemplatesForRecommendation(recommendation){
-      if(!recommendation){
-        setTemplateValue(els.suggestedComment, "");
-        setTemplateValue(els.suggestedCorrCode, "");
-        setTemplateValue(els.suggestedEmail, "");
-        return;
-      }
-
-      const ids = {
-        comment: getDocId(recommendation, "comment"),
-        corr: getDocId(recommendation, "corr"),
-        email: getDocId(recommendation, "email")
-      };
-
-      try{
-        const [commentDoc, corrDoc, emailDoc] = await Promise.all([
-          db.collection(TEMPLATE_COLLECTION).doc(ids.comment).get(),
-          db.collection(TEMPLATE_COLLECTION).doc(ids.corr).get(),
-          db.collection(TEMPLATE_COLLECTION).doc(ids.email).get()
-        ]);
-
-        const finalComment = commentDoc.exists ? (commentDoc.data().text || "") : "";
-        const finalCorr = corrDoc.exists ? (corrDoc.data().text || "") : "";
-        const finalEmail = emailDoc.exists ? (emailDoc.data().text || "") : "";
-
-        templateCache[ids.comment] = finalComment;
-        templateCache[ids.corr] = finalCorr;
-        templateCache[ids.email] = finalEmail;
-
-        setTemplateValue(els.suggestedComment, finalComment);
-        setTemplateValue(els.suggestedCorrCode, finalCorr);
-        setTemplateValue(els.suggestedEmail, finalEmail);
-      } catch(err){
-        setTemplateValue(els.suggestedComment, "");
-        setTemplateValue(els.suggestedCorrCode, "");
-        setTemplateValue(els.suggestedEmail, "");
-      }
-    }
-
-    function setCopiedState(btn, originalText){
-      btn.classList.add("copied");
-      btn.textContent = "Copied";
-      clearTimeout(btn._copiedTimer);
-      btn._copiedTimer = setTimeout(() => {
-        btn.classList.remove("copied");
-        btn.textContent = originalText;
-      }, 1400);
-    }
-
-    async function copyTemplateText(targetId, btn){
-      const target = document.getElementById(targetId);
-      const value = target?.innerText.trim();
-      if(!value || target.classList.contains("empty")) return;
-
-      try{
-        await navigator.clipboard.writeText(value);
-        setCopiedState(btn, btn.textContent);
-      } catch {
-        alert("Unable to copy text.");
-      }
-    }
-
-    function attemptEdit(type){
-      if(!currentFinalRecommendation){
-        alert("Reach a final recommendation first before editing templates.");
-        return;
-      }
-      currentEditType = type;
-      els.adminPassword.value = "";
-      els.passwordModal.style.display = "flex";
-    }
-
-    function closePasswordModal(){
-      els.passwordModal.style.display = "none";
-    }
-
-    function closeEditModal(){
-      els.editModal.style.display = "none";
-    }
-
-    function checkPassword(){
-      if(els.adminPassword.value === "admin"){
-        closePasswordModal();
-        openEditModal();
-      } else {
-        alert("Incorrect password");
-      }
-    }
-
-    function openEditModal(){
-      const map = {
-        comment: "suggestedComment",
-        email: "suggestedEmail",
-        corr: "suggestedCorrCode"
-      };
-
-      els.editTextarea.value = document.getElementById(map[currentEditType]).innerText;
-      els.modalTitle.textContent = `Edit ${currentEditType.toUpperCase()}`;
-      els.editModal.style.display = "flex";
-    }
-
-    async function saveEdit(){
-      const val = els.editTextarea.value.trim();
-
-      if(!val){
-        alert("Cannot save empty text.");
-        return;
-      }
-
-      const docId = getDocId(currentFinalRecommendation, currentEditType);
-
-      try{
-        await db.collection(TEMPLATE_COLLECTION).doc(docId).set({
-          text: val,
-          type: currentEditType,
-          recommendation: currentFinalRecommendation,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        templateCache[docId] = val;
-
-        if(currentEditType === "comment") setTemplateValue(els.suggestedComment, val);
-        if(currentEditType === "email") setTemplateValue(els.suggestedEmail, val);
-        if(currentEditType === "corr") setTemplateValue(els.suggestedCorrCode, val);
-
-        closeEditModal();
-        alert("Saved!");
-      } catch(err){
-        alert("Unable to save right now.");
-      }
-    }
-
-    function getPercent(isFinal){
-      if (isFinal) return 100;
-      if (path.length === 0) return 0;
-      return Math.min(Math.round((path.length / MAX_STEPS) * 100), 95);
-    }
-
-    function updateMeta(isFinal){
-      const pct = getPercent(isFinal);
-      const lastAnswer = path.length ? path[path.length - 1].answer : "—";
-      const progressLabel = isFinal ? "Recommendation ready" : path.length ? "Flow in progress" : "Not started";
-
-      els.progressFill.style.width = pct + "%";
-      els.progressText.textContent = progressLabel;
-      els.metricSteps.textContent = String(path.length);
-      els.metricAnswer.textContent = lastAnswer;
-      els.statusPill.innerHTML = `<i class="fa-solid fa-bolt"></i> ${isFinal ? "Completed" : path.length ? "Working" : "Ready"}`;
-    }
-
-    function updatePath(){
-      if(!path.length){
-        els.pathBox.className = "path-empty";
-        els.pathBox.innerHTML = "No steps selected yet. The full path will appear here as the user moves through the app.";
-        return;
-      }
-
-      const activePathKey = currentKey;
-
-      const html = path.map((item, index) => {
-        const isActive = item.nextKey === activePathKey;
-        return `
-          <div class="path-item">
-            <button
-              type="button"
-              class="path-jump ${isActive ? "active" : ""}"
-              data-step-index="${index}"
-            >
-              <div class="path-step">Step ${index + 1}</div>
-              <div class="path-question">${escapeHtml(item.question)}</div>
-              <div class="path-answer">→ ${escapeHtml(item.answer)}</div>
-            </button>
-          </div>
-        `;
-      }).join("");
-
-      els.pathBox.className = "path-list";
-      els.pathBox.innerHTML = html;
-
-      els.pathBox.querySelectorAll(".path-jump").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const index = Number(btn.dataset.stepIndex);
-          jumpToPathStep(index);
-        });
+    try{
+      await db.collection(TEMPLATE_COLLECTION).doc(docId).set({
+        text: val,
+        type: currentEditType,
+        recommendation: currentFinalRecommendation,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
+
+      templateCache[docId] = val;
+
+      if(currentEditType === "comment") setTemplateValue(els.suggestedComment, val);
+      if(currentEditType === "email") setTemplateValue(els.suggestedEmail, val);
+      if(currentEditType === "corr") setTemplateValue(els.suggestedCorrCode, val);
+
+      closeEditModal();
+      alert("Saved!");
+    } catch(err){
+      alert("Unable to save right now.");
     }
+  }
+
+  function getPercent(isFinal){
+    if (isFinal) return 100;
+    if (path.length === 0) return 0;
+    return Math.min(Math.round((path.length / MAX_STEPS) * 100), 95);
+  }
+
+  function updateMeta(isFinal){
+    const pct = getPercent(isFinal);
+    const lastAnswer = path.length ? path[path.length - 1].answer : "—";
+    const progressLabel = isFinal ? "Recommendation ready" : path.length ? "Flow in progress" : "Not started";
+
+    els.progressFill.style.width = pct + "%";
+    els.progressText.textContent = progressLabel;
+    els.metricSteps.textContent = String(path.length);
+    els.metricAnswer.textContent = lastAnswer;
+    els.statusPill.innerHTML = `<i class="fa-solid fa-bolt"></i> ${isFinal ? "Completed" : path.length ? "Working" : "Ready"}`;
+  }
+
+  function updatePath(){
+    if(!path.length){
+      els.pathBox.className = "path-empty";
+      els.pathBox.innerHTML = "No steps selected yet. The full path will appear here as the user moves through the app.";
+      return;
+    }
+
+    const activePathKey = currentKey;
+
+    const html = path.map((item, index) => {
+      const isActive = item.nextKey === activePathKey;
+      return `
+        <div class="path-item">
+          <button
+            type="button"
+            class="path-jump ${isActive ? "active" : ""}"
+            data-step-index="${index}"
+          >
+            <div class="path-step">Step ${index + 1}</div>
+            <div class="path-question">${escapeHtml(item.question)}</div>
+            <div class="path-answer">→ ${escapeHtml(item.answer)}</div>
+          </button>
+        </div>
+      `;
+    }).join("");
+
+    els.pathBox.className = "path-list";
+    els.pathBox.innerHTML = html;
+
+    els.pathBox.querySelectorAll(".path-jump").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const index = Number(btn.dataset.stepIndex);
+        jumpToPathStep(index);
+      });
+    });
+  }
 
   function jumpToPathStep(index){
     if(index < 0 || index >= path.length) return;
@@ -2280,44 +2282,44 @@ const NODES = {
     renderNode(target.nextKey);
   }
 
-    function updateRecommendation(text, isFinal){
-      if(!isFinal){
-        els.recommendationBox.className = "recommendation empty";
-        els.recommendationBox.textContent = "No recommendation yet. Follow the flow to reach the final instruction.";
-        return;
-      }
-
-      els.recommendationBox.className = "recommendation";
-      els.recommendationBox.textContent = text;
+  function updateRecommendation(text, isFinal){
+    if(!isFinal){
+      els.recommendationBox.className = "recommendation empty";
+      els.recommendationBox.textContent = "No recommendation yet. Follow the flow to reach the final instruction.";
+      return;
     }
 
-    function openImageModal(src){
-      const modal = document.getElementById("imageModal");
-      const img = document.getElementById("imageModalImg");
-      if (!modal || !img) return;
+    els.recommendationBox.className = "recommendation";
+    els.recommendationBox.textContent = text;
+  }
 
-      img.src = src;
-      modal.classList.add("open");
-      document.body.style.overflow = "hidden";
-    }
+  function openImageModal(src){
+    const modal = document.getElementById("imageModal");
+    const img = document.getElementById("imageModalImg");
+    if (!modal || !img) return;
 
-    function closeImageModal(e){
-      if (e) e.stopPropagation();
+    img.src = src;
+    modal.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
 
-      const modal = document.getElementById("imageModal");
-      const img = document.getElementById("imageModalImg");
-      if (!modal || !img) return;
+  function closeImageModal(e){
+    if (e) e.stopPropagation();
 
-      modal.classList.remove("open");
-      img.src = "";
-      document.body.style.overflow = "";
-    }
+    const modal = document.getElementById("imageModal");
+    const img = document.getElementById("imageModalImg");
+    if (!modal || !img) return;
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeImageModal();
-    });
+    modal.classList.remove("open");
+    img.src = "";
+    document.body.style.overflow = "";
+  }
 
-    async function renderFinal(finalNode){
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeImageModal();
+  });
+
+  async function renderFinal(finalNode){
     const finalText = finalNode.action || getNodeText(finalNode) || "";
     const finalNote = finalNode.note || "";
     const finalImage = finalNode.image || "";
@@ -2365,7 +2367,7 @@ const NODES = {
     if (inlineRestart) inlineRestart.onclick = restart;
   }
 
-    async function renderNode(key){
+  async function renderNode(key){
     currentKey = key;
     const node = NODES[key];
 
@@ -2573,35 +2575,74 @@ const NODES = {
     renderNode(previousStep.nextKey);
   }
 
-    function restart(){
-      path = [];
-      historyStack = [];
-      currentFinalRecommendation = "";
-      currentKey = "start";
+  function restart(){
+    path = [];
+    historyStack = [];
+    currentFinalRecommendation = "";
+    currentKey = "start";
 
-      setTemplateValue(els.suggestedComment, "");
-      setTemplateValue(els.suggestedCorrCode, "");
-      setTemplateValue(els.suggestedEmail, "");
+    setTemplateValue(els.suggestedComment, "");
+    setTemplateValue(els.suggestedCorrCode, "");
+    setTemplateValue(els.suggestedEmail, "");
 
-      updatePath();
-      updateRecommendation("", false);
-      renderNode("start");
-    }
-
-    window.attemptEdit = attemptEdit;
-    window.closePasswordModal = closePasswordModal;
-    window.closeEditModal = closeEditModal;
-    window.checkPassword = checkPassword;
-    window.saveEdit = saveEdit;
-    window.copyTemplateText = copyTemplateText;
-    window.goBack = goBack;
-    window.restart = restart;
-    window.openImageModal = openImageModal;
-    window.closeImageModal = closeImageModal;
-
+    updatePath();
+    updateRecommendation("", false);
     renderNode("start");
-  });
-  </script>
+  }
+
+  /* ===== HEADER MODAL FIX ===== */
+
+  function openComment() {
+    const modal = document.getElementById("commentModal");
+    if (modal) modal.style.display = "flex";
+  }
+
+  function closeComment() {
+    const modal = document.getElementById("commentModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function openHelp() {
+    const modal = document.getElementById("helpModal");
+    if (modal) modal.style.display = "flex";
+  }
+
+  function closeHelp() {
+    const modal = document.getElementById("helpModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function showAllComments() {
+    const modal = document.getElementById("allCommentsModal");
+    if (modal) modal.style.display = "flex";
+  }
+
+  function closeAllComments() {
+    const modal = document.getElementById("allCommentsModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  window.attemptEdit = attemptEdit;
+  window.closePasswordModal = closePasswordModal;
+  window.closeEditModal = closeEditModal;
+  window.checkPassword = checkPassword;
+  window.saveEdit = saveEdit;
+  window.copyTemplateText = copyTemplateText;
+  window.goBack = goBack;
+  window.restart = restart;
+  window.openImageModal = openImageModal;
+  window.closeImageModal = closeImageModal;
+
+  window.openComment = openComment;
+  window.closeComment = closeComment;
+  window.openHelp = openHelp;
+  window.closeHelp = closeHelp;
+  window.showAllComments = showAllComments;
+  window.closeAllComments = closeAllComments;
+
+  renderNode("start");
+});
+</script>
 <div id="imageModal" class="image-modal" onclick="closeImageModal()">
   <button type="button" class="image-modal-close" onclick="closeImageModal(event)">×</button>
   <img id="imageModalImg" src="" alt="Expanded step image" onclick="event.stopPropagation()">
