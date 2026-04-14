@@ -772,17 +772,53 @@ body {
   }
 }
 
-/* Final fix for Feedback + Get Help modal position only */
+/* ===== FINAL FIX: FEEDBACK + GET HELP ONLY ===== */
+
+#commentModal,
+#allCommentsModal,
+#helpModal{
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  background: rgba(2,6,23,.52) !important;
+  overflow-y: auto !important;
+  padding: 0 24px !important;
+  backdrop-filter: blur(8px) !important;
+}
+
 #commentModal .modal-content,
 #allCommentsModal .modal-content,
 #helpModal .modal-content{
-  margin:110px auto 32px !important;
+  position: relative !important;
+  top: 110px !important;
+  margin: 0 auto 32px !important;
+  width: 100% !important;
+  max-height: none !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+#commentModal .feedback-modal{
+  max-width: 640px !important;
+}
+
+#allCommentsModal .modal-content,
+#helpModal .help-modal{
+  max-width: 760px !important;
 }
 
 @media (max-width:720px){
+  #commentModal,
+  #allCommentsModal,
+  #helpModal{
+    padding: 0 14px !important;
+  }
+
   #commentModal .modal-content,
   #allCommentsModal .modal-content,
   #helpModal .modal-content{
-    margin:96px auto 20px !important;
+    top: 96px !important;
+    margin: 0 auto 20px !important;
   }
 }
