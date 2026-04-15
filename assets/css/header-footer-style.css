@@ -851,3 +851,76 @@ body {
   opacity: 0;
 }
 
+/* ===== FINAL HEADER TIME/CALENDAR/MODAL FIX ===== */
+
+.topbar,
+.topbar-inner,
+.brand-wrap,
+.actions,
+#site-header {
+  overflow: visible !important;
+}
+
+#timeCalendarPopup {
+  display: none;
+  position: fixed !important;
+  top: 92px;
+  right: 24px;
+  width: min(360px, calc(100vw - 32px));
+  z-index: 2147483647 !important;
+  opacity: 0;
+  transform: translateY(8px) scale(.985);
+  transition:
+    opacity .22s ease,
+    transform .22s ease;
+  pointer-events: none;
+}
+
+#timeCalendarPopup.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+#timeSettingsModal {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px !important;
+  overflow-y: auto !important;
+}
+
+#timeSettingsModal .modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  margin: 110px auto 32px !important;
+  box-sizing: border-box;
+}
+
+#timeSettingsModal.is-open {
+  display: flex !important;
+}
+
+#timeSettingsModal .modal-close {
+  border: none;
+  outline: none;
+}
+
+@media (max-width: 720px) {
+  #timeCalendarPopup {
+    right: 10px;
+    top: 86px;
+  }
+
+  #timeSettingsModal {
+    padding: 0 14px !important;
+  }
+
+  #timeSettingsModal .modal-content {
+    margin: 96px auto 20px !important;
+  }
+}
