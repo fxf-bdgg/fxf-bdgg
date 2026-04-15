@@ -6,7 +6,7 @@ if (!headerSelectedTimeZone) {
   localStorage.setItem("bdToolsTimeZone", headerSelectedTimeZone);
 }
 
-let headerCurrentDate = new Date();
+let headerCurrentDate = null;
 let headerClockInterval = null;
 let headerEventsBound = false;
 
@@ -38,8 +38,11 @@ function getTimeZoneDateParts(date, timeZone) {
   }).formatToParts(date);
 
   const result = {};
+
   parts.forEach((part) => {
-    if (part.type !== "literal") result[part.type] = part.value;
+    if (part.type !== "literal") {
+      result[part.type] = part.value;
+    }
   });
 
   return {
@@ -49,9 +52,56 @@ function getTimeZoneDateParts(date, timeZone) {
   };
 }
 
-function getTimeZoneDateObject(date, timeZone) {
+function getTimeZoneMonthAnchor(date, timeZone) {
   const parts = getTimeZoneDateParts(date, timeZone);
-  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
+  return new Date(Date.UTC(parts.year, parts.month - 1, 1));
+}
+
+function resetHeaderCurrentDateToSelectedZone() {
+  headerCurrentDate = getTimeZoneMonthAnchor(new Date(), headerSelectedTimeZone);
+}
+
+function openModal(modalEl) {
+  if (!modalEl) return;
+  modalEl.style.display = "flex";
+  modalEl.classList.remove("is-closing");
+  requestAnimationFrame(() => {
+    modalEl.classList.add("is-open");
+  });
+}
+
+function closeModal(modalEl) {
+  if (!modalEl) return;
+
+  modalEl.classList.remove("is-open");
+  modalEl.classList.add("is-closing");
+
+  setTimeout(() => {
+    modalEl.style.display = "none";
+    modalEl.classList.remove("is-closing");
+  }, 220);
+}
+
+function toggleCalendarPopup(popupEl) {
+  if (!popupEl) return;
+
+  const isVisible = popupEl.classList.contains("is-open");
+
+  if (isVisible) {
+    popupEl.classList.remove("is-open");
+    popupEl.style.display = "none";
+  } else {
+    popupEl.style.display = "block";
+    requestAnimationFrame(() => {
+      popupEl.classList.add("is-open");
+    });
+  }
+}
+
+function hideCalendarPopup(popupEl) {
+  if (!popupEl) return;
+  popupEl.classList.remove("is-open");
+  popupEl.style.display = "none";
 }
 
 function updateHeaderClock() {
@@ -95,13 +145,15 @@ function renderHeaderCalendar() {
   const calendarGrid = document.getElementById("calendarGrid");
   const monthYear = document.getElementById("monthYear");
 
-  if (!calendarGrid || !monthYear) return;
+  if (!calendarGrid || !monthYear || !headerCurrentDate) return;
 
   calendarGrid.innerHTML = "";
 
-  const tzParts = getTimeZoneDateParts(headerCurrentDate, headerSelectedTimeZone);
-  const firstDayUTC = new Date(Date.UTC(tzParts.year, tzParts.month - 1, 1));
-  const lastDayUTC = new Date(Date.UTC(tzParts.year, tzParts.month, 0));
+  const displayYear = headerCurrentDate.getUTCFullYear();
+  const displayMonthIndex = headerCurrentDate.getUTCMonth();
+
+  const firstDayUTC = new Date(Date.UTC(displayYear, displayMonthIndex, 1));
+  const lastDayUTC = new Date(Date.UTC(displayYear, displayMonthIndex + 1, 0));
 
   const monthLabel = new Intl.DateTimeFormat("en-US", {
     timeZone: "UTC",
@@ -124,7 +176,7 @@ function renderHeaderCalendar() {
 
   const startDay = firstDayUTC.getUTCDay();
   const totalDays = lastDayUTC.getUTCDate();
-  const nowParts = getTimeZoneDateParts(new Date(), headerSelectedTimeZone);
+  const todayParts = getTimeZoneDateParts(new Date(), headerSelectedTimeZone);
 
   for (let i = 0; i < startDay; i++) {
     const blank = document.createElement("div");
@@ -142,9 +194,9 @@ function renderHeaderCalendar() {
     cell.style.boxShadow = "inset 0 0 0 1px rgba(148,163,184,.12)";
 
     const isToday =
-      tzParts.year === nowParts.year &&
-      tzParts.month === nowParts.month &&
-      day === nowParts.day;
+      displayYear === todayParts.year &&
+      displayMonthIndex === todayParts.month - 1 &&
+      day === todayParts.day;
 
     if (isToday) {
       cell.style.background = "#4d148c";
@@ -280,8 +332,7 @@ function initHeaderUI() {
 
   setHeaderActiveTab();
 
-  headerCurrentDate = getTimeZoneDateObject(new Date(), headerSelectedTimeZone);
-
+  resetHeaderCurrentDateToSelectedZone();
   updateHeaderClock();
   renderHeaderCalendar();
 
@@ -292,19 +343,19 @@ function initHeaderUI() {
     document.addEventListener("click", (e) => {
       const liveCalendarPopup = document.getElementById("timeCalendarPopup");
       const liveClockBtn = document.getElementById("clockBtn");
+      const liveTimeSettingsModal = document.getElementById("timeSettingsModal");
 
       if (
         liveCalendarPopup &&
-        liveCalendarPopup.style.display === "block" &&
+        liveCalendarPopup.classList.contains("is-open") &&
         !liveCalendarPopup.contains(e.target) &&
         !liveClockBtn?.contains(e.target)
       ) {
-        liveCalendarPopup.style.display = "none";
+        hideCalendarPopup(liveCalendarPopup);
       }
 
-      const liveTimeSettingsModal = document.getElementById("timeSettingsModal");
       if (liveTimeSettingsModal && e.target === liveTimeSettingsModal) {
-        liveTimeSettingsModal.style.display = "none";
+        closeModal(liveTimeSettingsModal);
       }
     });
 
@@ -314,14 +365,13 @@ function initHeaderUI() {
   if (clockBtn && calendarPopup) {
     clockBtn.onclick = (e) => {
       e.stopPropagation();
-      calendarPopup.style.display =
-        calendarPopup.style.display === "block" ? "none" : "block";
+      toggleCalendarPopup(calendarPopup);
     };
   }
 
-  if (openTimeSettings && timeSettingsModal && timezoneSelectSettings) {
+  if (openTimeSettings && timeSettingsModal && timezoneSelectSettings && calendarPopup) {
     openTimeSettings.onclick = () => {
-      timeSettingsModal.style.display = "flex";
+      hideCalendarPopup(calendarPopup);
 
       if (
         [...timezoneSelectSettings.options].some(
@@ -330,12 +380,14 @@ function initHeaderUI() {
       ) {
         timezoneSelectSettings.value = headerSelectedTimeZone;
       }
+
+      openModal(timeSettingsModal);
     };
   }
 
   if (closeTimeSettings && timeSettingsModal) {
     closeTimeSettings.onclick = () => {
-      timeSettingsModal.style.display = "none";
+      closeModal(timeSettingsModal);
     };
   }
 
@@ -344,15 +396,14 @@ function initHeaderUI() {
       headerSelectedTimeZone = timezoneSelectSettings.value;
       localStorage.setItem("bdToolsTimeZone", headerSelectedTimeZone);
 
-      headerCurrentDate = getTimeZoneDateObject(new Date(), headerSelectedTimeZone);
+      resetHeaderCurrentDateToSelectedZone();
 
       if (headerClockInterval) clearInterval(headerClockInterval);
       headerClockInterval = setInterval(updateHeaderClock, 1000);
 
       updateHeaderClock();
       renderHeaderCalendar();
-
-      timeSettingsModal.style.display = "none";
+      closeModal(timeSettingsModal);
     };
   }
 
