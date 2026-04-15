@@ -17,14 +17,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     target.querySelectorAll("[data-link]").forEach((link) => {
       const path = link.getAttribute("data-link");
-      link.setAttribute("href", base + path);
+      if (path) {
+        link.setAttribute("href", base + path);
+      }
     });
 
     requestAnimationFrame(() => {
       target.classList.add("loaded");
+      document.dispatchEvent(new Event("headerLoaded"));
     });
-
-    document.dispatchEvent(new Event("headerLoaded"));
   } catch (error) {
     console.error("Header load error:", error);
   }
