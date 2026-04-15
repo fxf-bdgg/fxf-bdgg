@@ -1544,7 +1544,7 @@
 <div class="page-title-block">
   <h1>Updating SCAC/BU Guide</h1>
   <p class="page-subtitle">
-    Follow this guide to handle SCAC/BU-related billing updates based on the current account status, available replacement accounts, customer confirmation, and DNU account comments.
+    Follow this guide to handle SCAC/BU update requests based on who sent the request, shipment age, billing terms, available matching accounts, and whether pricing is available on the replacement account.
   </p>
 </div>
             </div>
@@ -1738,7 +1738,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const db = firebase.firestore();
-  const TEMPLATE_COLLECTION = "high_cost_templates";
+  const TEMPLATE_COLLECTION = "updating_scac_templates";
   const FEEDBACK_COLLECTION = "feedback";
   const MAX_STEPS = 8;
 
@@ -1776,288 +1776,384 @@ document.addEventListener("DOMContentLoaded", () => {
 const NODES = {
   start: {
     text: "Updating SCAC/BU Guide",
-    help: "Follow the correct path based on the status of the account before updating the invoice or advising the customer.",
+    help: "Follow the correct path based on who sent the request, the shipment age, the billing terms, and whether a matching replacement account can be located.",
     choices: [
       {
         label: "Continue",
-        next: "account_status",
+        next: "who_sent_request",
         icon: "fa-solid fa-arrow-right",
         desc: "Start the Updating SCAC/BU decision guide."
       }
     ]
   },
 
-  account_status: {
-    text: "What is the status of the account?",
-    help: "Check whether the account is Deleted, Archived, or Flagged as DNU before proceeding.",
+  who_sent_request: {
+    text: "Who sent the request?",
+    help: "Check whether the request came from the Collector or the Customer.",
     choices: [
       {
-        label: "Deleted",
-        next: "deleted_find_active",
-        icon: "fa-solid fa-trash",
-        desc: "Use this path when the account status is Deleted."
+        label: "Collector",
+        next: "collector_within_year",
+        icon: "fa-solid fa-user-tie",
+        desc: "Use this path when the request came from the Collector."
       },
       {
-        label: "Archived",
-        next: "archived_find_active",
-        icon: "fa-solid fa-box-archive",
-        desc: "Use this path when the account status is Archived."
-      },
-      {
-        label: "Flagged as DNU",
-        next: "dnu_check_comments",
-        icon: "fa-solid fa-flag",
-        desc: "Use this path when the account is flagged as Do Not Use."
+        label: "Customer",
+        next: "customer_terms",
+        icon: "fa-solid fa-user",
+        desc: "Use this path when the request came from the Customer."
       }
     ]
   },
 
-  deleted_find_active: {
-    text: "Try to find an active account using the same address.",
-    help: "Search for another usable active account using the same address details.",
-    note: "Alternatively, ECTS can also be used to search if an Express-only or archived account is provided by the customer.",
-    choices: [
-      {
-        label: "Continue",
-        next: "deleted_locate_account",
-        icon: "fa-solid fa-arrow-right",
-        desc: "Proceed after checking for another active account."
-      }
-    ]
-  },
+  /* =========================
+     COLLECTOR PATH
+  ========================= */
 
-  deleted_locate_account: {
-    text: "Were you able to locate an account?",
-    help: "Confirm whether you found a better active account using the same address.",
+  collector_within_year: {
+    text: "Is the shipment within a year?",
+    help: "Check the shipment age before proceeding with the requested SCAC correction.",
     choices: [
       {
         label: "Yes",
-        next: "deleted_advise_found_account",
+        next: "collector_within_year_yes",
         icon: "fa-solid fa-circle-check",
-        desc: "An account was located."
+        desc: "The shipment is within a year."
       },
       {
-        label: "No",
-        next: "deleted_create_new_account",
+        label: "No, over a year.",
+        next: "collector_within_year_no",
         icon: "fa-solid fa-circle-xmark",
-        desc: "No account was located."
+        desc: "The shipment is over a year old."
       }
     ]
   },
 
-  deleted_advise_found_account: {
-    text: "Do not bill it yet.",
-    help: "Advise the customer that the account number they provided is already Deleted. You may advise them that you were able to pull up an account that can bill and confirm if they want to bill it instead.",
+  collector_within_year_yes: {
+    text: "Correction can be completed to allow the SCAC requested.",
+    help: "This will be completed as an Attempt of payment per Collector.",
+    choices: []
+  },
+
+  collector_within_year_no: {
+    text: "Billing correctly per OBL/LOA on file.",
+    help: "We will need a LOA from the debtor of the changes asking for the correction and correction fee would apply. Ask the Collector to send a LOA from the debtor.",
+    choices: []
+  },
+
+  /* =========================
+     CUSTOMER PATH
+  ========================= */
+
+  customer_terms: {
+    text: "What is the terms?",
+    help: "Check whether the billing terms are Prepaid, Collect, or Third Party.",
+    choices: [
+      {
+        label: "Prepaid",
+        next: "prepaid_find_shipper",
+        icon: "fa-solid fa-credit-card",
+        desc: "Use this path when the terms are Prepaid."
+      },
+      {
+        label: "Collect",
+        next: "collect_find_consignee",
+        icon: "fa-solid fa-money-bill-wave",
+        desc: "Use this path when the terms are Collect."
+      },
+      {
+        label: "Third Party",
+        next: "third_party_type",
+        icon: "fa-solid fa-people-arrows",
+        desc: "Use this path when the terms are Third Party."
+      }
+    ]
+  },
+
+  /* =========================
+     PREPAID PATH
+  ========================= */
+
+  prepaid_find_shipper: {
+    text: "Look for another Shipper account that will match the SCAC of the BT account provided by the customer.",
+    help: "Search for another shipping account with the correct SCAC/Business Unit match.",
     choices: [
       {
         label: "Continue",
-        next: "deleted_customer_confirmed",
+        next: "prepaid_found_shipper",
         icon: "fa-solid fa-arrow-right",
-        desc: "Proceed after advising the customer."
+        desc: "Proceed after checking for another Shipper account."
       }
     ]
   },
 
-  deleted_customer_confirmed: {
-    text: "Did the customer confirm to bill the account you found?",
-    help: "Confirm whether the customer agreed to use the active account you found.",
+  prepaid_found_shipper: {
+    text: "Were you able to pull up another shipping account that matches the BT account?",
+    help: "Confirm whether a matching replacement Shipper account was found.",
     choices: [
       {
         label: "Yes",
-        next: "deleted_update_invoice",
+        next: "prepaid_has_pricing",
         icon: "fa-solid fa-circle-check",
-        desc: "The customer confirmed to use the account found."
+        desc: "A matching Shipper account was found."
       },
       {
         label: "No",
-        next: "deleted_reactivate_request",
+        next: "prepaid_no_match_advise",
         icon: "fa-solid fa-circle-xmark",
-        desc: "The customer did not confirm to use the account found."
+        desc: "No matching Shipper account was found."
       }
     ]
   },
 
-  deleted_create_new_account: {
-    text: "If no better account is found by the methods above, a new account would need to be created in the Corrections screen.",
-    help: "Create a new account in Corrections if no better account can be found.",
+  prepaid_has_pricing: {
+    text: "Does it have a pricing?",
+    help: "Check whether the replacement Shipper account has pricing.",
+    choices: [
+      {
+        label: "No",
+        next: "prepaid_no_pricing",
+        icon: "fa-solid fa-circle-xmark",
+        desc: "The account does not have pricing."
+      },
+      {
+        label: "Yes",
+        next: "prepaid_use_found_account",
+        icon: "fa-solid fa-circle-check",
+        desc: "The account has pricing."
+      }
+    ]
+  },
+
+  prepaid_no_pricing: {
+    text: "Do not use this account.",
+    help: "Advise the customer that the BT account number they provided cannot be used since it does not match the SCAC/Business Unit of the Shipper.",
     choices: []
   },
 
-  deleted_update_invoice: {
-    text: "Proceed on updating the invoice using the account number you pulled up.",
-    help: "Use the active account you found and proceed with the invoice update.",
+  prepaid_use_found_account: {
+    text: "Proceed on using the shipper account you found.",
+    help: "Use the replacement Shipper account for the billing update.",
     choices: []
   },
 
-  deleted_reactivate_request: {
-    text: "Ask for the reason why.",
-    help: "If they gave a reason, clone your case and assign the cloned case to Accounts Processing and request for the account to be reactivated or reinstated. Provide the reason of the customer. Wait for the confirmation from Accounts Processing that the account is already reactivated.",
-    choices: []
-  },
-
-  archived_find_active: {
-    text: "Try to find an active account using the same address.",
-    help: "Search for another usable active account using the same address details.",
-    note: "Alternatively, ECTS can also be used to search if an Express-only or archived account is provided by the customer.",
+  prepaid_no_match_advise: {
+    text: "Advise the customer that the BT account number they provided cannot be used since it does not match the SCAC/Business Unit of the Shipper.",
+    help: "If the customer insists to bill the account provided, proceed with updating to terms which will match the Bill-to's SCAC.",
     choices: [
       {
         label: "Continue",
-        next: "archived_locate_account",
+        next: "prepaid_if_customer_insists",
         icon: "fa-solid fa-arrow-right",
-        desc: "Proceed after checking for another active account."
+        desc: "Proceed if the customer still insists on using the provided account."
       }
     ]
   },
 
-  archived_locate_account: {
-    text: "Were you able to locate an account?",
-    help: "Confirm whether you found a better active account using the same address.",
-    choices: [
-      {
-        label: "Yes",
-        next: "archived_advise_found_account",
-        icon: "fa-solid fa-circle-check",
-        desc: "An account was located."
-      },
-      {
-        label: "No",
-        next: "archived_create_new_account",
-        icon: "fa-solid fa-circle-xmark",
-        desc: "No account was located."
-      }
-    ]
+  prepaid_if_customer_insists: {
+    text: "If the customer insist to bill the account provided, proceed with updating to terms which will match the Bill-to's SCAC.",
+    help: "Update the billing terms only if the customer insists on using the provided account.",
+    choices: []
   },
 
-  archived_advise_found_account: {
-    text: "Do not bill it yet.",
-    help: "Advise the customer that the account number they provided is already Deleted, then advise them that you were able to pull up an account that we can bill and confirm if they want to bill it instead.",
+  /* =========================
+     COLLECT PATH
+  ========================= */
+
+  collect_find_consignee: {
+    text: "Look for another Consignee account that will match the SCAC of the BT account provided by the customer.",
+    help: "Search for another Consignee account with the correct SCAC/Business Unit match.",
     choices: [
       {
         label: "Continue",
-        next: "archived_customer_confirmed",
+        next: "collect_found_consignee",
         icon: "fa-solid fa-arrow-right",
-        desc: "Proceed after advising the customer."
+        desc: "Proceed after checking for another Consignee account."
       }
     ]
   },
 
-  archived_customer_confirmed: {
-    text: "Did the customer confirm to bill the account you found?",
-    help: "Confirm whether the customer agreed to use the active account you found.",
+  collect_found_consignee: {
+    text: "Were you able to pull up another consignee account that matches the BT account?",
+    help: "Confirm whether a matching replacement Consignee account was found.",
     choices: [
       {
         label: "Yes",
-        next: "archived_update_invoice",
+        next: "collect_has_pricing",
         icon: "fa-solid fa-circle-check",
-        desc: "The customer confirmed to use the account found."
+        desc: "A matching Consignee account was found."
       },
       {
         label: "No",
-        next: "archived_reactivate_request",
+        next: "collect_no_match_advise",
         icon: "fa-solid fa-circle-xmark",
-        desc: "The customer did not confirm to use the account found."
+        desc: "No matching Consignee account was found."
       }
     ]
   },
 
-  archived_create_new_account: {
-    text: "If no better account is found by the methods above, a new account would need to be created in the Corrections screen.",
-    help: "Create a new account in Corrections if no better account can be found.",
+  collect_has_pricing: {
+    text: "Does it have a pricing?",
+    help: "Check whether the replacement Consignee account has pricing.",
+    choices: [
+      {
+        label: "No",
+        next: "collect_no_pricing",
+        icon: "fa-solid fa-circle-xmark",
+        desc: "The account does not have pricing."
+      },
+      {
+        label: "Yes",
+        next: "collect_use_found_account",
+        icon: "fa-solid fa-circle-check",
+        desc: "The account has pricing."
+      }
+    ]
+  },
+
+  collect_no_pricing: {
+    text: "Do not use this account.",
+    help: "Advise the customer that the BT account number they provided cannot be used since it does not match the SCAC/Business Unit of the Consignee.",
     choices: []
   },
 
-  archived_update_invoice: {
-    text: "Proceed on updating the invoice using the account number you pulled up.",
-    help: "Use the active account you found and proceed with the invoice update.",
+  collect_use_found_account: {
+    text: "Proceed on using the proper account you found.",
+    help: "Use the replacement Consignee account for the billing update.",
     choices: []
   },
 
-  archived_reactivate_request: {
-    text: "Ask for the reason why.",
-    help: "If they gave a reason, clone your case and assign the cloned case to Accounts Processing and request for the account to be reactivated or reinstated. Provide the reason of the customer. Wait for the confirmation from Accounts Processing that the account is already reactivated.",
-    choices: []
-  },
-
-  dnu_check_comments: {
-    text: "Check comments for the reason of flagging the account as Do Not Use or any suggested/new account.",
-    help: "Review the account comments first before deciding the next billing action.",
-    note: "When flagging/unflagging an account, make sure to process it in ISPI, not in CAPS.",
+  collect_no_match_advise: {
+    text: "Advise the customer that the BT account number they provided cannot be used since it does not match the SCAC/Business Unit of the Consignee.",
+    help: "If the customer insists to bill the account provided, proceed with updating to terms which will match the Bill-to's SCAC.",
     choices: [
       {
         label: "Continue",
-        next: "dnu_suggested_account",
+        next: "collect_if_customer_insists",
         icon: "fa-solid fa-arrow-right",
-        desc: "Proceed after reviewing the comments."
+        desc: "Proceed if the customer still insists on using the provided account."
       }
     ]
   },
 
-  dnu_suggested_account: {
-    text: "Is there a suggested account?",
-    help: "Check whether the account comments include a suggested or replacement account.",
-    choices: [
-      {
-        label: "Yes",
-        next: "dnu_rebill_suggested",
-        icon: "fa-solid fa-circle-check",
-        desc: "A suggested account is available."
-      },
-      {
-        label: "No",
-        next: "dnu_can_unflag",
-        icon: "fa-solid fa-circle-xmark",
-        desc: "No suggested account is available."
-      }
-    ]
-  },
-
-  dnu_rebill_suggested: {
-    text: "Proceed on rebilling the invoice using the suggested account for proper billing.",
-    help: "Use the suggested account from the comments and proceed with rebilling.",
+  collect_if_customer_insists: {
+    text: "If the customer insist to bill the account provided, proceed with updating to terms which will match the Bill-to's SCAC.",
+    help: "Update the billing terms only if the customer insists on using the provided account.",
     choices: []
   },
 
-  dnu_can_unflag: {
-    text: "Based on the account comments, can we unflag the account to bill the invoice?",
-    help: "Check the comments carefully before requesting the account to be unflagged.",
+  /* =========================
+     THIRD PARTY PATH
+  ========================= */
+
+  third_party_type: {
+    text: "Is the Third Party account under the Shipper or Consignee?",
+    help: "Determine whether the Third Party request should follow the Shipper or Consignee path.",
     choices: [
       {
-        label: "Yes",
-        next: "dnu_reach_tl",
-        icon: "fa-solid fa-circle-check",
-        desc: "The account can be unflagged based on the comments."
+        label: "Shipper",
+        next: "third_party_shipper_find",
+        icon: "fa-solid fa-truck-ramp-box",
+        desc: "Use this path when the Third Party account is under the Shipper."
       },
       {
-        label: "No",
-        next: "dnu_advise_customer_flagged",
-        icon: "fa-solid fa-circle-xmark",
-        desc: "The account should remain flagged as DNU."
+        label: "Consignee",
+        next: "third_party_consignee_find",
+        icon: "fa-solid fa-box-open",
+        desc: "Use this path when the Third Party account is under the Consignee."
       }
     ]
   },
 
-  dnu_reach_tl: {
-    text: "Reach out to your TL and request to unflag the account.",
-    help: "Once the account is unflagged, proceed with rebilling using the same account.",
+  /* THIRD PARTY - SHIPPER */
+
+  third_party_shipper_find: {
+    text: "Search for another Shipper account that has the same SCAC/BU as the requested account.",
+    help: "Look for another shipping account with the same SCAC/Business Unit as the requested account.",
     choices: [
       {
         label: "Continue",
-        next: "dnu_rebill_unflagged",
+        next: "third_party_shipper_found",
         icon: "fa-solid fa-arrow-right",
-        desc: "Proceed after the TL has been contacted."
+        desc: "Proceed after checking for another Shipper account."
       }
     ]
   },
 
-  dnu_rebill_unflagged: {
-    text: "Proceed on rebilling the invoice using the suggested account for proper billing.",
-    help: "Use the account after unflagging is completed and proceed with proper billing.",
+  third_party_shipper_found: {
+    text: "Were you able to pull up another account?",
+    help: "Confirm whether another matching Shipper account was found.",
+    choices: [
+      {
+        label: "Yes",
+        next: "third_party_shipper_yes",
+        icon: "fa-solid fa-circle-check",
+        desc: "A matching account was found."
+      },
+      {
+        label: "No",
+        next: "third_party_shipper_no",
+        icon: "fa-solid fa-circle-xmark",
+        desc: "No matching account was found."
+      }
+    ]
+  },
+
+  third_party_shipper_yes: {
+    text: "Proceed on updating the shipping account using the account you found.",
+    help: "Use the matching Shipper account for the update.",
     choices: []
   },
 
-  dnu_advise_customer_flagged: {
-    text: "Advise the customer that the account is already flagged as DNU and provide the reason why it was flagged.",
-    help: "Do not bill the invoice to the DNU account if the comments do not support unflagging.",
+  third_party_shipper_no: {
+    text: "If no other shipping account is found, proceed with updating to terms which will match the Bill-to's SCAC.",
+    help: "Update the billing terms if no matching shipping account is available.",
+    choices: []
+  },
+
+  /* THIRD PARTY - CONSIGNEE */
+
+  third_party_consignee_find: {
+    text: "Search for another Consignee account that has the same SCAC/BU as the requested account.",
+    help: "Look for another Consignee account with the same SCAC/Business Unit as the requested account.",
+    choices: [
+      {
+        label: "Continue",
+        next: "third_party_consignee_found",
+        icon: "fa-solid fa-arrow-right",
+        desc: "Proceed after checking for another Consignee account."
+      }
+    ]
+  },
+
+  third_party_consignee_found: {
+    text: "Were you able to pull up another account?",
+    help: "Confirm whether another matching Consignee account was found.",
+    choices: [
+      {
+        label: "Yes",
+        next: "third_party_consignee_yes",
+        icon: "fa-solid fa-circle-check",
+        desc: "A matching account was found."
+      },
+      {
+        label: "No",
+        next: "third_party_consignee_no",
+        icon: "fa-solid fa-circle-xmark",
+        desc: "No matching account was found."
+      }
+    ]
+  },
+
+  third_party_consignee_yes: {
+    text: "Proceed on updating the shipping account using the account you found.",
+    help: "Use the matching Consignee account for the update.",
+    choices: []
+  },
+
+  third_party_consignee_no: {
+    text: "If no other consignee account is found, proceed with updating to terms which will match the Bill-to's SCAC.",
+    help: "Update the billing terms if no matching Consignee account is available.",
     choices: []
   }
 };
