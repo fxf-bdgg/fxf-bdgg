@@ -1,7 +1,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand-wrap">
-      <a data-link="index.html" class="brand">
+      <a href="index.html" data-link="index.html" class="brand">
         <div class="brand-meta">
           <span class="brand-kicker">Internal Platform</span>
           <span class="brand-title">Decision Support System</span>
@@ -9,10 +9,10 @@
       </a>
 
       <nav class="nav-tabs">
-        <a data-link="index.html" class="tab" data-page="home">Home</a>
-        <a data-link="case-directory.html" class="tab" data-page="case-directory">Case Directory</a>
-        <a data-link="ebs-response-template.html" class="tab" data-page="ebs-response">EBS Response</a>
-        <a data-link="volume-application.html" class="tab" data-page="volume-application">Volume Application</a>
+        <a href="index.html" data-link="index.html" class="tab" data-page="home">Home</a>
+        <a href="case-directory.html" data-link="case-directory.html" class="tab" data-page="case-directory">Case Directory</a>
+        <a href="ebs-response-template.html" data-link="ebs-response-template.html" class="tab" data-page="ebs-response">EBS Response</a>
+        <a href="volume-application.html" data-link="volume-application.html" class="tab" data-page="volume-application">Volume Application</a>
       </nav>
     </div>
 
@@ -48,24 +48,24 @@
 
   <div class="calendar-grid" id="calendarGrid"></div>
 
-  <button id="openTimeSettings" class="btn" style="margin-top:14px;">
-    <i class="fa-solid fa-gear"></i> Date & Time Settings
+  <button id="openTimeSettings" class="btn" type="button" style="margin-top:14px;">
+    <i class="fa-solid fa-gear"></i> Date &amp; Time Settings
   </button>
 </div>
 
 <div class="modal" id="timeSettingsModal">
-  <div class="modal-content">
+  <div class="modal-content" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <span>Date & Time Settings</span>
-      <div class="modal-close" id="closeTimeSettings">
+      <span>Date &amp; Time Settings</span>
+      <button type="button" class="modal-close" id="closeTimeSettings" aria-label="Close date and time settings">
         <i class="fa-solid fa-xmark"></i>
-      </div>
+      </button>
     </div>
 
     <p>Select your preferred time zone. This will update the clock across the system.</p>
 
     <div class="timezone-picker">
-      <label>Select Time Zone</label>
+      <label for="timezoneSelectSettings">Select Time Zone</label>
       <select id="timezoneSelectSettings">
         <option value="Asia/Manila">Philippines — Asia/Manila</option>
         <option value="Asia/Kolkata">India — Asia/Kolkata</option>
@@ -82,7 +82,7 @@
       </select>
     </div>
 
-    <button id="saveTimeSettings" class="btn" style="margin-top:16px;">
+    <button id="saveTimeSettings" class="btn" type="button" style="margin-top:16px;">
       Save Changes
     </button>
   </div>
@@ -107,12 +107,12 @@
     <textarea id="commentText" placeholder="Enter your comment..."></textarea>
     <p id="feedbackMessage" style="display:none; margin-top:12px; font-size:14px; font-weight:700;"></p>
 
-    <button class="btn feedback-submit-btn" onclick="sendComment()">
+    <button class="btn feedback-submit-btn" type="button" onclick="sendComment()">
       Send feedback <i class="fa-solid fa-paper-plane"></i>
     </button>
 
     <div class="feedback-bottom-link">
-      <span class="link-text" onclick="showAllComments()">View all comments & ratings</span>
+      <span class="link-text" onclick="showAllComments()">View all comments &amp; ratings</span>
     </div>
   </div>
 </div>
@@ -120,7 +120,7 @@
 <div id="allCommentsModal" class="modal">
   <div class="modal-content" onclick="event.stopPropagation()">
     <div class="modal-header">
-      All Ratings & Comments
+      All Ratings &amp; Comments
       <span class="modal-close" onclick="closeAllComments()">×</span>
     </div>
     <div id="commentsList"></div>
