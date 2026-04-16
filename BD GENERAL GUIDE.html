@@ -823,6 +823,19 @@
     border-color:#bbf7d0 !important;
   }
 
+  .template-tag{
+  cursor:pointer;
+  text-decoration:none;
+  transition:.2s ease;
+}
+
+.template-tag:hover{
+  background:#eef4ff;
+  border-color:#cfe0ff;
+  color:#1d4ed8;
+  transform:translateY(-1px);
+} 
+
   @media (max-width:1450px){
     .app-frame{
       grid-template-columns:minmax(0,1fr) 340px 360px;
@@ -1649,7 +1662,9 @@
                 </div>
 
                 <div class="template-foot">
-                  <span class="template-tag"><i class="fa-solid fa-hashtag"></i> Corr code</span>
+                  <a href="Correction Code Guide.html" target="_blank" class="template-tag">
+                  <i class="fa-solid fa-hashtag"></i> Open Corr Code
+                  </a>
                   <button class="template-copy" type="button" onclick="copyTemplateText('suggestedCorrCode', this)">Copy</button>
                 </div>
               </div>
@@ -1676,7 +1691,9 @@
                 </div>
 
                 <div class="template-foot">
-                  <span class="template-tag"><i class="fa-solid fa-paper-plane"></i> Email</span>
+                  <a href="ebs-response-template.html" target="_blank" class="template-tag">
+                  <i class="fa-solid fa-paper-plane"></i> Open EBS Response
+                  </a>
                   <button class="template-copy" type="button" onclick="copyTemplateText('suggestedEmail', this)">Copy</button>
                 </div>
               </div>
