@@ -722,16 +722,17 @@ select:disabled{opacity:.65;cursor:not-allowed;}
       statusPill.textContent = label;
     }
     
-function scrollToBuilder() {
-  const target = document.getElementById('ebsBuilder');
+window.scrollToBuilder = function () {
+  const target = document.getElementById("ebsBuilder");
   if (!target) return;
 
-  const y = target.getBoundingClientRect().top + window.pageYOffset - 20;
+  const y = target.getBoundingClientRect().top + window.scrollY - 20;
+
   window.scrollTo({
     top: y,
-    behavior: 'smooth'
+    behavior: "smooth"
   });
-}
+};
 
     function showToast(msg = "Copied!") {
       const toast = document.getElementById("toast");
