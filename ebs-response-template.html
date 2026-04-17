@@ -272,48 +272,6 @@ select:disabled{opacity:.65;cursor:not-allowed;}
 .helper-list{margin:0;padding-left:18px;color:#475569;line-height:1.8;font-size:14px;}
 .helper-list li + li{margin-top:4px;}
 
-/* modals */
-#commentModal,#allCommentsModal,#helpModal{
-  display:none;position:fixed;inset:0;background:rgba(2,6,23,.52);justify-content:center;align-items:center;
-  padding:0 24px;z-index:2147483647;backdrop-filter:blur(8px);overflow-y:auto;
-}
-#commentModal .modal-content,#allCommentsModal .modal-content,#helpModal .modal-content{
-  width:100%;background:#fff;border-radius:28px;padding:26px;box-shadow:0 24px 80px rgba(2,6,23,.18);
-  max-height:min(84vh, 900px);overflow:auto;border:1px solid rgba(148,163,184,.16);margin:110px auto 32px;
-}
-#commentModal .modal-content{max-width:640px;}
-#allCommentsModal .modal-content,#helpModal .modal-content{max-width:760px;}
-#commentModal .modal-header,#allCommentsModal .modal-header,#helpModal .modal-header{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:22px;font-weight:800;letter-spacing:-.03em;margin-bottom:14px;color:#0f172a;
-}
-.modal-close{cursor:pointer;width:40px;height:40px;border-radius:14px;display:grid;place-items:center;color:#64748b;background:#f8fafc;box-shadow:inset 0 0 0 1px rgba(148,163,184,.16);transition:.2s ease;flex-shrink:0;font-size:22px;line-height:1;}
-.modal-close:hover{color:#0f172a;background:#eef2ff;}
-.rating-container{display:flex;justify-content:center;gap:14px;margin:16px 0 18px;}
-.rating-star{cursor:pointer;font-size:26px;color:#d1d5db;transition:transform .18s ease, color .18s ease;}
-.rating-star:hover{transform:translateY(-1px) scale(1.06);}
-.rating-star.selected{color:#ff6600;}
-.comment-modal-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;}
-.link-text{color:#4d148c;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;}
-.link-text:hover{text-decoration:underline;}
-.comment-list-item{padding:14px 0;border-bottom:1px solid rgba(148,163,184,.18);}
-.comment-list-item:last-child{border-bottom:none;}
-.comment-list-item .stars{color:#ff6600;font-size:18px;margin-bottom:6px;display:block;}
-
-#timeCalendarPopup{
-  display:none;position:absolute;top:60px;right:20px;background:white;border-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.22);
-  padding:18px;width:320px;z-index:900;border:1px solid #e2e8f0;
-}
-.popup-time{font-size:34px;font-weight:700;text-align:left;margin-bottom:4px;color:#111827;letter-spacing:-.04em;}
-.popup-date{font-size:14px;color:#64748b;margin-bottom:14px;text-align:left;}
-.calendar-header{display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:10px 12px;border-radius:12px;}
-.calendar-header span{cursor:pointer;color:var(--accent-2);font-weight:700;}
-.calendar-title{font-weight:800;color:#0f172a;}
-.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px;}
-.calendar-grid .day-name{text-align:center;font-size:12px;font-weight:800;color:#64748b;}
-.calendar-grid .day{text-align:center;padding:8px 0;font-size:14px;border-radius:50%;}
-.calendar-grid .today{background:var(--accent-2);color:white;font-weight:700;}
-.calendar-grid .day:hover{background:#eef2ff;}
-
 #toast{
   position:fixed;right:24px;bottom:24px;z-index:99999;background:#111827;color:#fff;padding:12px 16px;border-radius:14px;
   box-shadow:0 16px 34px rgba(15,23,42,.18);opacity:0;transform:translateY(10px);pointer-events:none;transition:.22s ease;font-size:13px;font-weight:800;
@@ -622,64 +580,6 @@ select:disabled{opacity:.65;cursor:not-allowed;}
 
     <div id="site-footer"></div>
   </div>
-
-  <div id="helpModal" class="modal">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        Get Help <span class="modal-close" onclick="closeHelp()">×</span>
-      </div>
-      <p>Use this page to generate the correct EBS response based on concern and type.</p>
-      <ul class="helper-list">
-        <li><strong>Select Concern:</strong> Start with the main case concern.</li>
-        <li><strong>Select Type:</strong> Choose the exact response category tied to that concern.</li>
-        <li><strong>Copy or Launch:</strong> Copy the generated response or open it directly in Outlook.</li>
-        <li><strong>Review the note:</strong> Some entries include extra handling reminders.</li>
-      </ul>
-      <p>If a customer continues to reject the decision, consult your Team Lead or Training Team before sending another final response.</p>
-    </div>
-  </div>
-
-  <div id="commentModal" class="modal">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        How do you rate the tool? <span class="modal-close" onclick="closeComment()">×</span>
-      </div>
-      <div class="rating-container">
-        <i class="fa-solid fa-star rating-star" data-value="1"></i>
-        <i class="fa-solid fa-star rating-star" data-value="2"></i>
-        <i class="fa-solid fa-star rating-star" data-value="3"></i>
-        <i class="fa-solid fa-star rating-star" data-value="4"></i>
-        <i class="fa-solid fa-star rating-star" data-value="5"></i>
-      </div>
-      <input type="text" id="commentName" placeholder="Your Name (optional)">
-      <textarea id="commentText" placeholder="Enter your comment..."></textarea>
-      <div class="comment-modal-footer">
-        <button class="btn btn-primary" onclick="sendComment()"><i class="fa-solid fa-paper-plane"></i> Send</button>
-        <span class="link-text" onclick="showAllComments()">View all comments & ratings</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="allCommentsModal" class="modal">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-header">
-        All Ratings & Comments <span class="modal-close" onclick="closeAllComments()">×</span>
-      </div>
-      <div id="commentsList"></div>
-    </div>
-  </div>
-
-  <div id="timeCalendarPopup">
-    <div class="popup-time" id="popupTime"></div>
-    <div class="popup-date" id="popupDate"></div>
-    <div class="calendar-header">
-      <span id="prevMonth">‹</span>
-      <div id="monthYear" class="calendar-title"></div>
-      <span id="nextMonth">›</span>
-    </div>
-    <div class="calendar-grid" id="calendarGrid"></div>
-  </div>
-
   <div id="toast">Copied!</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
