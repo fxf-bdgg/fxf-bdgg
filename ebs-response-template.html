@@ -830,6 +830,24 @@ document.addEventListener("headerLoaded", () => {
   updateSnapshot();
   updateEmailLinks();
 });
+
+  document.addEventListener("headerLoaded", () => {
+  console.log("Header fully loaded");
+
+  // 🔥 Force rebind of header features
+  if (typeof initRatingStars === "function") {
+    initRatingStars();
+  }
+
+  // 🔥 Safety: ensure header buttons exist
+  const helpIcon = document.getElementById("helpIcon");
+  const commentIcon = document.getElementById("commentIcon");
+  const clockBtn = document.getElementById("clockBtn");
+
+  console.log("Help:", !!helpIcon);
+  console.log("Feedback:", !!commentIcon);
+  console.log("Clock:", !!clockBtn);
+});
 </script>
   </body>
   </html>
