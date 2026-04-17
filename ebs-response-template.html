@@ -1009,6 +1009,25 @@ body::after{
     width:100%;
   }
 }  
+
+  /* 🔥 Make modal buttons fit-content like index */
+#commentModal .btn,
+#helpModal .btn,
+#allCommentsModal .btn,
+#commentModal button:not(.modal-close),
+#helpModal button:not(.modal-close),
+#allCommentsModal button:not(.modal-close),
+#timeCalendarPopup button{
+  width:auto !important;
+  padding:0 20px;
+}
+  #timeCalendarPopup{
+  text-align:center;
+}
+
+#timeCalendarPopup button{
+  margin-top:10px;
+}
 </style>
 </head>
 <body data-page="ebs-response-template">
