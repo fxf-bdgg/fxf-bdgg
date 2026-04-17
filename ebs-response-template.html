@@ -589,7 +589,200 @@ select:disabled{opacity:.65;cursor:not-allowed;}
 <script src="assets/js/footer-loader.js"></script>
 
 <script>
-document.addEventListener("headerLoaded", () => {
+let ebsPageInitialized = false;
+let selectedRating = 0;
+let commentsUnsubscribe = null;
+let ratingStars = [];
+
+function initRatingStars() {
+  ratingStars = Array.from(document.querySelectorAll(".rating-star"));
+
+  ratingStars.forEach(star => {
+    star.addEventListener("click", () => {
+      selectedRating = Number(star.dataset.value);
+      ratingStars.forEach(s => {
+        s.classList.toggle("selected", Number(s.dataset.value) <= selectedRating);
+      });
+    });
+  });
+}
+
+function openAnimatedModal(modal) {
+  if (!modal) return;
+  modal.style.display = "flex";
+  modal.classList.remove("is-closing");
+
+  requestAnimationFrame(() => {
+    modal.classList.add("is-open");
+  });
+}
+
+function closeAnimatedModal(modal, onClosed) {
+  if (!modal) return;
+
+  modal.classList.remove("is-open");
+  modal.classList.add("is-closing");
+
+  setTimeout(() => {
+    modal.style.display = "none";
+    modal.classList.remove("is-closing");
+    if (typeof onClosed === "function") onClosed();
+  }, 220);
+}
+
+function openComment() {
+  const modal = document.getElementById("commentModal");
+  openAnimatedModal(modal);
+}
+
+function closeComment() {
+  const modal = document.getElementById("commentModal");
+  closeAnimatedModal(modal);
+}
+
+function openHelp() {
+  const modal = document.getElementById("helpModal");
+  openAnimatedModal(modal);
+}
+
+function closeHelp() {
+  const modal = document.getElementById("helpModal");
+  closeAnimatedModal(modal);
+}
+
+function closeAllComments() {
+  const modal = document.getElementById("allCommentsModal");
+
+  closeAnimatedModal(modal, () => {
+    if (commentsUnsubscribe) {
+      commentsUnsubscribe();
+      commentsUnsubscribe = null;
+    }
+  });
+}
+
+async function sendComment() {
+  const name = document.getElementById("commentName")?.value.trim() || "";
+  const comment = document.getElementById("commentText")?.value.trim() || "";
+  const message = document.getElementById("feedbackMessage");
+
+  if (!selectedRating) {
+    if (message) {
+      message.style.display = "block";
+      message.style.color = "#ef4444";
+      message.textContent = "Please select a star rating first.";
+    } else {
+      alert("Please select a star rating first.");
+    }
+    return;
+  }
+
+  try {
+    const db = firebase.firestore();
+
+    await db.collection("feedback").add({
+      rating: selectedRating,
+      name,
+      comment,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    if (message) {
+      message.style.display = "block";
+      message.style.color = "#16a34a";
+      message.textContent = "Thank you. Your feedback has been submitted.";
+    }
+
+    const nameInput = document.getElementById("commentName");
+    const commentInput = document.getElementById("commentText");
+
+    if (nameInput) nameInput.value = "";
+    if (commentInput) commentInput.value = "";
+
+    selectedRating = 0;
+    ratingStars.forEach(s => s.classList.remove("selected"));
+
+    setTimeout(() => {
+      if (message) message.style.display = "none";
+      closeComment();
+    }, 1200);
+  } catch (error) {
+    console.error(error);
+    if (message) {
+      message.style.display = "block";
+      message.style.color = "#ef4444";
+      message.textContent = "Something went wrong while sending feedback.";
+    } else {
+      alert("Something went wrong while sending feedback.");
+    }
+  }
+}
+
+function showAllComments() {
+  const commentModal = document.getElementById("commentModal");
+  const modal = document.getElementById("allCommentsModal");
+  const list = document.getElementById("commentsList");
+
+  if (!modal || !list) return;
+
+  list.innerHTML = "<p>Loading comments.</p>";
+
+  if (commentsUnsubscribe) commentsUnsubscribe();
+
+  const db = firebase.firestore();
+
+  const loadComments = () => {
+    openAnimatedModal(modal);
+
+    commentsUnsubscribe = db.collection("feedback")
+      .orderBy("createdAt", "desc")
+      .onSnapshot(snapshot => {
+        if (snapshot.empty) {
+          list.innerHTML = "<p>No comments yet.</p>";
+          return;
+        }
+
+        let html = "";
+        snapshot.forEach(doc => {
+          const item = doc.data();
+          const stars = "★".repeat(item.rating || 0) + "☆".repeat(5 - (item.rating || 0));
+          html += `
+            <div class="comment-list-item">
+              <span class="stars">${stars}</span>
+              <strong>${item.name || "Anonymous"}</strong>
+              <p style="margin:6px 0 0;">${item.comment || "No comment provided."}</p>
+            </div>
+          `;
+        });
+
+        list.innerHTML = html;
+      }, error => {
+        console.error(error);
+        list.innerHTML = "<p>Unable to load comments right now.</p>";
+      });
+  };
+
+  if (commentModal && commentModal.style.display === "flex") {
+    closeAnimatedModal(commentModal, loadComments);
+  } else {
+    loadComments();
+  }
+}
+
+window.addEventListener("click", (e) => {
+  const commentModal = document.getElementById("commentModal");
+  const allCommentsModal = document.getElementById("allCommentsModal");
+  const helpModal = document.getElementById("helpModal");
+
+  if (e.target === commentModal) closeComment();
+  if (e.target === allCommentsModal) closeAllComments();
+  if (e.target === helpModal) closeHelp();
+});
+
+function initEbsPage() {
+  if (ebsPageInitialized) return;
+  ebsPageInitialized = true;
+
   if (!firebase.apps.length) {
     firebase.initializeApp({
       apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
@@ -601,7 +794,6 @@ document.addEventListener("headerLoaded", () => {
     });
   }
 
-  const db = firebase.firestore();
   let DATA = [];
 
   const concernSelect = document.getElementById("concernSelect");
@@ -653,6 +845,7 @@ document.addEventListener("headerLoaded", () => {
   function normalizeRows(rows) {
     let lastConcern = "";
     let lastDesc = "";
+
     return rows.map(r => {
       r.Concern = (r.Concern || "").trim();
       r.Description = (r.Description || "").trim();
@@ -681,12 +874,14 @@ document.addEventListener("headerLoaded", () => {
   function populateConcernOptions(list) {
     const current = concernSelect.value;
     concernSelect.innerHTML = `<option value="">Select Concern</option>`;
+
     list.forEach(c => {
       const opt = document.createElement("option");
       opt.value = c;
       opt.textContent = c;
       concernSelect.appendChild(opt);
     });
+
     if (current && list.includes(current)) concernSelect.value = current;
     heroConcernCount.textContent = list.length;
   }
@@ -697,7 +892,11 @@ document.addEventListener("headerLoaded", () => {
       heroTypeCount.textContent = "—";
       return;
     }
-    const count = [...new Set(DATA.filter(r => r.Concern === concern).map(r => r.Type).filter(Boolean))].length;
+
+    const count = [...new Set(
+      DATA.filter(r => r.Concern === concern).map(r => r.Type).filter(Boolean)
+    )].length;
+
     heroTypeCount.textContent = count;
   }
 
@@ -727,6 +926,7 @@ document.addEventListener("headerLoaded", () => {
     const body = responseBox.value || "";
     const subject = encodeURIComponent(`${concern}${type ? " — " + type : ""}`);
     const encodedBody = encodeURIComponent(body);
+
     document.getElementById("outlookLink").href =
       `https://outlook.office.com/mail/deeplink/compose?subject=${subject}&body=${encodedBody}`;
   }
@@ -829,24 +1029,12 @@ document.addEventListener("headerLoaded", () => {
 
   updateSnapshot();
   updateEmailLinks();
-});
+}
 
-  document.addEventListener("headerLoaded", () => {
-  console.log("Header fully loaded");
-
-  // 🔥 Force rebind of header features
-  if (typeof initRatingStars === "function") {
-    initRatingStars();
-  }
-
-  // 🔥 Safety: ensure header buttons exist
-  const helpIcon = document.getElementById("helpIcon");
-  const commentIcon = document.getElementById("commentIcon");
-  const clockBtn = document.getElementById("clockBtn");
-
-  console.log("Help:", !!helpIcon);
-  console.log("Feedback:", !!commentIcon);
-  console.log("Clock:", !!clockBtn);
+document.addEventListener("DOMContentLoaded", initEbsPage);
+document.addEventListener("headerLoaded", () => {
+  initRatingStars();
+  initEbsPage();
 });
 </script>
   </body>
