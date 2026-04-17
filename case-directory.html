@@ -428,19 +428,16 @@ mark.search-highlight{
 
 /* Queue / Request clickable */
 .queue-link{
-  color:#4d148c;
+  color:#0f172a; /* same as table text */
   font-weight:800;
   cursor:pointer;
   text-decoration:none;
-  transition:.2s ease;
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
+  transition:.18s ease;
 }
 
 .queue-link:hover{
-  color:#6d28d9;
-  transform:translateX(2px);
+  color:#2563eb; /* light blue like index links */
+  text-decoration:underline;
 }
 
 .queue-link i{
@@ -449,115 +446,43 @@ mark.search-highlight{
 }
 
 /* Premium detail modal */
-.detail-modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(2,6,23,.52);
-  justify-content:center;
-  align-items:center;
-  padding:24px;
-  z-index:2147483647;
-  backdrop-filter:blur(8px);
-}
-
-.detail-modal.is-open .detail-modal-content{
-  opacity:1;
-  transform:translateY(0) scale(1);
-}
-
-.detail-modal.is-closing .detail-modal-content{
-  opacity:0;
-  transform:translateY(10px) scale(.985);
-}
-
-.detail-modal-content{
-  width:100%;
-  max-width:920px;
-  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
-  border:1px solid #dbe4f0;
-  border-radius:30px;
-  padding:24px;
-  box-shadow:0 30px 80px rgba(2,6,23,.18);
-  position:relative;
-  overflow:hidden;
-  opacity:0;
-  transform:translateY(10px) scale(.985);
-  transition:opacity .22s ease, transform .22s ease;
-}
-
-.detail-modal-content::before{
-  content:"";
-  position:absolute;
-  left:18px;
-  right:18px;
-  top:0;
-  height:4px;
-  border-radius:0 0 999px 999px;
-  background:linear-gradient(90deg, #4d148c, #7c3aed, #ff6600);
-}
-
-.detail-modal-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:16px;
-  margin-bottom:18px;
-  font-size:24px;
-  font-weight:900;
-  letter-spacing:-.03em;
-  color:#0f172a;
-}
-
-.detail-grid{
+.detail-table{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
+  grid-template-columns:repeat(5, 1fr);
+  gap:12px;
 }
 
-.detail-item{
+.detail-col{
   background:#f8fafc;
   border:1px solid #e5edf6;
-  border-radius:20px;
-  padding:16px;
-}
-
-.detail-item-full{
-  grid-column:1 / -1;
+  border-radius:18px;
+  padding:14px;
+  min-height:100px;
+  display:flex;
+  flex-direction:column;
 }
 
 .detail-label{
-  display:block;
-  font-size:12px;
+  font-size:11px;
   font-weight:900;
   color:#64748b;
   letter-spacing:.08em;
   text-transform:uppercase;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 
-.detail-value{
-  color:#0f172a;
+.detail-col div{
   font-size:14px;
-  line-height:1.75;
+  color:#0f172a;
+  line-height:1.7;
   white-space:pre-wrap;
   word-break:break-word;
 }
-
-@media (max-width:760px){
-  .detail-grid{
+  @media (max-width:1000px){
+  .detail-table{
     grid-template-columns:1fr;
   }
-
-  .detail-modal{
-    padding:14px;
-  }
-
-  .detail-modal-content{
-    padding:20px;
-    border-radius:24px;
-  }
-}  
+}
 </style>
 </head>
 <body data-page="case-directory">
@@ -1191,39 +1116,41 @@ document.addEventListener("headerLoaded", () => {
   initCaseDirectoryPage();
 });
 </script>
-  <div id="caseDetailModal" class="modal detail-modal">
+<div id="caseDetailModal" class="modal detail-modal">
   <div class="modal-content detail-modal-content" onclick="event.stopPropagation()">
+
     <div class="modal-header detail-modal-header">
       <span>Case Directory Detail</span>
       <span class="modal-close" onclick="closeCaseDetail()">×</span>
     </div>
 
-    <div class="detail-grid">
-      <div class="detail-item">
+    <div class="detail-table">
+      <div class="detail-col">
         <span class="detail-label">Queue / Request</span>
-        <div class="detail-value" id="detailQueue"></div>
+        <div id="detailQueue"></div>
       </div>
 
-      <div class="detail-item">
+      <div class="detail-col">
         <span class="detail-label">Concern</span>
-        <div class="detail-value" id="detailConcern"></div>
+        <div id="detailConcern"></div>
       </div>
 
-      <div class="detail-item">
+      <div class="detail-col">
         <span class="detail-label">Action</span>
-        <div class="detail-value" id="detailAction"></div>
+        <div id="detailAction"></div>
       </div>
 
-      <div class="detail-item">
+      <div class="detail-col">
         <span class="detail-label">Email Address</span>
-        <div class="detail-value" id="detailEmail"></div>
+        <div id="detailEmail"></div>
       </div>
 
-      <div class="detail-item detail-item-full">
+      <div class="detail-col">
         <span class="detail-label">Case Assignment / Email</span>
-        <div class="detail-value" id="detailAssignment"></div>
+        <div id="detailAssignment"></div>
       </div>
     </div>
+
   </div>
 </div>
 </body>
