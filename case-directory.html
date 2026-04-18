@@ -1,407 +1,407 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>BD Tools — Case Directory</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<link rel="stylesheet" href="assets/css/header-footer-style.css">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-<style>
-:root{
-  --bg:#07111f;
-  --bg-soft:#0c1728;
-  --panel:#0f1c31;
-  --panel-2:#12233d;
-  --card:#ffffff;
-  --card-soft:#f8fafc;
-  --text:#0f172a;
-  --text-soft:#475569;
-  --muted:#94a3b8;
-  --line:rgba(148,163,184,.18);
-  --white-line:rgba(255,255,255,.08);
-  --accent:#6d28d9;
-  --accent-2:#4d148c;
-  --accent-3:#ff6600;
-  --success:#16a34a;
-  --warning:#f59e0b;
-  --danger:#ef4444;
-  --shadow-xl:0 24px 80px rgba(2,6,23,.18);
-  --shadow-lg:0 18px 48px rgba(2,6,23,.12);
-  --shadow-md:0 10px 28px rgba(15,23,42,.10);
-  --shadow-card:0 16px 40px rgba(15,23,42,.06);
-  --radius-xl:28px;
-  --radius-lg:20px;
-  --radius-md:16px;
-  --radius-sm:12px;
-  --max:1500px;
-  font-family:"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-}
-
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-a{color:inherit}
-button,input,textarea,select{font:inherit}
-
-body{
-  margin:0;
-  min-height:100vh;
-  color:var(--text);
-  overflow-x:hidden;
-  background:#eef4fb;
-}
-
-body::before{
-  content:"";
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  background:
-    radial-gradient(circle at top left, rgba(109,40,217,.24), transparent 28%),
-    radial-gradient(circle at top right, rgba(255,102,0,.14), transparent 22%),
-    linear-gradient(180deg, #091120 0%, #0b1525 38%, #eef4fb 38%, #f5f8fc 100%);
-  pointer-events:none;
-}
-
-body::after{
-  content:"";
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  background:
-    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
-  background-size:36px 36px;
-  mask-image:linear-gradient(to bottom, rgba(0,0,0,.45), transparent 42%);
-}
-
-.page{position:relative;z-index:1}
-.container{width:min(calc(100% - 32px), var(--max));margin:0 auto}
-
-/* Hero */
-.hero-wrap{padding:28px 0 18px}
-.hero{
-  position:relative;
-  overflow:hidden;
-  border-radius:36px;
-  background:
-    radial-gradient(circle at 85% 20%, rgba(255,102,0,.24), transparent 18%),
-    radial-gradient(circle at 15% 18%, rgba(255,255,255,.16), transparent 20%),
-    linear-gradient(135deg, #4d148c 0%, #5b1aae 46%, #1e293b 100%);
-  box-shadow:var(--shadow-xl);
-  border:1px solid rgba(255,255,255,.12);
-}
-.hero::before,
-.hero::after{content:"";position:absolute;border-radius:999px;pointer-events:none}
-.hero::before{
-  width:420px;height:420px;top:-220px;right:-120px;
-  background:radial-gradient(circle, rgba(255,255,255,.18), transparent 62%);
-}
-.hero::after{
-  width:280px;height:280px;bottom:-160px;left:-80px;
-  background:radial-gradient(circle, rgba(255,102,0,.18), transparent 65%);
-}
-.hero-grid{
-  position:relative;z-index:1;
-  display:grid;
-  grid-template-columns:minmax(0,1.25fr) minmax(300px,.82fr);
-  gap:22px;
-  align-items:stretch;
-  padding:32px;
-}
-.eyebrow{
-  display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;
-  background:rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:700;
-  letter-spacing:.10em;text-transform:uppercase;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
-  margin-bottom:18px;
-}
-.hero h1{
-  margin:0;color:#fff;font-size:clamp(2.1rem, 4vw, 3.65rem);line-height:.98;
-  letter-spacing:-.05em;max-width:760px;
-}
-.hero p{
-  margin:16px 0 22px;color:rgba(255,255,255,.82);font-size:16px;line-height:1.7;max-width:760px;
-}
-.hero-stats{
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px;
-}
-.stat-card{
-  border-radius:20px;padding:18px 18px 16px;background:rgba(255,255,255,.10);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);backdrop-filter:blur(10px);
-}
-.stat-value{color:#fff;font-size:26px;font-weight:800;letter-spacing:-.04em;margin-bottom:6px}
-.stat-label{color:rgba(255,255,255,.7);font-size:13px;line-height:1.45}
-.hero-cta{
-  border:none;padding:14px 22px;border-radius:999px;background:#ffffff;color:#4d148c;
-  font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.15);
-  transition:all .2s ease;display:inline-flex;align-items:center;gap:8px;animation:fadeUp .6s ease;
-}
-.hero-cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.2)}
-.hero-side{display:flex;flex-direction:column;gap:16px;min-width:0}
-.quick-panel{
-  background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
-  border-radius:28px;padding:22px;backdrop-filter:blur(12px);height:100%;
-  display:flex;flex-direction:column;justify-content:space-between;
-}
-.panel-title{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff;font-weight:700;font-size:18px;margin-bottom:14px;
-}
-.panel-title span:last-child{color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.quick-list{display:grid;gap:12px;margin:0;padding:0;list-style:none}
-.quick-item{
-  display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:18px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
-}
-.quick-icon{
-  width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
-  background:linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.08));color:#fff;flex-shrink:0;
-}
-.quick-item strong{display:block;color:#fff;font-size:14px;margin-bottom:4px}
-.quick-item span{display:block;color:rgba(255,255,255,.7);font-size:13px;line-height:1.45}
-.live-strip{
-  display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;padding:14px 16px;
-  border-radius:18px;background:rgba(7,17,31,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;
-}
-.live-strip strong{display:block;font-size:14px;margin-bottom:4px}
-.live-strip span{color:rgba(255,255,255,.68);font-size:13px}
-.pulse{width:12px;height:12px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:pulse 1.9s infinite;flex-shrink:0}
-
-@keyframes pulse{
-  0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}
-  70%{box-shadow:0 0 0 16px rgba(34,197,94,0)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
-}
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* Search */
-.search-card{
-  background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);
-  box-shadow:var(--shadow-lg);border-radius:28px;padding:18px;
-}
-.search-input-wrap{position:relative}
-.search-input-wrap i{
-  position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#64748b;font-size:16px;pointer-events:none;
-}
-#directorySearch{
-  width:100%;border:none;outline:none;border-radius:18px;background:#f8fafc;min-height:60px;padding:0 54px 0 50px;
-  font-size:16px;font-weight:600;color:#0f172a;box-shadow:inset 0 0 0 1px rgba(148,163,184,.22);transition:.2s ease;
-}
-#directorySearch:focus{background:#fff;box-shadow:inset 0 0 0 2px rgba(77,20,140,.18), 0 0 0 6px rgba(77,20,140,.08)}
-#directorySearch::placeholder{color:#94a3b8;font-weight:500}
-#clearSearchBtn{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:none;border-radius:999px;
-  background:#e2e8f0;color:#475569;font-size:18px;font-weight:700;cursor:pointer;display:none;transition:.2s ease;
-}
-#clearSearchBtn:hover{background:#cbd5e1;color:#0f172a}
-.search-btn{
-  border:none;min-height:60px;padding:0 22px;border-radius:18px;background:linear-gradient(135deg, #ff6600, #ff7b22);
-  color:#fff;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 16px 28px rgba(255,102,0,.22);transition:.22s ease;
-}
-.search-btn:hover{transform:translateY(-2px);box-shadow:0 20px 34px rgba(255,102,0,.28)}
-mark.search-highlight{
-  background:#fef08a;color:#0f172a;padding:0 2px;border-radius:4px;
-}
-
-/* Workspace */
-.workspace-wrap{padding:8px 0 58px;position:relative;z-index:1}
-.workspace-wrap::before{
-  content:"";position:absolute;top:22px;left:50%;width:min(1320px, calc(100% - 80px));height:92%;transform:translateX(-50%);
-  border-radius:42px;background:radial-gradient(circle at top center, rgba(109,40,217,.12), transparent 38%), linear-gradient(180deg, rgba(255,255,255,.62), rgba(248,250,252,.42));
-  filter:blur(8px);z-index:-1;
-}
-.app-frame{
-  min-height:calc(100vh - 180px);
-  background:rgba(255,255,255,.58);
-  backdrop-filter:blur(16px);
-  border:1px solid rgba(255,255,255,.68);
-  border-radius:34px;
-  box-shadow:var(--shadow-xl);
-  overflow:hidden;
-  display:grid;
-  grid-template-columns:minmax(0,1.45fr) 390px;
-}
-.main{padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
-.main-topbar{
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-  padding:16px 18px;
-  border-radius:24px;
-  background:rgba(255,255,255,.85);
-  border:1px solid rgba(219,228,240,.9);
-  box-shadow:var(--shadow-md);
-}
-.topbar-header-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:12px;
-}
-.page-title-block{display:flex;flex-direction:column;gap:6px}
-.page-title-block h2{margin:0;font-size:24px;font-weight:900;letter-spacing:-.03em;color:#0f172a}
-.page-subtitle{margin:0;font-size:13px;color:#64748b;line-height:1.6;max-width:680px}
-.pill{
-  display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border-radius:999px;background:#fff;border:1px solid #dbe4f0;font-size:12px;font-weight:800;color:#0f172a;
-}
-.pill.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none}
-
-.directory-inline-search{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:14px;
-  align-items:center;
-}
-
-.tool-card,.summary-card{
-  background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);border:1px solid #dbe4f0;border-radius:28px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;
-}
-.tool-card::before,.summary-card::before{
-  content:"";position:absolute;left:18px;right:18px;top:0;height:4px;border-radius:0 0 999px 999px;background:linear-gradient(90deg, #4d148c, #7c3aed, #ff6600);opacity:.98;
-}
-.tool-card{padding:22px}
-.summary-card{padding:18px}
-.section-head-inline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
-.badge{
-  display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:linear-gradient(180deg, #f8f6ff, #f1ecff);
-  color:#5b21b6;font-size:12px;font-weight:800;letter-spacing:.02em;border:1px solid #ece5ff;box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
-}
-.guide-icon{
-  width:46px;height:46px;border-radius:16px;display:grid;place-items:center;color:#5b21b6;background:linear-gradient(180deg, rgba(91,33,182,.08), rgba(255,102,0,.08));box-shadow:inset 0 0 0 1px rgba(91,33,182,.08);font-size:17px;flex-shrink:0;
-}
-.card-title{margin:10px 0 8px;font-size:20px;font-weight:900;letter-spacing:-.03em;color:#111827}
-.card-lead{margin:0 0 18px;color:#516173;font-size:14px;line-height:1.72}
-
-#directoryWorkspace .table-wrap{
-  max-height:620px;overflow:auto;border:1px solid #e4ebf5;border-radius:22px;background:#fff;
-}
-#directoryWorkspace table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
-#directoryWorkspace thead th{
-  position:sticky;top:0;z-index:5;background:#f8fafc;color:#475569;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;
-  padding:16px 14px;border-bottom:1px solid #e2e8f0;text-align:left;
-}
-#directoryWorkspace tbody td{
-  padding:16px 14px;vertical-align:top;border-bottom:1px solid #eef2f7;color:#0f172a;font-size:14px;line-height:1.6;
-}
-#directoryWorkspace tbody tr:nth-child(odd){background:#fcfdff}
-#directoryWorkspace tbody tr:hover{background:#f8fbff}
-#directoryWorkspace tbody td:first-child{font-weight:800}
-#directoryWorkspace pre{
-  margin:0;background:#f8fafc;border:1px solid #e7edf4;border-radius:12px;padding:10px 12px;white-space:pre-wrap;font-family:inherit;color:#334155;
-}
-#directoryWorkspace .empty-state{
-  text-align:center;padding:34px 20px;color:#64748b;
-}
-.side-panel{padding:18px 18px 18px 0;display:flex;flex-direction:column;gap:14px;min-width:0}
-.summary-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px;font-weight:900}
-.summary-head i{color:#7c3aed}
-.section-note{font-size:12px;color:#64748b;line-height:1.6;margin-top:-2px}
-.quick-stat{
-  padding:14px;border-radius:18px;background:#f8fafc;border:1px solid #e7edf4;
-}
-.quick-stat + .quick-stat{margin-top:10px}
-.quick-label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#64748b;font-weight:800;margin-bottom:6px}
-.quick-value{font-size:18px;font-weight:900;letter-spacing:-.03em;word-break:break-word}
-.helper-text{font-size:13px;color:#64748b;line-height:1.7}
-.helper-list{margin:0;padding-left:18px;color:#475569;line-height:1.8;font-size:14px}
-.helper-list li + li{margin-top:4px}
-.side-card.reminder-card{
-  background:linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
-  border:1px solid rgba(255,102,0,.25);
-}
-.side-card.reminder-card .badge{
-  background:#fff1e6;border:1px solid rgba(255,102,0,.25);color:#c2410c;
-}
-.side-card.reminder-card .work-top i{color:#ff6600}
-.side-card.reminder-card .helper-list,
-.side-card.reminder-card .helper-text{color:#0f172a}
-.side-card.reminder-card li::marker{color:#0f172a}
-
-#toast{
-  position:fixed;right:24px;bottom:24px;z-index:99999;background:#111827;color:#fff;padding:12px 16px;border-radius:14px;
-  box-shadow:0 16px 34px rgba(15,23,42,.18);opacity:0;transform:translateY(10px);pointer-events:none;transition:.22s ease;font-size:13px;font-weight:800;
-}
-
-/* Shared modal/button styling restore */
-#commentModal .btn,
-#allCommentsModal .btn,
-#helpModal .btn,
-#commentModal button:not(.modal-close),
-#allCommentsModal button:not(.modal-close),
-#helpModal button:not(.modal-close){
-  display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 18px;border-radius:17px;text-decoration:none;font-weight:800;border:none;cursor:pointer;transition:.22s ease;width:100%;
-}
-#commentModal .btn-primary,
-#helpModal .btn-primary,
-#allCommentsModal .btn-primary,
-#commentModal button:not(.modal-close),
-#helpModal button:not(.modal-close),
-#allCommentsModal button:not(.modal-close){
-  background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%);
-  color:#fff;
-  box-shadow:0 14px 24px rgba(77,20,140,.16);
-}
-#commentModal .btn-primary:hover,
-#helpModal .btn-primary:hover,
-#allCommentsModal .btn-primary:hover,
-#commentModal button:not(.modal-close):hover,
-#helpModal button:not(.modal-close):hover,
-#allCommentsModal button:not(.modal-close):hover{
-  transform:translateY(-2px);box-shadow:0 18px 30px rgba(77,20,140,.22);
-}
-.comment-modal-footer{
-  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
-}
-.link-text{
-  color:#4d148c;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;
-}
-.link-text:hover{text-decoration:underline}
-#commentsList .stars{color:#ff6600;font-size:18px;margin-bottom:6px;display:block}
-#timeCalendarPopup .settings-btn,
-#timeCalendarPopup .time-settings-btn,
-#timeCalendarPopup button:last-of-type{
-  display:flex !important;align-items:center;justify-content:center;gap:10px;width:100% !important;min-height:50px;padding:0 18px;border:none;border-radius:17px;
-  background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%) !important;color:#fff !important;font-weight:800;text-decoration:none;cursor:pointer;
-  box-shadow:0 14px 24px rgba(77,20,140,.16);transition:.22s ease;
-}
-#timeCalendarPopup .settings-btn:hover,
-#timeCalendarPopup .time-settings-btn:hover,
-#timeCalendarPopup button:last-of-type:hover{
-  transform:translateY(-2px);box-shadow:0 18px 30px rgba(77,20,140,.22);
-}
-#timeSettingsModal select,
-#timezoneModal select,
-#dateTimeSettingsModal select{
-  width:100%;min-height:46px;border:none;outline:none;border-radius:16px;background:#f8fafc;box-shadow:inset 0 0 0 1px rgba(148,163,184,.18);padding:0 16px;color:#0f172a;font-size:14px;appearance:auto;
-}
-#timeSettingsModal select:focus,
-#timezoneModal select:focus,
-#dateTimeSettingsModal select:focus{
-  background:#fff;box-shadow:inset 0 0 0 2px rgba(77,20,140,.16), 0 0 0 5px rgba(77,20,140,.06);
-}
-#timeSettingsModal .btn,
-#timezoneModal .btn,
-#dateTimeSettingsModal .btn,
-#timeSettingsModal button:not(.modal-close),
-#timezoneModal button:not(.modal-close),
-#dateTimeSettingsModal button:not(.modal-close){
-  display:flex !important;align-items:center;justify-content:center;width:100% !important;min-height:50px;padding:0 18px;border:none;border-radius:17px;background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%) !important;color:#fff !important;font-weight:800;text-decoration:none;cursor:pointer;box-shadow:0 14px 24px rgba(77,20,140,.16);transition:.22s ease;margin-top:18px;
-}
-#timeSettingsModal .btn:hover,
-#timezoneModal .btn:hover,
-#dateTimeSettingsModal .btn:hover,
-#timeSettingsModal button:not(.modal-close):hover,
-#timezoneModal button:not(.modal-close):hover,
-#dateTimeSettingsModal button:not(.modal-close):hover{
-  transform:translateY(-2px);box-shadow:0 18px 30px rgba(77,20,140,.22);
-}
-
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BD Tools — Case Directory</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/header-footer-style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <style>
+  :root{
+    --bg:#07111f;
+    --bg-soft:#0c1728;
+    --panel:#0f1c31;
+    --panel-2:#12233d;
+    --card:#ffffff;
+    --card-soft:#f8fafc;
+    --text:#0f172a;
+    --text-soft:#475569;
+    --muted:#94a3b8;
+    --line:rgba(148,163,184,.18);
+    --white-line:rgba(255,255,255,.08);
+    --accent:#6d28d9;
+    --accent-2:#4d148c;
+    --accent-3:#ff6600;
+    --success:#16a34a;
+    --warning:#f59e0b;
+    --danger:#ef4444;
+    --shadow-xl:0 24px 80px rgba(2,6,23,.18);
+    --shadow-lg:0 18px 48px rgba(2,6,23,.12);
+    --shadow-md:0 10px 28px rgba(15,23,42,.10);
+    --shadow-card:0 16px 40px rgba(15,23,42,.06);
+    --radius-xl:28px;
+    --radius-lg:20px;
+    --radius-md:16px;
+    --radius-sm:12px;
+    --max:1500px;
+    font-family:"Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  a{color:inherit}
+  button,input,textarea,select{font:inherit}
+  
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--text);
+    overflow-x:hidden;
+    background:#eef4fb;
+  }
+  
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background:
+      radial-gradient(circle at top left, rgba(109,40,217,.24), transparent 28%),
+      radial-gradient(circle at top right, rgba(255,102,0,.14), transparent 22%),
+      linear-gradient(180deg, #091120 0%, #0b1525 38%, #eef4fb 38%, #f5f8fc 100%);
+    pointer-events:none;
+  }
+  
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size:36px 36px;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,.45), transparent 42%);
+  }
+  
+  .page{position:relative;z-index:1}
+  .container{width:min(calc(100% - 32px), var(--max));margin:0 auto}
+  
+  /* Hero */
+  .hero-wrap{padding:28px 0 18px}
+  .hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:36px;
+    background:
+      radial-gradient(circle at 85% 20%, rgba(255,102,0,.24), transparent 18%),
+      radial-gradient(circle at 15% 18%, rgba(255,255,255,.16), transparent 20%),
+      linear-gradient(135deg, #4d148c 0%, #5b1aae 46%, #1e293b 100%);
+    box-shadow:var(--shadow-xl);
+    border:1px solid rgba(255,255,255,.12);
+  }
+  .hero::before,
+  .hero::after{content:"";position:absolute;border-radius:999px;pointer-events:none}
+  .hero::before{
+    width:420px;height:420px;top:-220px;right:-120px;
+    background:radial-gradient(circle, rgba(255,255,255,.18), transparent 62%);
+  }
+  .hero::after{
+    width:280px;height:280px;bottom:-160px;left:-80px;
+    background:radial-gradient(circle, rgba(255,102,0,.18), transparent 65%);
+  }
+  .hero-grid{
+    position:relative;z-index:1;
+    display:grid;
+    grid-template-columns:minmax(0,1.25fr) minmax(300px,.82fr);
+    gap:22px;
+    align-items:stretch;
+    padding:32px;
+  }
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;
+    background:rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:700;
+    letter-spacing:.10em;text-transform:uppercase;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+    margin-bottom:18px;
+  }
+  .hero h1{
+    margin:0;color:#fff;font-size:clamp(2.1rem, 4vw, 3.65rem);line-height:.98;
+    letter-spacing:-.05em;max-width:760px;
+  }
+  .hero p{
+    margin:16px 0 22px;color:rgba(255,255,255,.82);font-size:16px;line-height:1.7;max-width:760px;
+  }
+  .hero-stats{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:22px;
+  }
+  .stat-card{
+    border-radius:20px;padding:18px 18px 16px;background:rgba(255,255,255,.10);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);backdrop-filter:blur(10px);
+  }
+  .stat-value{color:#fff;font-size:26px;font-weight:800;letter-spacing:-.04em;margin-bottom:6px}
+  .stat-label{color:rgba(255,255,255,.7);font-size:13px;line-height:1.45}
+  .hero-cta{
+    border:none;padding:14px 22px;border-radius:999px;background:#ffffff;color:#4d148c;
+    font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 10px 24px rgba(0,0,0,.15);
+    transition:all .2s ease;display:inline-flex;align-items:center;gap:8px;animation:fadeUp .6s ease;
+  }
+  .hero-cta:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.2)}
+  .hero-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+  .quick-panel{
+    background:rgba(255,255,255,.10);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+    border-radius:28px;padding:22px;backdrop-filter:blur(12px);height:100%;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .panel-title{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff;font-weight:700;font-size:18px;margin-bottom:14px;
+  }
+  .panel-title span:last-child{color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .quick-list{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+  .quick-item{
+    display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:18px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .quick-icon{
+    width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
+    background:linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.08));color:#fff;flex-shrink:0;
+  }
+  .quick-item strong{display:block;color:#fff;font-size:14px;margin-bottom:4px}
+  .quick-item span{display:block;color:rgba(255,255,255,.7);font-size:13px;line-height:1.45}
+  .live-strip{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:16px;padding:14px 16px;
+    border-radius:18px;background:rgba(7,17,31,.24);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:#fff;
+  }
+  .live-strip strong{display:block;font-size:14px;margin-bottom:4px}
+  .live-strip span{color:rgba(255,255,255,.68);font-size:13px}
+  .pulse{width:12px;height:12px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.55);animation:pulse 1.9s infinite;flex-shrink:0}
+  
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(34,197,94,.55)}
+    70%{box-shadow:0 0 0 16px rgba(34,197,94,0)}
+    100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+  }
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(10px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  
+  /* Search */
+  .search-card{
+    background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);
+    box-shadow:var(--shadow-lg);border-radius:28px;padding:18px;
+  }
+  .search-input-wrap{position:relative}
+  .search-input-wrap i{
+    position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#64748b;font-size:16px;pointer-events:none;
+  }
+  #directorySearch{
+    width:100%;border:none;outline:none;border-radius:18px;background:#f8fafc;min-height:60px;padding:0 54px 0 50px;
+    font-size:16px;font-weight:600;color:#0f172a;box-shadow:inset 0 0 0 1px rgba(148,163,184,.22);transition:.2s ease;
+  }
+  #directorySearch:focus{background:#fff;box-shadow:inset 0 0 0 2px rgba(77,20,140,.18), 0 0 0 6px rgba(77,20,140,.08)}
+  #directorySearch::placeholder{color:#94a3b8;font-weight:500}
+  #clearSearchBtn{
+    position:absolute;right:14px;top:50%;transform:translateY(-50%);width:32px;height:32px;border:none;border-radius:999px;
+    background:#e2e8f0;color:#475569;font-size:18px;font-weight:700;cursor:pointer;display:none;transition:.2s ease;
+  }
+  #clearSearchBtn:hover{background:#cbd5e1;color:#0f172a}
+  .search-btn{
+    border:none;min-height:60px;padding:0 22px;border-radius:18px;background:linear-gradient(135deg, #ff6600, #ff7b22);
+    color:#fff;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 16px 28px rgba(255,102,0,.22);transition:.22s ease;
+  }
+  .search-btn:hover{transform:translateY(-2px);box-shadow:0 20px 34px rgba(255,102,0,.28)}
+  mark.search-highlight{
+    background:#fef08a;color:#0f172a;padding:0 2px;border-radius:4px;
+  }
+  
+  /* Workspace */
+  .workspace-wrap{padding:8px 0 58px;position:relative;z-index:1}
+  .workspace-wrap::before{
+    content:"";position:absolute;top:22px;left:50%;width:min(1320px, calc(100% - 80px));height:92%;transform:translateX(-50%);
+    border-radius:42px;background:radial-gradient(circle at top center, rgba(109,40,217,.12), transparent 38%), linear-gradient(180deg, rgba(255,255,255,.62), rgba(248,250,252,.42));
+    filter:blur(8px);z-index:-1;
+  }
+  .app-frame{
+    min-height:calc(100vh - 180px);
+    background:rgba(255,255,255,.58);
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.68);
+    border-radius:34px;
+    box-shadow:var(--shadow-xl);
+    overflow:hidden;
+    display:grid;
+    grid-template-columns:minmax(0,1.45fr) 390px;
+  }
+  .main{padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+  .main-topbar{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    padding:16px 18px;
+    border-radius:24px;
+    background:rgba(255,255,255,.85);
+    border:1px solid rgba(219,228,240,.9);
+    box-shadow:var(--shadow-md);
+  }
+  .topbar-header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:12px;
+  }
+  .page-title-block{display:flex;flex-direction:column;gap:6px}
+  .page-title-block h2{margin:0;font-size:24px;font-weight:900;letter-spacing:-.03em;color:#0f172a}
+  .page-subtitle{margin:0;font-size:13px;color:#64748b;line-height:1.6;max-width:680px}
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border-radius:999px;background:#fff;border:1px solid #dbe4f0;font-size:12px;font-weight:800;color:#0f172a;
+  }
+  .pill.primary{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none}
+  
+  .directory-inline-search{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:14px;
+    align-items:center;
+  }
+  
+  .tool-card,.summary-card{
+    background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);border:1px solid #dbe4f0;border-radius:28px;box-shadow:var(--shadow-card);position:relative;overflow:hidden;
+  }
+  .tool-card::before,.summary-card::before{
+    content:"";position:absolute;left:18px;right:18px;top:0;height:4px;border-radius:0 0 999px 999px;background:linear-gradient(90deg, #4d148c, #7c3aed, #ff6600);opacity:.98;
+  }
+  .tool-card{padding:22px}
+  .summary-card{padding:18px}
+  .section-head-inline{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .badge{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:linear-gradient(180deg, #f8f6ff, #f1ecff);
+    color:#5b21b6;font-size:12px;font-weight:800;letter-spacing:.02em;border:1px solid #ece5ff;box-shadow:inset 0 1px 0 rgba(255,255,255,.85);
+  }
+  .guide-icon{
+    width:46px;height:46px;border-radius:16px;display:grid;place-items:center;color:#5b21b6;background:linear-gradient(180deg, rgba(91,33,182,.08), rgba(255,102,0,.08));box-shadow:inset 0 0 0 1px rgba(91,33,182,.08);font-size:17px;flex-shrink:0;
+  }
+  .card-title{margin:10px 0 8px;font-size:20px;font-weight:900;letter-spacing:-.03em;color:#111827}
+  .card-lead{margin:0 0 18px;color:#516173;font-size:14px;line-height:1.72}
+  
+  #directoryWorkspace .table-wrap{
+    max-height:620px;overflow:auto;border:1px solid #e4ebf5;border-radius:22px;background:#fff;
+  }
+  #directoryWorkspace table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+  #directoryWorkspace thead th{
+    position:sticky;top:0;z-index:5;background:#f8fafc;color:#475569;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;
+    padding:16px 14px;border-bottom:1px solid #e2e8f0;text-align:left;
+  }
+  #directoryWorkspace tbody td{
+    padding:16px 14px;vertical-align:top;border-bottom:1px solid #eef2f7;color:#0f172a;font-size:14px;line-height:1.6;
+  }
+  #directoryWorkspace tbody tr:nth-child(odd){background:#fcfdff}
+  #directoryWorkspace tbody tr:hover{background:#f8fbff}
+  #directoryWorkspace tbody td:first-child{font-weight:800}
+  #directoryWorkspace pre{
+    margin:0;background:#f8fafc;border:1px solid #e7edf4;border-radius:12px;padding:10px 12px;white-space:pre-wrap;font-family:inherit;color:#334155;
+  }
+  #directoryWorkspace .empty-state{
+    text-align:center;padding:34px 20px;color:#64748b;
+  }
+  .side-panel{padding:18px 18px 18px 0;display:flex;flex-direction:column;gap:14px;min-width:0}
+  .summary-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:14px;font-weight:900}
+  .summary-head i{color:#7c3aed}
+  .section-note{font-size:12px;color:#64748b;line-height:1.6;margin-top:-2px}
+  .quick-stat{
+    padding:14px;border-radius:18px;background:#f8fafc;border:1px solid #e7edf4;
+  }
+  .quick-stat + .quick-stat{margin-top:10px}
+  .quick-label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#64748b;font-weight:800;margin-bottom:6px}
+  .quick-value{font-size:18px;font-weight:900;letter-spacing:-.03em;word-break:break-word}
+  .helper-text{font-size:13px;color:#64748b;line-height:1.7}
+  .helper-list{margin:0;padding-left:18px;color:#475569;line-height:1.8;font-size:14px}
+  .helper-list li + li{margin-top:4px}
+  .side-card.reminder-card{
+    background:linear-gradient(180deg, #fff7ed 0%, #ffffff 100%);
+    border:1px solid rgba(255,102,0,.25);
+  }
+  .side-card.reminder-card .badge{
+    background:#fff1e6;border:1px solid rgba(255,102,0,.25);color:#c2410c;
+  }
+  .side-card.reminder-card .work-top i{color:#ff6600}
+  .side-card.reminder-card .helper-list,
+  .side-card.reminder-card .helper-text{color:#0f172a}
+  .side-card.reminder-card li::marker{color:#0f172a}
+  
+  #toast{
+    position:fixed;right:24px;bottom:24px;z-index:99999;background:#111827;color:#fff;padding:12px 16px;border-radius:14px;
+    box-shadow:0 16px 34px rgba(15,23,42,.18);opacity:0;transform:translateY(10px);pointer-events:none;transition:.22s ease;font-size:13px;font-weight:800;
+  }
+  
+  /* Shared modal/button styling restore */
+  #commentModal .btn,
+  #allCommentsModal .btn,
+  #helpModal .btn,
+  #commentModal button:not(.modal-close),
+  #allCommentsModal button:not(.modal-close),
+  #helpModal button:not(.modal-close){
+    display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 18px;border-radius:17px;text-decoration:none;font-weight:800;border:none;cursor:pointer;transition:.22s ease;width:100%;
+  }
+  #commentModal .btn-primary,
+  #helpModal .btn-primary,
+  #allCommentsModal .btn-primary,
+  #commentModal button:not(.modal-close),
+  #helpModal button:not(.modal-close),
+  #allCommentsModal button:not(.modal-close){
+    background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%);
+    color:#fff;
+    box-shadow:0 14px 24px rgba(77,20,140,.16);
+  }
+  #commentModal .btn-primary:hover,
+  #helpModal .btn-primary:hover,
+  #allCommentsModal .btn-primary:hover,
+  #commentModal button:not(.modal-close):hover,
+  #helpModal button:not(.modal-close):hover,
+  #allCommentsModal button:not(.modal-close):hover{
+    transform:translateY(-2px);box-shadow:0 18px 30px rgba(77,20,140,.22);
+  }
+  .comment-modal-footer{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  }
+  .link-text{
+    color:#4d148c;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;
+  }
+  .link-text:hover{text-decoration:underline}
+  #commentsList .stars{color:#ff6600;font-size:18px;margin-bottom:6px;display:block}
+  #timeCalendarPopup .settings-btn,
+  #timeCalendarPopup .time-settings-btn,
+  #timeCalendarPopup button:last-of-type{
+    display:flex !important;align-items:center;justify-content:center;gap:10px;width:100% !important;min-height:50px;padding:0 18px;border:none;border-radius:17px;
+    background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%) !important;color:#fff !important;font-weight:800;text-decoration:none;cursor:pointer;
+    box-shadow:0 14px 24px rgba(77,20,140,.16);transition:.22s ease;
+  }
+  #timeCalendarPopup .settings-btn:hover,
+  #timeCalendarPopup .time-settings-btn:hover,
+  #timeCalendarPopup button:last-of-type:hover{
+    transform:translateY(-2px);box-shadow:0 18px 30px rgba(77,20,140,.22);
+  }
+  #timeSettingsModal select,
+  #timezoneModal select,
+  #dateTimeSettingsModal select{
+    width:100%;min-height:46px;border:none;outline:none;border-radius:16px;background:#f8fafc;box-shadow:inset 0 0 0 1px rgba(148,163,184,.18);padding:0 16px;color:#0f172a;font-size:14px;appearance:auto;
+  }
+  #timeSettingsModal select:focus,
+  #timezoneModal select:focus,
+  #dateTimeSettingsModal select:focus{
+    background:#fff;box-shadow:inset 0 0 0 2px rgba(77,20,140,.16), 0 0 0 5px rgba(77,20,140,.06);
+  }
+  #timeSettingsModal .btn,
+  #timezoneModal .btn,
+  #dateTimeSettingsModal .btn,
+  #timeSettingsModal button:not(.modal-close),
+  #timezoneModal button:not(.modal-close),
+  #dateTimeSettingsModal button:not(.modal-close){
+    display:flex !important;align-items:center;justify-content:center;width:100% !important;min-height:50px;padding:0 18px;border:none;border-radius:17px;background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%) !important;color:#fff !important;font-weight:800;text-decoration:none;cursor:pointer;box-shadow:0 14px 24px rgba(77,20,140,.16);transition:.22s ease;margin-top:18px;
+  }
+  #timeSettingsModal .btn:hover,
+  #timezoneModal .btn:hover,
+  #dateTimeSettingsModal .btn:hover,
+  #timeSettingsModal button:not(.modal-close):hover,
+  #timezoneModal button:not(.modal-close):hover,
+  #dateTimeSettingsModal button:not(.modal-close):hover{
+    transform:translateY(-2px);box-shadow:0 18px 30px rgba(77,20,140,.22);
+  }
+  
 /* Queue / Request clickable */
 .queue-link{
   color:#0f172a;
@@ -417,9 +417,10 @@ mark.search-highlight{
 .queue-link i{
   font-size:12px;
   opacity:.8;
+  margin-left:6px;
 }
 
-/* Premium detail modal */
+/* Detail modal */
 .detail-modal{
   display:none;
   position:fixed;
@@ -431,9 +432,11 @@ mark.search-highlight{
   z-index:2147483647;
   backdrop-filter:blur(8px);
 }
+
 .detail-modal-content{
   width:100%;
-  max-width:1600px;
+  max-width:1650px;
+  min-height:560px;
   background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
   border:1px solid #dbe4f0;
   border-radius:30px;
@@ -445,14 +448,17 @@ mark.search-highlight{
   transform:translateY(10px) scale(.985);
   transition:opacity .22s ease, transform .22s ease;
 }
+
 .detail-modal.is-open .detail-modal-content{
   opacity:1;
   transform:translateY(0) scale(1);
 }
+
 .detail-modal.is-closing .detail-modal-content{
   opacity:0;
   transform:translateY(10px) scale(.985);
 }
+
 .detail-modal-content::before{
   content:"";
   position:absolute;
@@ -463,18 +469,61 @@ mark.search-highlight{
   border-radius:0 0 999px 999px;
   background:linear-gradient(90deg, #4d148c, #7c3aed, #ff6600);
 }
+
 .detail-modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.detail-modal-title{
   font-size:26px;
   font-weight:900;
   letter-spacing:-.03em;
   color:#0f172a;
-  margin-bottom:20px;
 }
+
+.detail-modal-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.view-toggle-icon{
+  border:none;
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  background:#eef2ff;
+  color:#4338ca;
+  font-size:16px;
+  cursor:pointer;
+  transition:.18s ease;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.view-toggle-icon:hover{
+  background:#e0e7ff;
+  transform:translateY(-1px);
+}
+
+.view-toggle-icon.active{
+  background:linear-gradient(135deg, #4d148c 0%, #6d28d9 100%);
+  color:#fff;
+  box-shadow:0 12px 24px rgba(77,20,140,.18);
+}
+
+/* default view */
 .detail-table{
   display:grid;
   grid-template-columns:1.2fr 1.5fr 1.5fr 1.2fr 2fr;
   gap:14px;
 }
+
 .detail-col{
   background:#f8fafc;
   border:1px solid #e5edf6;
@@ -484,6 +533,7 @@ mark.search-highlight{
   flex-direction:column;
   min-width:0;
 }
+
 .detail-label{
   font-size:11px;
   font-weight:900;
@@ -492,6 +542,7 @@ mark.search-highlight{
   text-transform:uppercase;
   margin-bottom:8px;
 }
+
 .detail-col div{
   font-size:14px;
   color:#0f172a;
@@ -499,14 +550,80 @@ mark.search-highlight{
   white-space:pre-wrap;
   word-break:break-word;
   overflow-wrap:anywhere;
-  max-height:260px;
+  max-height:320px;
   overflow-y:auto;
   padding-right:6px;
 }
-.detail-col div::-webkit-scrollbar{width:6px}
+
+.detail-col div::-webkit-scrollbar{
+  width:6px;
+}
 .detail-col div::-webkit-scrollbar-thumb{
   background:#cbd5f5;
   border-radius:10px;
+}
+
+/* premium view */
+.premium-detail-view{
+  display:none;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:16px;
+}
+
+.premium-card{
+  background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+  border:1px solid #e4ebf5;
+  border-radius:20px;
+  padding:18px;
+  box-shadow:0 10px 24px rgba(15,23,42,.05);
+}
+
+.premium-card.full{
+  grid-column:1 / -1;
+}
+
+.premium-card-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:10px;
+  font-size:12px;
+  font-weight:900;
+  color:#64748b;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.premium-card-title i{
+  color:#6d28d9;
+}
+
+.premium-card-value{
+  color:#0f172a;
+  font-size:15px;
+  line-height:1.8;
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  max-height:320px;
+  overflow-y:auto;
+  padding-right:6px;
+}
+
+.premium-card-value::-webkit-scrollbar{
+  width:6px;
+}
+.premium-card-value::-webkit-scrollbar-thumb{
+  background:#cbd5f5;
+  border-radius:10px;
+}
+
+.detail-modal-content.premium-mode .detail-table{
+  display:none;
+}
+
+.detail-modal-content.premium-mode .premium-detail-view{
+  display:grid;
 }
 
 @media (max-width:1400px){
@@ -515,449 +632,532 @@ mark.search-highlight{
   }
 }
 
-@media (max-width:1220px){
-  .hero-grid{grid-template-columns:1fr}
-  .hero-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .app-frame{grid-template-columns:1fr}
-  .side-panel{padding:0 18px 18px}
-}
 @media (max-width:1000px){
-  .detail-table{grid-template-columns:1fr}
-  .detail-col div{max-height:none}
+  .detail-table,
+  .premium-detail-view{
+    grid-template-columns:1fr;
+  }
+
+  .detail-col div,
+  .premium-card-value{
+    max-height:none;
+  }
 }
+
 @media (max-width:760px){
-  .container{width:min(calc(100% - 20px), var(--max))}
-  .hero{border-radius:28px}
-  .hero-grid{padding:24px}
-  .hero h1{font-size:2.2rem}
-  .hero-stats{grid-template-columns:1fr}
-  .search-btn{width:100%}
-  .app-frame{min-height:100vh;border-radius:24px}
-  .main{padding:18px}
-  .topbar-header-row{
+  .detail-modal{
+    padding:12px;
+  }
+
+  .detail-modal-content{
+    padding:20px;
+    border-radius:24px;
+    min-height:auto;
+  }
+
+  .detail-modal-header{
     flex-direction:column;
     align-items:stretch;
   }
-  .directory-inline-search{
-    grid-template-columns:1fr;
+
+  .detail-modal-actions{
+    justify-content:flex-start;
+    flex-wrap:wrap;
   }
-  .comment-modal-footer{flex-direction:column;align-items:stretch}
-  #commentModal,#allCommentsModal,#helpModal{padding:0 14px}
-  #commentModal .modal-content,#allCommentsModal .modal-content,#helpModal .modal-content{padding:20px;border-radius:22px;margin:96px auto 20px}
-  .detail-modal{padding:12px}
-  .detail-modal-content{padding:20px;border-radius:24px}
 }
-</style>
-</head>
-<body data-page="case-directory">
-  <div class="page">
-    <div id="site-header"></div>
-
-    <main>
-      <section class="hero-wrap reveal-up">
-        <div class="container">
-          <div class="hero">
-            <div class="hero-grid">
-              <div class="hero-copy">
-                <div class="eyebrow">
-                  <i class="fa-solid fa-folder-tree"></i>
-                  Premium routing workspace
-                </div>
-
-                <h1>Find the right queue faster and move the case with confidence.</h1>
-                <p>
-                  Search the case directory by queue, concern, action, email, or assignment to quickly identify the correct destination for each request.
-                </p>
-
-                <div class="hero-stats">
-                  <div class="stat-card">
-                    <div class="stat-value" id="heroCaseCount">—</div>
-                    <div class="stat-label">Directory rows currently available in the case routing list.</div>
+  
+  @media (max-width:1400px){
+    .detail-modal-content{
+      max-width:95vw;
+    }
+  }
+  
+  @media (max-width:1220px){
+    .hero-grid{grid-template-columns:1fr}
+    .hero-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .app-frame{grid-template-columns:1fr}
+    .side-panel{padding:0 18px 18px}
+  }
+  @media (max-width:1000px){
+    .detail-table{grid-template-columns:1fr}
+    .detail-col div{max-height:none}
+  }
+  @media (max-width:760px){
+    .container{width:min(calc(100% - 20px), var(--max))}
+    .hero{border-radius:28px}
+    .hero-grid{padding:24px}
+    .hero h1{font-size:2.2rem}
+    .hero-stats{grid-template-columns:1fr}
+    .search-btn{width:100%}
+    .app-frame{min-height:100vh;border-radius:24px}
+    .main{padding:18px}
+    .topbar-header-row{
+      flex-direction:column;
+      align-items:stretch;
+    }
+    .directory-inline-search{
+      grid-template-columns:1fr;
+    }
+    .comment-modal-footer{flex-direction:column;align-items:stretch}
+    #commentModal,#allCommentsModal,#helpModal{padding:0 14px}
+    #commentModal .modal-content,#allCommentsModal .modal-content,#helpModal .modal-content{padding:20px;border-radius:22px;margin:96px auto 20px}
+    .detail-modal{padding:12px}
+    .detail-modal-content{padding:20px;border-radius:24px}
+  }
+  </style>
+  </head>
+  <body data-page="case-directory">
+    <div class="page">
+      <div id="site-header"></div>
+  
+      <main>
+        <section class="hero-wrap reveal-up">
+          <div class="container">
+            <div class="hero">
+              <div class="hero-grid">
+                <div class="hero-copy">
+                  <div class="eyebrow">
+                    <i class="fa-solid fa-folder-tree"></i>
+                    Premium routing workspace
                   </div>
-                  <div class="stat-card">
-                    <div class="stat-value" id="heroQueueCount">—</div>
-                    <div class="stat-label">Unique queues and requests available in the current workbook.</div>
-                  </div>
-                  <div class="stat-card">
-                    <div class="stat-value" id="heroMatchCount">—</div>
-                    <div class="stat-label">Search results shown for the current keyword.</div>
-                  </div>
-                </div>
-
-                <div style="margin-top:18px;">
-                  <button class="hero-cta" onclick="scrollToDirectory()">
-                    Open Case Directory <i class="fa-solid fa-arrow-down"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div class="hero-side">
-                <div class="quick-panel">
-                  <div>
-                    <div class="panel-title">
-                      <span>How to use</span>
-                      <span>4 steps</span>
+  
+                  <h1>Find the right queue faster and move the case with confidence.</h1>
+                  <p>
+                    Search the case directory by queue, concern, action, email, or assignment to quickly identify the correct destination for each request.
+                  </p>
+  
+                  <div class="hero-stats">
+                    <div class="stat-card">
+                      <div class="stat-value" id="heroCaseCount">—</div>
+                      <div class="stat-label">Directory rows currently available in the case routing list.</div>
                     </div>
-
-                    <ul class="quick-list">
-                      <li class="quick-item">
-                        <div class="quick-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
-                        <div>
-                          <strong>Search the request</strong>
-                          <span>Use queue, concern, action, email, or assignment keywords to narrow the directory.</span>
-                        </div>
-                      </li>
-                      <li class="quick-item">
-                        <div class="quick-icon"><i class="fa-solid fa-list-check"></i></div>
-                        <div>
-                          <strong>Review the row details</strong>
-                          <span>Compare the concern, action, and case assignment before moving the case.</span>
-                        </div>
-                      </li>
-                      <li class="quick-item">
-                        <div class="quick-icon"><i class="fa-solid fa-circle-nodes"></i></div>
-                        <div>
-                          <strong>Confirm the destination</strong>
-                          <span>Make sure the queue and assignment match the requested handling path.</span>
-                        </div>
-                      </li>
-                      <li class="quick-item">
-                        <div class="quick-icon"><i class="fa-solid fa-share"></i></div>
-                        <div>
-                          <strong>Move the case correctly</strong>
-                          <span>Use the directory result to route the case cleanly and avoid rework.</span>
-                        </div>
-                      </li>
-                    </ul>
+                    <div class="stat-card">
+                      <div class="stat-value" id="heroQueueCount">—</div>
+                      <div class="stat-label">Unique queues and requests available in the current workbook.</div>
+                    </div>
+                    <div class="stat-card">
+                      <div class="stat-value" id="heroMatchCount">—</div>
+                      <div class="stat-label">Search results shown for the current keyword.</div>
+                    </div>
                   </div>
-
-                  <div class="live-strip">
+  
+                  <div style="margin-top:18px;">
+                    <button class="hero-cta" onclick="scrollToDirectory()">
+                      Go to Case Directory <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                  </div>
+                </div>
+  
+                <div class="hero-side">
+                  <div class="quick-panel">
                     <div>
-                      <strong>Workspace ready</strong>
-                      <span>Search, feedback, and time tools are available.</span>
+                      <div class="panel-title">
+                        <span>How to use</span>
+                        <span>4 steps</span>
+                      </div>
+  
+                      <ul class="quick-list">
+                        <li class="quick-item">
+                          <div class="quick-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+                          <div>
+                            <strong>Search the request</strong>
+                            <span>Use queue, concern, action, email, or assignment keywords to narrow the directory.</span>
+                          </div>
+                        </li>
+                        <li class="quick-item">
+                          <div class="quick-icon"><i class="fa-solid fa-list-check"></i></div>
+                          <div>
+                            <strong>Review the row details</strong>
+                            <span>Compare the concern, action, and case assignment before moving the case.</span>
+                          </div>
+                        </li>
+                        <li class="quick-item">
+                          <div class="quick-icon"><i class="fa-solid fa-circle-nodes"></i></div>
+                          <div>
+                            <strong>Confirm the destination</strong>
+                            <span>Make sure the queue and assignment match the requested handling path.</span>
+                          </div>
+                        </li>
+                        <li class="quick-item">
+                          <div class="quick-icon"><i class="fa-solid fa-share"></i></div>
+                          <div>
+                            <strong>Move the case correctly</strong>
+                            <span>Use the directory result to route the case cleanly and avoid rework.</span>
+                          </div>
+                        </li>
+                      </ul>
                     </div>
-                    <div class="pulse"></div>
+  
+                    <div class="live-strip">
+                      <div>
+                        <strong>Workspace ready</strong>
+                        <span>Search, feedback, and time tools are available.</span>
+                      </div>
+                      <div class="pulse"></div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="directoryWorkspace" class="workspace-wrap reveal-up stagger-2">
-  <div class="container">
-    <div class="app-frame">
-      <main class="main">
-        <div class="main-topbar">
-          <div class="topbar-header-row">
-            <div class="page-title-block">
-              <h2>Case Directory</h2>
-              <p class="page-subtitle">Search the routing directory below to identify the correct queue, concern handling, email, and case assignment path.</p>
-            </div>
-
-            <div class="pill primary" id="statusPill">
-              <i class="fa-solid fa-database"></i> Waiting for Data
-            </div>
-          </div>
-
-          <div class="directory-inline-search">
-            <div class="search-input-wrap">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <input id="directorySearch" type="text" placeholder="Search queue, concern, action, email, or assignment.">
-              <button id="clearSearchBtn" type="button" onclick="clearDirectorySearch()">×</button>
-            </div>
-
-            <button class="search-btn" type="button" onclick="focusDirectorySearch()">
-              Focus search
-            </button>
-          </div>
-        </div>
-
-        <section class="tool-card">
-          <div class="section-head-inline">
-            <div>
-              <div class="badge"><i class="fa-solid fa-table"></i> Routing table</div>
-              <div class="card-title">Search and review the correct destination</div>
-              <div class="card-lead">Use the live directory below to check where a case should move before routing it.</div>
-            </div>
-            <div class="guide-icon"><i class="fa-solid fa-folder-open"></i></div>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Queue / Request</th>
-                  <th>Concern</th>
-                  <th>Action</th>
-                  <th>Email Address</th>
-                  <th>Case Assignment / Email</th>
-                </tr>
-              </thead>
-              <tbody id="rows"></tbody>
-            </table>
-          </div>
-
-          <div id="emptyState" class="empty-state" style="display:none;">
-            <i class="fa-solid fa-circle-exclamation" style="font-size:28px; margin-bottom:10px; color:#94a3b8;"></i>
-            <div>No matching results found for the current search.</div>
           </div>
         </section>
-      </main>
-
-      <aside class="side-panel">
-        <div class="summary-card">
-          <div class="summary-head"><i class="fa-solid fa-chart-simple"></i> Quick Snapshot</div>
-          <div class="section-note">Live context while reviewing the directory.</div>
-
-          <div class="quick-stat">
-            <span class="quick-label">Total Rows</span>
-            <span class="quick-value" id="totalRowsValue">—</span>
-          </div>
-
-          <div class="quick-stat">
-            <span class="quick-label">Unique Queues</span>
-            <span class="quick-value" id="uniqueQueuesValue">—</span>
-          </div>
-
-          <div class="quick-stat">
-            <span class="quick-label">Visible Results</span>
-            <span class="quick-value" id="visibleResultsValue">—</span>
-          </div>
-        </div>
-
-        <div class="summary-card reminder-card">
-          <div class="summary-head"><i class="fa-solid fa-triangle-exclamation"></i> Reminder</div>
-          <div class="helper-text">Before routing the case, confirm the queue name, action, and case assignment together to avoid moving the case to the wrong team.</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="summary-head"><i class="fa-solid fa-lightbulb"></i> Search Tips</div>
-          <ul class="helper-list">
-            <li>Search by exact queue name first when possible.</li>
-            <li>Try concern or action keywords if the queue is unknown.</li>
-            <li>Use email or assignment fields to confirm the final destination.</li>
-            <li>Review highlighted text before moving the case.</li>
-          </ul>
-        </div>
-      </aside>
-    </div>
-  </div>
-</section>
-    </main>
-
-    <div id="site-footer"></div>
-  </div>
-
-  <div id="toast">Copied!</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="assets/js/header-loader.js"></script>
-<script src="assets/js/header.js"></script>
-<script src="assets/js/footer-loader.js"></script>
-
-<script>
-let caseDirectoryInitialized = false;
-let selectedRating = 0;
-let commentsUnsubscribe = null;
-let ratingStars = [];
-
-function initRatingStars() {
-  ratingStars = Array.from(document.querySelectorAll(".rating-star"));
-
-  ratingStars.forEach(star => {
-    star.addEventListener("click", () => {
-      selectedRating = Number(star.dataset.value);
-      ratingStars.forEach(s => {
-        s.classList.toggle("selected", Number(s.dataset.value) <= selectedRating);
-      });
-    });
-  });
-}
-
-function openAnimatedModal(modal) {
-  if (!modal) return;
-  modal.style.display = "flex";
-  modal.classList.remove("is-closing");
-
-  requestAnimationFrame(() => {
-    modal.classList.add("is-open");
-  });
-}
-
-function closeAnimatedModal(modal, onClosed) {
-  if (!modal) return;
-
-  modal.classList.remove("is-open");
-  modal.classList.add("is-closing");
-
-  setTimeout(() => {
-    modal.style.display = "none";
-    modal.classList.remove("is-closing");
-    if (typeof onClosed === "function") onClosed();
-  }, 220);
-}
-
-function openComment() {
-  const modal = document.getElementById("commentModal");
-  openAnimatedModal(modal);
-}
-
-function closeComment() {
-  const modal = document.getElementById("commentModal");
-  closeAnimatedModal(modal);
-}
-
-function openHelp() {
-  const modal = document.getElementById("helpModal");
-  openAnimatedModal(modal);
-}
-
-function closeHelp() {
-  const modal = document.getElementById("helpModal");
-  closeAnimatedModal(modal);
-}
-
-function closeAllComments() {
-  const modal = document.getElementById("allCommentsModal");
-
-  closeAnimatedModal(modal, () => {
-    if (commentsUnsubscribe) {
-      commentsUnsubscribe();
-      commentsUnsubscribe = null;
-    }
-  });
-}
-
-async function sendComment() {
-  const name = document.getElementById("commentName")?.value.trim() || "";
-  const comment = document.getElementById("commentText")?.value.trim() || "";
-  const message = document.getElementById("feedbackMessage");
-
-  if (!selectedRating) {
-    if (message) {
-      message.style.display = "block";
-      message.style.color = "#ef4444";
-      message.textContent = "Please select a star rating first.";
-    } else {
-      alert("Please select a star rating first.");
-    }
-    return;
-  }
-
-  try {
-    const db = firebase.firestore();
-
-    await db.collection("feedback").add({
-      rating: selectedRating,
-      name,
-      comment,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    if (message) {
-      message.style.display = "block";
-      message.style.color = "#16a34a";
-      message.textContent = "Thank you. Your feedback has been submitted.";
-    }
-
-    const nameInput = document.getElementById("commentName");
-    const commentInput = document.getElementById("commentText");
-
-    if (nameInput) nameInput.value = "";
-    if (commentInput) commentInput.value = "";
-
-    selectedRating = 0;
-    ratingStars.forEach(s => s.classList.remove("selected"));
-
-    setTimeout(() => {
-      if (message) message.style.display = "none";
-      closeComment();
-    }, 1200);
-  } catch (error) {
-    console.error(error);
-    if (message) {
-      message.style.display = "block";
-      message.style.color = "#ef4444";
-      message.textContent = "Something went wrong while sending feedback.";
-    } else {
-      alert("Something went wrong while sending feedback.");
-    }
-  }
-}
-
-function showAllComments() {
-  const commentModal = document.getElementById("commentModal");
-  const modal = document.getElementById("allCommentsModal");
-  const list = document.getElementById("commentsList");
-
-  if (!modal || !list) return;
-
-  list.innerHTML = "<p>Loading comments.</p>";
-
-  if (commentsUnsubscribe) commentsUnsubscribe();
-
-  const db = firebase.firestore();
-
-  const loadComments = () => {
-    openAnimatedModal(modal);
-
-    commentsUnsubscribe = db.collection("feedback")
-      .orderBy("createdAt", "desc")
-      .onSnapshot(snapshot => {
-        if (snapshot.empty) {
-          list.innerHTML = "<p>No comments yet.</p>";
-          return;
-        }
-
-        let html = "";
-        snapshot.forEach(doc => {
-          const item = doc.data();
-          const stars = "★".repeat(item.rating || 0) + "☆".repeat(5 - (item.rating || 0));
-          html += `
-            <div class="comment-list-item">
-              <span class="stars">${stars}</span>
-              <strong>${item.name || "Anonymous"}</strong>
-              <p style="margin:6px 0 0;">${item.comment || "No comment provided."}</p>
+  
+        <section id="directoryWorkspace" class="workspace-wrap reveal-up stagger-2">
+    <div class="container">
+      <div class="app-frame">
+        <main class="main">
+          <div class="main-topbar">
+            <div class="topbar-header-row">
+              <div class="page-title-block">
+                <h2>Case Directory</h2>
+                <p class="page-subtitle">Search the routing directory below to identify the correct queue, concern handling, email, and case assignment path.</p>
+              </div>
+  
+              <div class="pill primary" id="statusPill">
+                <i class="fa-solid fa-database"></i> Waiting for Data
+              </div>
             </div>
-          `;
+  
+            <div class="directory-inline-search">
+              <div class="search-input-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="directorySearch" type="text" placeholder="Search queue, concern, action, email, or assignment.">
+                <button id="clearSearchBtn" type="button" onclick="clearDirectorySearch()">×</button>
+              </div>
+  
+              <button class="search-btn" type="button" onclick="focusDirectorySearch()">
+                Focus search
+              </button>
+            </div>
+          </div>
+  
+          <section class="tool-card">
+            <div class="section-head-inline">
+              <div>
+                <div class="badge"><i class="fa-solid fa-table"></i> Routing table</div>
+                <div class="card-title">Search and review the correct destination</div>
+                <div class="card-lead">Use the live directory below to check where a case should move before routing it.</div>
+              </div>
+              <div class="guide-icon"><i class="fa-solid fa-folder-open"></i></div>
+            </div>
+  
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Queue / Request</th>
+                    <th>Concern</th>
+                    <th>Action</th>
+                    <th>Email Address</th>
+                    <th>Case Assignment / Email</th>
+                  </tr>
+                </thead>
+                <tbody id="rows"></tbody>
+              </table>
+            </div>
+  
+            <div id="emptyState" class="empty-state" style="display:none;">
+              <i class="fa-solid fa-circle-exclamation" style="font-size:28px; margin-bottom:10px; color:#94a3b8;"></i>
+              <div>No matching results found for the current search.</div>
+            </div>
+          </section>
+        </main>
+  
+        <aside class="side-panel">
+          <div class="summary-card">
+            <div class="summary-head"><i class="fa-solid fa-chart-simple"></i> Quick Snapshot</div>
+            <div class="section-note">Live context while reviewing the directory.</div>
+  
+            <div class="quick-stat">
+              <span class="quick-label">Total Rows</span>
+              <span class="quick-value" id="totalRowsValue">—</span>
+            </div>
+  
+            <div class="quick-stat">
+              <span class="quick-label">Unique Queues</span>
+              <span class="quick-value" id="uniqueQueuesValue">—</span>
+            </div>
+  
+            <div class="quick-stat">
+              <span class="quick-label">Visible Results</span>
+              <span class="quick-value" id="visibleResultsValue">—</span>
+            </div>
+          </div>
+  
+          <div class="summary-card reminder-card">
+            <div class="summary-head"><i class="fa-solid fa-triangle-exclamation"></i> Reminder</div>
+            <div class="helper-text">Before routing the case, confirm the queue name, action, and case assignment together to avoid moving the case to the wrong team.</div>
+          </div>
+  
+          <div class="summary-card">
+            <div class="summary-head"><i class="fa-solid fa-lightbulb"></i> Search Tips</div>
+            <ul class="helper-list">
+              <li>Search by exact queue name first when possible.</li>
+              <li>Try concern or action keywords if the queue is unknown.</li>
+              <li>Use email or assignment fields to confirm the final destination.</li>
+              <li>Review highlighted text before moving the case.</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+      </main>
+  
+      <div id="site-footer"></div>
+    </div>
+  
+    <div id="toast">Copied!</div>
+  
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="assets/js/header-loader.js"></script>
+  <script src="assets/js/header.js"></script>
+  <script src="assets/js/footer-loader.js"></script>
+  
+  <script>
+  let caseDirectoryInitialized = false;
+  let selectedRating = 0;
+  let commentsUnsubscribe = null;
+  let ratingStars = [];
+  
+  function initRatingStars() {
+    ratingStars = Array.from(document.querySelectorAll(".rating-star"));
+  
+    ratingStars.forEach(star => {
+      star.addEventListener("click", () => {
+        selectedRating = Number(star.dataset.value);
+        ratingStars.forEach(s => {
+          s.classList.toggle("selected", Number(s.dataset.value) <= selectedRating);
         });
-
-        list.innerHTML = html;
-      }, error => {
-        console.error(error);
-        list.innerHTML = "<p>Unable to load comments right now.</p>";
       });
-  };
+    });
+  }
+  
+  function openAnimatedModal(modal) {
+    if (!modal) return;
+    modal.style.display = "flex";
+    modal.classList.remove("is-closing");
+  
+    requestAnimationFrame(() => {
+      modal.classList.add("is-open");
+    });
+  }
+  
+  function closeAnimatedModal(modal, onClosed) {
+    if (!modal) return;
+  
+    modal.classList.remove("is-open");
+    modal.classList.add("is-closing");
+  
+    setTimeout(() => {
+      modal.style.display = "none";
+      modal.classList.remove("is-closing");
+      if (typeof onClosed === "function") onClosed();
+    }, 220);
+  }
+  
+  function openComment() {
+    const modal = document.getElementById("commentModal");
+    openAnimatedModal(modal);
+  }
+  
+  function closeComment() {
+    const modal = document.getElementById("commentModal");
+    closeAnimatedModal(modal);
+  }
+  
+  function openHelp() {
+    const modal = document.getElementById("helpModal");
+    openAnimatedModal(modal);
+  }
+  
+  function closeHelp() {
+    const modal = document.getElementById("helpModal");
+    closeAnimatedModal(modal);
+  }
+  
+  function closeAllComments() {
+    const modal = document.getElementById("allCommentsModal");
+  
+    closeAnimatedModal(modal, () => {
+      if (commentsUnsubscribe) {
+        commentsUnsubscribe();
+        commentsUnsubscribe = null;
+      }
+    });
+  }
+  
+  async function sendComment() {
+    const name = document.getElementById("commentName")?.value.trim() || "";
+    const comment = document.getElementById("commentText")?.value.trim() || "";
+    const message = document.getElementById("feedbackMessage");
+  
+    if (!selectedRating) {
+      if (message) {
+        message.style.display = "block";
+        message.style.color = "#ef4444";
+        message.textContent = "Please select a star rating first.";
+      } else {
+        alert("Please select a star rating first.");
+      }
+      return;
+    }
+  
+    try {
+      const db = firebase.firestore();
+  
+      await db.collection("feedback").add({
+        rating: selectedRating,
+        name,
+        comment,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+  
+      if (message) {
+        message.style.display = "block";
+        message.style.color = "#16a34a";
+        message.textContent = "Thank you. Your feedback has been submitted.";
+      }
+  
+      const nameInput = document.getElementById("commentName");
+      const commentInput = document.getElementById("commentText");
+  
+      if (nameInput) nameInput.value = "";
+      if (commentInput) commentInput.value = "";
+  
+      selectedRating = 0;
+      ratingStars.forEach(s => s.classList.remove("selected"));
+  
+      setTimeout(() => {
+        if (message) message.style.display = "none";
+        closeComment();
+      }, 1200);
+    } catch (error) {
+      console.error(error);
+      if (message) {
+        message.style.display = "block";
+        message.style.color = "#ef4444";
+        message.textContent = "Something went wrong while sending feedback.";
+      } else {
+        alert("Something went wrong while sending feedback.");
+      }
+    }
+  }
+  
+  function showAllComments() {
+    const commentModal = document.getElementById("commentModal");
+    const modal = document.getElementById("allCommentsModal");
+    const list = document.getElementById("commentsList");
+  
+    if (!modal || !list) return;
+  
+    list.innerHTML = "<p>Loading comments.</p>";
+  
+    if (commentsUnsubscribe) commentsUnsubscribe();
+  
+    const db = firebase.firestore();
+  
+    const loadComments = () => {
+      openAnimatedModal(modal);
+  
+      commentsUnsubscribe = db.collection("feedback")
+        .orderBy("createdAt", "desc")
+        .onSnapshot(snapshot => {
+          if (snapshot.empty) {
+            list.innerHTML = "<p>No comments yet.</p>";
+            return;
+          }
+  
+          let html = "";
+          snapshot.forEach(doc => {
+            const item = doc.data();
+            const stars = "★".repeat(item.rating || 0) + "☆".repeat(5 - (item.rating || 0));
+            html += `
+              <div class="comment-list-item">
+                <span class="stars">${stars}</span>
+                <strong>${item.name || "Anonymous"}</strong>
+                <p style="margin:6px 0 0;">${item.comment || "No comment provided."}</p>
+              </div>
+            `;
+          });
+  
+          list.innerHTML = html;
+        }, error => {
+          console.error(error);
+          list.innerHTML = "<p>Unable to load comments right now.</p>";
+        });
+    };
+  
+    if (commentModal && commentModal.style.display === "flex") {
+      closeAnimatedModal(commentModal, loadComments);
+    } else {
+      loadComments();
+    }
+  }
+  
+  window.addEventListener("click", (e) => {
+    const commentModal = document.getElementById("commentModal");
+    const allCommentsModal = document.getElementById("allCommentsModal");
+    const helpModal = document.getElementById("helpModal");
+  
+    if (e.target === commentModal) closeComment();
+    if (e.target === allCommentsModal) closeAllComments();
+    if (e.target === helpModal) closeHelp();
+  });
+  
+  let currentCaseDetailView = "default";
 
-  if (commentModal && commentModal.style.display === "flex") {
-    closeAnimatedModal(commentModal, loadComments);
+function setCaseDetailView(view) {
+  currentCaseDetailView = view;
+
+  const modalContent = document.getElementById("caseDetailModalContent");
+  const toggleBtn = document.getElementById("viewToggleBtn");
+  if (!modalContent || !toggleBtn) return;
+
+  if (view === "premium") {
+    modalContent.classList.add("premium-mode");
+    toggleBtn.classList.add("active");
+    toggleBtn.innerHTML = '<i class="fa-solid fa-table-columns"></i>';
+    toggleBtn.title = "Switch to default view";
   } else {
-    loadComments();
+    modalContent.classList.remove("premium-mode");
+    toggleBtn.classList.remove("active");
+    toggleBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
+    toggleBtn.title = "Switch to premium view";
   }
 }
-
-window.addEventListener("click", (e) => {
-  const commentModal = document.getElementById("commentModal");
-  const allCommentsModal = document.getElementById("allCommentsModal");
-  const helpModal = document.getElementById("helpModal");
-
-  if (e.target === commentModal) closeComment();
-  if (e.target === allCommentsModal) closeAllComments();
-  if (e.target === helpModal) closeHelp();
-});
+    function toggleView() {
+  if (currentCaseDetailView === "default") {
+    setCaseDetailView("premium");
+  } else {
+    setCaseDetailView("default");
+  }
+}
 
 function openCaseDetail(serializedRow) {
   const row = JSON.parse(serializedRow);
   const modal = document.getElementById("caseDetailModal");
 
-  document.getElementById("detailQueue").textContent = row["QUEUE/ Request"] || "";
-  document.getElementById("detailConcern").textContent = row["Concern"] || "";
-  document.getElementById("detailAction").textContent = row["ACTION"] || "";
-  document.getElementById("detailEmail").textContent = row["Email Address"] || "";
-  document.getElementById("detailAssignment").textContent = row["Case Assignment/Email"] || "";
+  const queue = row["QUEUE/ Request"] || "";
+  const concern = row["Concern"] || "";
+  const action = row["ACTION"] || "";
+  const email = row["Email Address"] || "";
+  const assignment = row["Case Assignment/Email"] || "";
+
+  document.getElementById("detailQueue").textContent = queue;
+  document.getElementById("detailConcern").textContent = concern;
+  document.getElementById("detailAction").textContent = action;
+  document.getElementById("detailEmail").textContent = email;
+  document.getElementById("detailAssignment").textContent = assignment;
+
+  document.getElementById("premiumDetailQueue").textContent = queue;
+  document.getElementById("premiumDetailConcern").textContent = concern;
+  document.getElementById("premiumDetailAction").textContent = action;
+  document.getElementById("premiumDetailEmail").textContent = email;
+  document.getElementById("premiumDetailAssignment").textContent = assignment;
+
+  setCaseDetailView("default");
 
   modal.style.display = "flex";
   modal.classList.remove("is-closing");
@@ -966,214 +1166,220 @@ function openCaseDetail(serializedRow) {
     modal.classList.add("is-open");
   });
 }
-
-function closeCaseDetail() {
-  const modal = document.getElementById("caseDetailModal");
-  if (!modal) return;
-
-  modal.classList.remove("is-open");
-  modal.classList.add("is-closing");
-
-  setTimeout(() => {
-    modal.style.display = "none";
-    modal.classList.remove("is-closing");
-  }, 220);
-}
-
-window.addEventListener("click", (e) => {
-  const caseDetailModal = document.getElementById("caseDetailModal");
-  if (e.target === caseDetailModal) closeCaseDetail();
-});  
-
-function initCaseDirectoryPage() {
-  if (caseDirectoryInitialized) return;
-  caseDirectoryInitialized = true;
-
-  if (!firebase.apps.length) {
-    firebase.initializeApp({
-      apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
-      authDomain: "bdgg-database.firebaseapp.com",
-      projectId: "bdgg-database",
-      storageBucket: "bdgg-database.appspot.com",
-      messagingSenderId: "43574975434",
-      appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
-    });
+  
+  function closeCaseDetail() {
+    const modal = document.getElementById("caseDetailModal");
+    if (!modal) return;
+  
+    modal.classList.remove("is-open");
+    modal.classList.add("is-closing");
+  
+    setTimeout(() => {
+      modal.style.display = "none";
+      modal.classList.remove("is-closing");
+    }, 220);
   }
-
-  const rowsEl = document.getElementById("rows");
-  const searchInput = document.getElementById("directorySearch");
-  const clearBtn = document.getElementById("clearSearchBtn");
-  const emptyState = document.getElementById("emptyState");
-  const heroCaseCount = document.getElementById("heroCaseCount");
-  const heroQueueCount = document.getElementById("heroQueueCount");
-  const heroMatchCount = document.getElementById("heroMatchCount");
-  const totalRowsValue = document.getElementById("totalRowsValue");
-  const uniqueQueuesValue = document.getElementById("uniqueQueuesValue");
-  const visibleResultsValue = document.getElementById("visibleResultsValue");
-  const statusPill = document.getElementById("statusPill");
-
-  let CASES = [];
-
-  function setStatus(label, icon = "fa-bolt") {
-    statusPill.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
-  }
-
-  function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
-
-  function updateCounts(rows) {
-    const uniqueQueues = [...new Set(CASES.map(r => (r["QUEUE/ Request"] || "").trim()).filter(Boolean))];
-    heroCaseCount.textContent = CASES.length || "0";
-    totalRowsValue.textContent = CASES.length || "0";
-    heroQueueCount.textContent = uniqueQueues.length || "0";
-    uniqueQueuesValue.textContent = uniqueQueues.length || "0";
-    heroMatchCount.textContent = rows.length || "0";
-    visibleResultsValue.textContent = rows.length || "0";
-
-    if (!CASES.length) {
-      setStatus("Waiting for Data", "fa-database");
-    } else if (!rows.length) {
-      setStatus("No Match Found", "fa-circle-exclamation");
-    } else if ((searchInput.value || "").trim()) {
-      setStatus("Filtered Results", "fa-filter");
-    } else {
-      setStatus("Directory Ready", "fa-circle-check");
+  
+  window.addEventListener("click", (e) => {
+    const caseDetailModal = document.getElementById("caseDetailModal");
+    if (e.target === caseDetailModal) closeCaseDetail();
+  });  
+  
+  function initCaseDirectoryPage() {
+    if (caseDirectoryInitialized) return;
+    caseDirectoryInitialized = true;
+  
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyDjaMdeh0Cgx00hzDyZOi54fDkR81wnxJU",
+        authDomain: "bdgg-database.firebaseapp.com",
+        projectId: "bdgg-database",
+        storageBucket: "bdgg-database.appspot.com",
+        messagingSenderId: "43574975434",
+        appId: "1:43574975434:web:4c79e581267fdfcc6ccd33"
+      });
     }
-  }
-
-  function highlightText(value, query) {
-    if (!query) return value || "";
-    const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
-    return String(value || "").replace(regex, '<mark class="search-highlight">$1</mark>');
-  }
-
-  function renderTable(rows, query = "") {
-    if (!rows.length) {
-      rowsEl.innerHTML = "";
-      emptyState.style.display = "block";
-      updateCounts(rows);
-      return;
+  
+    const rowsEl = document.getElementById("rows");
+    const searchInput = document.getElementById("directorySearch");
+    const clearBtn = document.getElementById("clearSearchBtn");
+    const emptyState = document.getElementById("emptyState");
+    const heroCaseCount = document.getElementById("heroCaseCount");
+    const heroQueueCount = document.getElementById("heroQueueCount");
+    const heroMatchCount = document.getElementById("heroMatchCount");
+    const totalRowsValue = document.getElementById("totalRowsValue");
+    const uniqueQueuesValue = document.getElementById("uniqueQueuesValue");
+    const visibleResultsValue = document.getElementById("visibleResultsValue");
+    const statusPill = document.getElementById("statusPill");
+  
+    let CASES = [];
+  
+    function setStatus(label, icon = "fa-bolt") {
+      statusPill.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
     }
-
-    emptyState.style.display = "none";
-    rowsEl.innerHTML = rows.map(r => `
-      <tr>
-       <td>
-      <span class="queue-link" onclick='openCaseDetail(${JSON.stringify(JSON.stringify(r))})'>
-        ${highlightText(r["QUEUE/ Request"], query)}
-        <i class="fa-solid fa-up-right-from-square"></i>
-      </span>
-    </td>
-        <td>${highlightText(r["QUEUE/ Request"], query)}</td>
-        <td style="white-space:pre-line">${highlightText(r["Concern"], query)}</td>
-        <td style="white-space:pre-line">${highlightText(r["ACTION"], query)}</td>
-        <td>${highlightText(r["Email Address"], query)}</td>
-        <td><pre>${highlightText(r["Case Assignment/Email"], query)}</pre></td>
-      </tr>
-    `).join("");
-
-    updateCounts(rows);
-  }
-
-  function sortMatches(query) {
-    if (!query) return CASES;
-
-    const startsWithQueue = [];
-    const includesQueue = [];
-    const otherMatches = [];
-
-    CASES.forEach(r => {
-      const queue = (r["QUEUE/ Request"] || "").toLowerCase().trim();
-      const concern = (r["Concern"] || "").toLowerCase().trim();
-      const action = (r["ACTION"] || "").toLowerCase().trim();
-      const email = (r["Email Address"] || "").toLowerCase().trim();
-      const assignment = (r["Case Assignment/Email"] || "").toLowerCase().trim();
-
-      if (queue.startsWith(query)) {
-        startsWithQueue.push(r);
-      } else if (queue.includes(query)) {
-        includesQueue.push(r);
-      } else if (
-        concern.includes(query) ||
-        action.includes(query) ||
-        email.includes(query) ||
-        assignment.includes(query)
-      ) {
-        otherMatches.push(r);
+  
+    function escapeRegExp(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+  
+    function updateCounts(rows) {
+      const uniqueQueues = [...new Set(CASES.map(r => (r["QUEUE/ Request"] || "").trim()).filter(Boolean))];
+      heroCaseCount.textContent = CASES.length || "0";
+      totalRowsValue.textContent = CASES.length || "0";
+      heroQueueCount.textContent = uniqueQueues.length || "0";
+      uniqueQueuesValue.textContent = uniqueQueues.length || "0";
+      heroMatchCount.textContent = rows.length || "0";
+      visibleResultsValue.textContent = rows.length || "0";
+  
+      if (!CASES.length) {
+        setStatus("Waiting for Data", "fa-database");
+      } else if (!rows.length) {
+        setStatus("No Match Found", "fa-circle-exclamation");
+      } else if ((searchInput.value || "").trim()) {
+        setStatus("Filtered Results", "fa-filter");
+      } else {
+        setStatus("Directory Ready", "fa-circle-check");
       }
-    });
-
-    return [...startsWithQueue, ...includesQueue, ...otherMatches];
+    }
+  
+    function highlightText(value, query) {
+      if (!query) return value || "";
+      const regex = new RegExp(`(${escapeRegExp(query)})`, "gi");
+      return String(value || "").replace(regex, '<mark class="search-highlight">$1</mark>');
+    }
+  
+function renderTable(rows, query = "") {
+  if (!rows.length) {
+    rowsEl.innerHTML = "";
+    emptyState.style.display = "block";
+    updateCounts(rows);
+    return;
   }
 
-  window.scrollToDirectory = function () {
-    const target = document.getElementById("directoryWorkspace");
-    if (!target) return;
-    const y = target.getBoundingClientRect().top + window.scrollY - 20;
-    window.scrollTo({ top: y, behavior: "smooth" });
-  };
+  emptyState.style.display = "none";
+  rowsEl.innerHTML = rows.map(r => `
+    <tr>
+      <td>
+        <span class="queue-link" onclick='openCaseDetail(${JSON.stringify(JSON.stringify(r))})'>
+          ${highlightText(r["QUEUE/ Request"], query)}
+          <i class="fa-solid fa-up-right-from-square"></i>
+        </span>
+      </td>
+      <td style="white-space:pre-line">${highlightText(r["Concern"], query)}</td>
+      <td style="white-space:pre-line">${highlightText(r["ACTION"], query)}</td>
+      <td>${highlightText(r["Email Address"], query)}</td>
+      <td><pre>${highlightText(r["Case Assignment/Email"], query)}</pre></td>
+    </tr>
+  `).join("");
 
-  window.clearDirectorySearch = function () {
-    searchInput.value = "";
-    clearBtn.style.display = "none";
-    renderTable(CASES);
-    searchInput.focus();
-  };
-
-  window.focusDirectorySearch = function () {
-    searchInput.focus();
-    searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
-
-  fetch("case-directory.xlsx")
-    .then(res => res.arrayBuffer())
-    .then(data => {
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-
-      CASES = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-      renderTable(CASES);
-    })
-    .catch(err => {
-      console.error("Failed to load XLSX:", err);
-      rowsEl.innerHTML = "";
-      emptyState.style.display = "block";
-      emptyState.innerHTML = `
-        <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; margin-bottom:10px; color:#ef4444;"></i>
-        <div>Failed to load case-directory.xlsx</div>
-      `;
-      updateCounts([]);
-    });
-
-  searchInput.addEventListener("input", (e) => {
-    const query = e.target.value.toLowerCase().trim();
-    clearBtn.style.display = query ? "block" : "none";
-
-    if (!query) {
-      renderTable(CASES);
-      return;
-    }
-
-    renderTable(sortMatches(query), query);
-  });
+  updateCounts(rows);
 }
-
-document.addEventListener("DOMContentLoaded", initCaseDirectoryPage);
-document.addEventListener("headerLoaded", () => {
-  initRatingStars();
-  initCaseDirectoryPage();
-});
-</script>
+  
+    function sortMatches(query) {
+      if (!query) return CASES;
+  
+      const startsWithQueue = [];
+      const includesQueue = [];
+      const otherMatches = [];
+  
+      CASES.forEach(r => {
+        const queue = (r["QUEUE/ Request"] || "").toLowerCase().trim();
+        const concern = (r["Concern"] || "").toLowerCase().trim();
+        const action = (r["ACTION"] || "").toLowerCase().trim();
+        const email = (r["Email Address"] || "").toLowerCase().trim();
+        const assignment = (r["Case Assignment/Email"] || "").toLowerCase().trim();
+  
+        if (queue.startsWith(query)) {
+          startsWithQueue.push(r);
+        } else if (queue.includes(query)) {
+          includesQueue.push(r);
+        } else if (
+          concern.includes(query) ||
+          action.includes(query) ||
+          email.includes(query) ||
+          assignment.includes(query)
+        ) {
+          otherMatches.push(r);
+        }
+      });
+  
+      return [...startsWithQueue, ...includesQueue, ...otherMatches];
+    }
+  
+    window.scrollToDirectory = function () {
+      const target = document.getElementById("directoryWorkspace");
+      if (!target) return;
+      const y = target.getBoundingClientRect().top + window.scrollY - 20;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    };
+  
+    window.clearDirectorySearch = function () {
+      searchInput.value = "";
+      clearBtn.style.display = "none";
+      renderTable(CASES);
+      searchInput.focus();
+    };
+  
+    window.focusDirectorySearch = function () {
+      searchInput.focus();
+      searchInput.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+  
+    fetch("case-directory.xlsx")
+      .then(res => res.arrayBuffer())
+      .then(data => {
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+  
+        CASES = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        renderTable(CASES);
+      })
+      .catch(err => {
+        console.error("Failed to load XLSX:", err);
+        rowsEl.innerHTML = "";
+        emptyState.style.display = "block";
+        emptyState.innerHTML = `
+          <i class="fa-solid fa-triangle-exclamation" style="font-size:28px; margin-bottom:10px; color:#ef4444;"></i>
+          <div>Failed to load case-directory.xlsx</div>
+        `;
+        updateCounts([]);
+      });
+  
+    searchInput.addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      clearBtn.style.display = query ? "block" : "none";
+  
+      if (!query) {
+        renderTable(CASES);
+        return;
+      }
+  
+      renderTable(sortMatches(query), query);
+    });
+  }
+  
+  document.addEventListener("DOMContentLoaded", initCaseDirectoryPage);
+  document.addEventListener("headerLoaded", () => {
+    initRatingStars();
+    initCaseDirectoryPage();
+  });
+  </script>
 <div id="caseDetailModal" class="modal detail-modal">
-  <div class="modal-content detail-modal-content" onclick="event.stopPropagation()">
+  <div class="modal-content detail-modal-content" id="caseDetailModalContent" onclick="event.stopPropagation()">
 
     <div class="modal-header detail-modal-header">
-      <span>Case Directory Detail</span>
-      <span class="modal-close" onclick="closeCaseDetail()">×</span>
+      <span class="detail-modal-title">Case Directory Detail</span>
+
+      <div class="detail-modal-actions">
+        <button type="button" class="view-toggle-icon" id="viewToggleBtn" onclick="toggleView()" title="Switch to premium view">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </button>
+        <span class="modal-close" onclick="closeCaseDetail()">×</span>
+      </div>
     </div>
 
+    <!-- Default view -->
     <div class="detail-table">
       <div class="detail-col">
         <span class="detail-label">Queue / Request</span>
@@ -1201,7 +1407,35 @@ document.addEventListener("headerLoaded", () => {
       </div>
     </div>
 
+    <!-- Premium view -->
+    <div class="premium-detail-view">
+      <div class="premium-card full">
+        <div class="premium-card-title"><i class="fa-solid fa-folder-open"></i> Queue / Request</div>
+        <div class="premium-card-value" id="premiumDetailQueue"></div>
+      </div>
+
+      <div class="premium-card">
+        <div class="premium-card-title"><i class="fa-solid fa-circle-question"></i> Concern</div>
+        <div class="premium-card-value" id="premiumDetailConcern"></div>
+      </div>
+
+      <div class="premium-card">
+        <div class="premium-card-title"><i class="fa-solid fa-list-check"></i> Action</div>
+        <div class="premium-card-value" id="premiumDetailAction"></div>
+      </div>
+
+      <div class="premium-card">
+        <div class="premium-card-title"><i class="fa-solid fa-envelope"></i> Email Address</div>
+        <div class="premium-card-value" id="premiumDetailEmail"></div>
+      </div>
+
+      <div class="premium-card full">
+        <div class="premium-card-title"><i class="fa-solid fa-share-nodes"></i> Case Assignment / Email</div>
+        <div class="premium-card-value" id="premiumDetailAssignment"></div>
+      </div>
+    </div>
+
   </div>
 </div>
-</body>
-</html>
+  </body>
+  </html>
