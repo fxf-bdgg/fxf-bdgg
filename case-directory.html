@@ -1095,8 +1095,6 @@ window.addEventListener("click", (e) => {
   if (e.target === helpModal) closeHelp();
 });
 
-let currentCaseDetailView = "default";
-
 function setCaseDetailView(view) {
   currentCaseDetailView = view;
   localStorage.setItem("caseDetailView", view);
