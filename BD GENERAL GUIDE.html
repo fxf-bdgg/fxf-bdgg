@@ -2669,7 +2669,7 @@ const hasPreviousStep = currentKey !== "start";
         <div class="question-card">
           <div class="question-label"><i class="fa-solid fa-circle-nodes"></i> Current Step</div>
           <div class="question-text">${escapeHtml(nodeText)}</div>
-          ${nodeHelp ? `<div class="question-help">${escapeHtml(nodeHelp)}</div>` : ""}
+          ${nodeHelp ? `<div class="question-help">${escapeHtml(nodeHelp).replace(/\n/g, "<br>")}</div>` : ""}
 
           ${nodeNote ? `
             <div class="note-card">
@@ -2677,7 +2677,7 @@ const hasPreviousStep = currentKey !== "start";
                 <i class="fa-solid fa-bell"></i>
                 Reminder
               </div>
-              <div class="note-body">${nodeNote}</div>
+              <div class="note-body">${escapeHtml(nodeNote).replace(/\n/g, "<br>")}</div>
             </div>
           ` : ""}
 
