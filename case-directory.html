@@ -908,7 +908,8 @@ let caseDirectoryInitialized = false;
 let selectedRating = 0;
 let commentsUnsubscribe = null;
 let ratingStars = [];
-
+let currentCaseDetailView = localStorage.getItem("caseDetailView") || "default";
+  
 function initRatingStars() {
   ratingStars = Array.from(document.querySelectorAll(".rating-star"));
 
@@ -1098,6 +1099,7 @@ let currentCaseDetailView = "default";
 
 function setCaseDetailView(view) {
   currentCaseDetailView = view;
+  localStorage.setItem("caseDetailView", view);
 
   const modalContent = document.getElementById("caseDetailModalContent");
   const toggleBtn = document.getElementById("viewToggleBtn");
@@ -1115,7 +1117,7 @@ function setCaseDetailView(view) {
     toggleBtn.title = "Switch to premium view";
   }
 }
-
+  
 function toggleView() {
   if (currentCaseDetailView === "default") {
     setCaseDetailView("premium");
@@ -1146,7 +1148,8 @@ function openCaseDetail(serializedRow) {
   document.getElementById("premiumDetailEmail").textContent = email;
   document.getElementById("premiumDetailAssignment").textContent = assignment;
 
-  setCaseDetailView("default");
+  /* keep last selected view, even after refresh */
+  setCaseDetailView(currentCaseDetailView);
 
   modal.style.display = "flex";
   modal.classList.remove("is-closing");
@@ -1156,7 +1159,7 @@ function openCaseDetail(serializedRow) {
     modal.classList.add("is-open");
   });
 }
-
+  
 function closeCaseDetail() {
   const modal = document.getElementById("caseDetailModal");
   if (!modal) return;
